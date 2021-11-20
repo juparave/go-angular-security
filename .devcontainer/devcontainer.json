@@ -19,7 +19,8 @@
 		"cweijan.vscode-mysql-client2",
 		"wakatime.vscode-wakatime",
         "johnpapa.angular2",
-        "golang.go"
+        "golang.go",
+        "GitHub.copilot"
 	],
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
