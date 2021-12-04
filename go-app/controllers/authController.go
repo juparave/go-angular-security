@@ -33,7 +33,14 @@ func Register(c *fiber.Ctx) error {
 
 	user.SetPassword(data["password"])
 
-	database.DB.Create(&user)
+	res := database.DB.Create(&user)
+	// verify if user was created
+	if res.Error != nil {
+		c.Status(400)
+		return c.JSON(fiber.Map{
+			"message": res.Error.Error(),
+		})
+	}
 
 	return c.JSON(user)
 }
