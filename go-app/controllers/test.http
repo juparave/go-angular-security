@@ -1,0 +1,31 @@
+# this files uses REST Client vscode extension
+
+@API_URL = http://localhost:5000
+
+# Register
+POST {{API_URL}}/api/register
+Content-Type: application/json
+
+{
+    "first_name": "first name test",
+    "last_name": "last name test",
+    "email": "some2@email.com",
+    "password": "test",
+    "password_confirm": "test"
+}
+
+###
+
+POST {{API_URL}}/api/login
+Content-Type: application/json
+
+{
+    "email": "some2@email.com",
+    "password": "test"
+}
+
+###
+
+# Get user with id 2
+GET {{API_URL}}/api/user/2
+
