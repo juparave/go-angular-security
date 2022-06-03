@@ -1,0 +1,33 @@
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <a
+    class="navbar-brand"
+    routerLink="/">Go Angular Security</a>
+  <button
+    class="navbar-toggler"
+    type="button"
+    data-toggle="collapse"
+    data-target="#navbarSupportedContent"
+    aria-controls="navbarSupportedContent"
+    aria-expanded="false"
+    aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div
+    class="collapse navbar-collapse justify-content-end"
+    id="navbarSupportedContent">
+    <ul
+      class="navbar-nav align-items-center"
+      *ngIf="isLoggedIn$ | async">
+      <li class="nav-item">
+        <span style="padding:0.5rem 1rem;">Hello {{(currentUser$ | async)?.firstName}}</span>
+      </li>
+      <li class="nav-item">
+        <a
+          style="cursor: pointer;"
+          class="nav-link"
+          (click)="logout()">Logout</a>
+      </li>
+    </ul>
+  </div>
+</nav>
