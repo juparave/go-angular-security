@@ -9,7 +9,6 @@ Install fiber v2
 
     $ go get github.com/gofiber/fiber/v2
 
-
 ## Installing go-app dependencies
 
     $ go mod download
@@ -17,16 +16,10 @@ Install fiber v2
 
 ## Dev Cycle
 
+Codespace URL: https://juparave-go-angular-security-pgvrxv62rvj5-4200.githubpreview.dev/
+
 ### Autorefresh server with (Air)[https://github.com/cosmtrek/air]
 
 Install air executable in ~/bin/ and inside `go-app` run:
-    
+
     $ air
-
-
-
-
-
-
-
-
