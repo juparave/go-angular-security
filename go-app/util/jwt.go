@@ -7,13 +7,27 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-const SecretKey = "secretkey"
+// SecretKey, to encode jwt claims, change it
+const SecretKey = "s3cr37kEy"
+
+const AccessTokenDuration = time.Hour * 24 * 90
+const RefreshTokenDuration = time.Hour * 24 * 180
 
 func GenerateJwt(issuer string) (string, error) {
 	// ref: https://github.com/golang-jwt/jwt/blob/main/example_test.go
 	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
 		Issuer:    issuer,
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(AccessTokenDuration)),
+	})
+
+	return claims.SignedString([]byte(SecretKey))
+}
+
+func GenerateRefreshJwt(issuer string) (string, error) {
+	// ref: https://github.com/golang-jwt/jwt/blob/main/example_test.go
+	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
+		Issuer:    issuer,
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(RefreshTokenDuration)),
 	})
 
 	return claims.SignedString([]byte(SecretKey))

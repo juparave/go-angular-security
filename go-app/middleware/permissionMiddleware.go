@@ -5,43 +5,45 @@ import (
 	"go-app/database"
 	"go-app/models"
 	"go-app/util"
-	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-func IsAuthorized(c *fiber.Ctx, page string) error {
+// IsAuthorized verifies user have the required permission
+func IsAuthorized(c *fiber.Ctx, reqPerm string) error {
 	cookie := c.Cookies("jwt")
 
-	Id, err := util.ParseJwt(cookie)
-
+	userID, err := util.ParseJwt(cookie)
 	if err != nil {
 		return err
 	}
 
-	userId, _ := strconv.Atoi(Id)
+	// if no permission required, allow
+	if reqPerm == "" {
+		return nil
+	}
 
 	user := models.User{
-		Id: uint(userId),
+		ID: userID,
 	}
 
-	database.DB.Preload("Role").Find(&user)
+	var roles []models.Role
+	// find all user's roles
+	database.DB.Model(&user).Association("Roles").Find(&roles)
 
-	role := models.Role{
-		Id: user.RoleId,
-	}
-
-	database.DB.Preload("Permissions").Find(&role)
+	var permissions []models.Permission
+	// find all permissions for user's roles
+	database.DB.Model(&roles).Association("Permissions").Find(&permissions)
 
 	if c.Method() == "GET" {
-		for _, permission := range role.Permissions {
-			if permission.Name == "view_"+page || permission.Name == "edit_"+page {
+		for _, permission := range permissions {
+			if permission.Name == "view_"+reqPerm || permission.Name == "edit_"+reqPerm {
 				return nil
 			}
 		}
 	} else {
-		for _, permission := range role.Permissions {
-			if permission.Name == "edit_"+page {
+		for _, permission := range permissions {
+			if permission.Name == "edit_"+reqPerm {
 				return nil
 			}
 		}

@@ -6,13 +6,21 @@ import (
 )
 
 type User struct {
-	Id        uint   `json:"id"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Email     string `json:"email" gorm:"unique"`
-	Password  []byte `json:"-"` // don't return password on json
-	RoleId    uint   `json:"role_id"`
-	Role      Role   `json"role" gorm:"foreingKey:RoleId"`
+	ID           string `json:"user_id" gorm:"size:11"`
+	FirstName    string `json:"first_name" gorm:"size:128"`
+	LastName     string `json:"last_name" gorm:"size:128"`
+	Email        string `json:"email" gorm:"size:128; unique"`
+	Password     []byte `json:"-" gorm:"size:64"` // don't return password on json
+	Token        string `json:"token" gorm:"-"`
+	RefreshToken string `json:"refresh_token" gorm:"-"`
+
+	Roles []Role `json:"roles" gorm:"many2many:user_roles;"`
+}
+
+// UserWithPassword used on change password requests
+type UserWithPassword struct {
+	*User
+	Password string `json:"password"`
 }
 
 func (user *User) SetPassword(password string) {
