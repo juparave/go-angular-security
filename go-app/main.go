@@ -19,7 +19,14 @@ func main() {
 		AllowCredentials: true,
 	}))
 
-	routes.Setup(app)
+	// group handlers, set api prefix path to /api/v1
+	api := app.Group("/api")
+	v1 := api.Group("/v1", func(c *fiber.Ctx) error {
+		c.Set("Version", "v1")
+		return c.Next()
+	})
+
+	routes.Setup(v1)
 
 	app.Listen(":5000")
 }
