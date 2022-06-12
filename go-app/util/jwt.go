@@ -1,6 +1,7 @@
 package util
 
 import (
+	"go-app/models"
 	"log"
 	"time"
 
@@ -48,4 +49,22 @@ func ParseJwt(cookie string) (string, error) {
 	claims := token.Claims.(*jwt.RegisteredClaims)
 
 	return claims.Issuer, nil
+}
+
+// GenerateUserTokens sets token and refreshToken to user
+func GenerateUserTokens(user *models.User) error {
+	accessToken, err := GenerateJwt(user.ID)
+	if err != nil {
+		return err
+	}
+
+	refreshToken, err := GenerateRefreshJwt(user.ID)
+	if err != nil {
+		return err
+	}
+
+	user.AccessToken = accessToken
+	user.RefreshToken = refreshToken
+
+	return nil
 }

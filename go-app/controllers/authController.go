@@ -17,7 +17,7 @@ func Register(c *fiber.Ctx) error {
 		return err
 	}
 
-	if data["password"] != data["password_confirm"] {
+	if data["password"] != data["confirmPassword"] {
 		c.Status(400)
 		return c.JSON(fiber.Map{
 			"message": "passwords do not match",
@@ -25,8 +25,8 @@ func Register(c *fiber.Ctx) error {
 	}
 
 	user := models.User{
-		FirstName: data["first_name"],
-		LastName:  data["last_name"],
+		FirstName: data["firstName"],
+		LastName:  data["lastName"],
 		Email:     data["email"],
 	}
 
@@ -39,6 +39,11 @@ func Register(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
 			"message": res.Error.Error(),
 		})
+	}
+
+	err := util.GenerateUserTokens(&user)
+	if err != nil {
+		return c.SendStatus(fiber.StatusInternalServerError)
 	}
 
 	return c.JSON(user)
@@ -149,7 +154,7 @@ func RefreshToken(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
 
-	user.Token = token
+	user.AccessToken = token
 	user.RefreshToken = newRefreshToken
 
 	cookie := fiber.Cookie{
