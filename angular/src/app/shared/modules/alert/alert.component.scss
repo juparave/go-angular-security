@@ -1,0 +1,134 @@
+@import "src/assets/scss/variables";
+
+$_module-rem: $module-rem;
+$_border-width: 1px;
+$_shape: $shape;
+$_animation: $animation;
+
+$_types: (
+  default: (
+    bg: main-palette(500),
+    color: main-palette-contrast(500),
+    border-color: main-palette(500),
+  ),
+  accent: (
+    bg: accent-palette(500),
+    color: accent-palette-contrast(500),
+    border-color: accent-palette(500),
+  ),
+  success: (
+    bg: $success-color,
+    color: $success-contrast,
+    border-color: $success-color,
+  ),
+  info: (
+    bg: $info-color,
+    color: $info-contrast,
+    border-color: $info-color,
+  ),
+  warning: (
+    bg: $warning-color,
+    color: $warning-contrast,
+    border-color: $warning-color,
+  ),
+  error: (
+    bg: $error-color,
+    color: $error-contrast,
+    border-color: $error-color,
+  ),
+);
+
+:host {
+  border: $_border-width solid transparent;
+  display: flex;
+  border-radius: $_shape;
+  position: relative;
+  padding: 0 $_module-rem;
+
+  .content {
+    align-self: center;
+    display: block;
+    flex: 1;
+    padding: calc(#{$_module-rem} * 1.5 - #{$_border-width}) $_module-rem;
+
+    .title {
+      font-size: 1.25em;
+      font-weight: 500;
+      margin-bottom: $_module-rem * 0.5;
+    }
+  }
+  .close {
+    background: rgba(#000, 0.1);
+    color: inherit;
+    cursor: pointer;
+    font-size: 20px;
+    line-height: 1;
+    position: absolute;
+    right: 0;
+    top: 0;
+    transition: background 0.2s $_animation, color 0.2s $_animation;
+    border: 0;
+
+    .rtl & {
+      left: 0;
+      right: auto;
+    }
+    &:hover {
+      background: rgba(#fff, 0.3);
+      color: #f00;
+    }
+    .material-icons {
+      color: inherit;
+      font-size: inherit;
+      margin: 0;
+      vertical-align: top;
+    }
+  }
+  .alert-icon {
+    align-items: center;
+    background: rgba(#fff, 0.2);
+    display: flex;
+    font-size: 1.43em;
+    line-height: 1;
+    min-height: 100%;
+    padding: $_module-rem ($_module-rem * 1.5);
+  }
+  @each $_type, $_color in $_types {
+    &.alert-#{$_type} {
+      background: map-get($_color, bg);
+      color: map-get($_color, color);
+      border-color: map-get($map: $_color, $key: border-color);
+      margin: 14px 0;
+
+      &.outline {
+        background: transparent;
+        color: map-get($_color, bg);
+      }
+    }
+  }
+  &.with-before-icon {
+    padding-left: 0;
+
+    .rtl & {
+      padding-left: $_module-rem;
+      padding-right: 0;
+    }
+  }
+  &.with-after-icon {
+    padding-right: 0;
+
+    .rtl & {
+      padding-left: 0;
+      padding-right: $_module-rem;
+
+      &.with-before-icon {
+        padding-right: 0;
+      }
+    }
+  }
+  &:hover {
+    .close {
+      opacity: 1;
+    }
+  }
+}
