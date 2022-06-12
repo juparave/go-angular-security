@@ -6,13 +6,13 @@ import (
 )
 
 type User struct {
-	ID           string `json:"user_id" gorm:"size:11"`
-	FirstName    string `json:"first_name" gorm:"size:128"`
-	LastName     string `json:"last_name" gorm:"size:128"`
+	ID           string `json:"id" gorm:"size:11"`
+	FirstName    string `json:"firstName" gorm:"size:128"`
+	LastName     string `json:"lastName" gorm:"size:128"`
 	Email        string `json:"email" gorm:"size:128; unique"`
 	Password     []byte `json:"-" gorm:"size:64"` // don't return password on json
-	Token        string `json:"token" gorm:"-"`
-	RefreshToken string `json:"refresh_token" gorm:"-"`
+	AccessToken  string `json:"accessToken" gorm:"-"`
+	RefreshToken string `json:"refreshToken" gorm:"-"`
 
 	Roles []Role `json:"roles" gorm:"many2many:user_roles;"`
 }
@@ -21,6 +21,15 @@ type User struct {
 type UserWithPassword struct {
 	*User
 	Password string `json:"password"`
+}
+
+func (user *User) BeforeCreate(tx *gorm.DB) (err error) {
+	// UUID short version
+	if user.ID == "" {
+		user.ID = SortableShortUUID()
+	}
+
+	return nil
 }
 
 func (user *User) SetPassword(password string) {
