@@ -52,7 +52,7 @@ export class RegisterEffect {
       this.actions$.pipe(
         ofType(registerSuccessAction),
         tap(() => {
-          this.router.navigateByUrl('/');
+          this.router.navigateByUrl('/app');
         })
       ),
     // doesn't return an Observable, so we set dispatch to false

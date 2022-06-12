@@ -11,12 +11,25 @@ import { articleReducers } from 'src/app/store/reducers/article.reducer';
 import { HeaderComponent } from './header/header.component';
 import { LoginEffect } from './store/effects/auth-login.effects';
 import { RegisterEffect } from './store/effects/auth-register.effects';
-import { HttpClientJsonpModule, HttpClientModule } from '@angular/common/http';
+import {
+  HttpClientJsonpModule,
+  HttpClientModule,
+  HTTP_INTERCEPTORS,
+} from '@angular/common/http';
 import { LogoutEffect } from './store/effects/auth-logout.effects';
 import { GetCurrentUserEffect } from './store/effects/auth-get-current-user.effects';
 import { RefreshTokensEffect } from './store/effects/auth-refresh-tokens.effects';
 import { authReducer } from './store/reducers/auth.reducers';
 import { environment } from 'src/environments/environment';
+import { RefreshTokenInterceptor } from './services/auth/refresh-token.interceptor';
+
+const APP_PROVIDERS = [
+  {
+    provide: HTTP_INTERCEPTORS,
+    useClass: RefreshTokenInterceptor,
+    multi: true,
+  },
+];
 
 @NgModule({
   declarations: [AppComponent, HeaderComponent],
@@ -49,7 +62,7 @@ import { environment } from 'src/environments/environment';
       logOnly: environment.production,
     }),
   ],
-  providers: [],
+  providers: [APP_PROVIDERS],
   bootstrap: [AppComponent],
 })
 export class AppModule {}
