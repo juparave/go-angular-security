@@ -51,6 +51,9 @@ export class GetCurrentUserEffect {
       this.actions$.pipe(
         ofType(getCurrentUserFailureAction),
         tap(() => {
+          // clear token from persistanceService
+          this.persistanceService.remove('accessToken');
+          this.persistanceService.remove('refreshToken');
           // this.router.navigateByUrl('/login');
         })
       ),
