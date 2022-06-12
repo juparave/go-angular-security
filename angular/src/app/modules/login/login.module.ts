@@ -8,6 +8,7 @@ import { RouterModule } from '@angular/router';
 import { SharedModule } from 'src/app/shared/shared.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { SignUpComponent } from './sign-up/sign-up.component';
+import { BackendErrorMessagesModule } from 'src/app/shared/modules/backend-error-messages/backend-error-messages.module';
 
 export const routes = [
   {
@@ -44,6 +45,8 @@ export const routes = [
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
+
+    BackendErrorMessagesModule,
 
     SharedModule,
     RouterModule.forChild(routes),

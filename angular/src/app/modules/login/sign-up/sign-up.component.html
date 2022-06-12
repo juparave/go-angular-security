@@ -8,6 +8,10 @@
       (ngSubmit)="doRegister()"
       class="example-form"
     >
+      <app-backend-error-messages
+        *ngIf="backendErrors$ | async"
+        [backendErrors]="backendErrors$ | async"
+      ></app-backend-error-messages>
       <mat-card-content>
         <mat-form-field class="full-width">
           <input
