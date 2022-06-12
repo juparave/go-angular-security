@@ -3,8 +3,10 @@ package util
 import (
 	"go-app/models"
 	"log"
+	"strings"
 	"time"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v4"
 )
 
@@ -32,6 +34,27 @@ func GenerateRefreshJwt(issuer string) (string, error) {
 	})
 
 	return claims.SignedString([]byte(SecretKey))
+}
+
+// GetJWT returns jwt from `Authorization` header or from `jwt` cookie
+func GetJWT(c *fiber.Ctx) string {
+	var jwt string
+
+	token := c.Get("Token")    // get value from headers
+	cookie := c.Cookies("jwt") // get value from cookie
+
+	if token != "" {
+		t := strings.Split(token, " ")
+		if len(t) == 2 {
+			jwt = t[1]
+		} else {
+			jwt = token
+		}
+	} else {
+		jwt = cookie
+	}
+
+	return jwt
 }
 
 func ParseJwt(cookie string) (string, error) {

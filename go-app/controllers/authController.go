@@ -185,13 +185,24 @@ func RefreshToken(c *fiber.Ctx) error {
 }
 
 func User(c *fiber.Ctx) error {
-	cookie := c.Cookies("jwt")
+	var jwt string
+	// get jwt from header or cookie
+	jwt = util.GetJWT(c)
 
-	id, _ := util.ParseJwt(cookie)
+	id, _ := util.ParseJwt(jwt)
 
 	var user models.User
 
 	database.DB.Where("id = ?", id).First(&user)
+
+	if user.ID == "" {
+		c.Status(404)
+		return c.JSON(fiber.Map{
+			"errors": fiber.Map{
+				"user": []string{"token valid but user not found"},
+			},
+		})
+	}
 
 	return c.JSON(user)
 }

@@ -7,14 +7,16 @@ import (
 )
 
 func IsAuthenticated(c *fiber.Ctx) error {
-	cookie := c.Cookies("jwt")
+	jwt := util.GetJWT(c)
 
-	if _, err := util.ParseJwt(cookie); err != nil {
+	if _, err := util.ParseJwt(jwt); err != nil {
 		c.Status(fiber.StatusUnauthorized)
 		return c.JSON(fiber.Map{
 			"message": "unauthenticated",
 		})
 	}
+
+	// we should test if authenticated user exists on db
 
 	return c.Next()
 }
