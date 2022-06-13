@@ -5,26 +5,49 @@
     </mat-card-header>
     <mat-card-content>
       <form [formGroup]="loginForm" class="example-form">
-        <mat-error *ngIf="backendErrors$ | async">
-          The username and password were not recognized
-        </mat-error>
+        <app-backend-error-messages
+          *ngIf="backendErrors$ | async"
+          [backendErrors]="backendErrors$ | async"
+        ></app-backend-error-messages>
         <mat-form-field class="full-width">
-          <input matInput type="text" placeholder="Email" formControlName="email" required>
-          <mat-error>
-            Please provide a valid email address
-          </mat-error>
+          <input
+            matInput
+            type="text"
+            placeholder="Email"
+            formControlName="email"
+            required
+          />
+          <mat-error> Please provide a valid email address </mat-error>
         </mat-form-field>
         <mat-form-field class="full-width">
-          <input matInput type="password" placeholder="Password" formControlName="password" name="password" required>
-          <mat-error>
-            Please provide a valid password
-          </mat-error>
+          <input
+            matInput
+            type="password"
+            placeholder="Password"
+            formControlName="password"
+            name="password"
+            required
+          />
+          <mat-error> Please provide a valid password </mat-error>
         </mat-form-field>
-        <button mat-raised-button color="primary" (click)="doLogin()" [disabled]="isSubmitting$ | async">Login</button>
-        <div class="additional-info" fxLayout="row" fxLayoutAlign="space-between">
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="doLogin()"
+          [disabled]="isSubmitting$ | async"
+        >
+          Login
+        </button>
+        <div
+          class="additional-info"
+          fxLayout="row"
+          fxLayoutAlign="space-between"
+        >
           <a href="#" [routerLink]="['../', 'sign-up']">Nuevo Registro</a>
           <span class="divider"></span>
-          <a href="#" [routerLink]="['/login', 'request-reset-password']">Recuperar Contraseña</a>
+          <a href="#" [routerLink]="['/login', 'request-reset-password']"
+            >Recuperar Contraseña</a
+          >
         </div>
       </form>
     </mat-card-content>
