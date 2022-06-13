@@ -78,38 +78,14 @@ func Login(c *fiber.Ctx) error {
 		})
 	}
 
-	token, err := util.GenerateJwt(user.ID)
+	err := util.GenerateUserTokens(&user)
 	if err != nil {
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
-
-	refreshToken, err := util.GenerateRefreshJwt(user.ID)
-	if err != nil {
-		return c.SendStatus(fiber.StatusInternalServerError)
-	}
-
-	cookie := fiber.Cookie{
-		Name:    "jwt",
-		Value:   token,
-		Expires: time.Now().Add(util.AccessTokenDuration),
-		// only accesible by backend
-		HTTPOnly: true,
-	}
-
-	c.Cookie(&cookie)
-
-	refreshCookie := fiber.Cookie{
-		Name:    "refreshjwt",
-		Value:   refreshToken,
-		Expires: time.Now().Add(util.RefreshTokenDuration),
-		// only accesible by backend
-		HTTPOnly: true,
-	}
-
-	c.Cookie(&refreshCookie)
 
 	return c.JSON(fiber.Map{
 		"message": "success",
+		"user":    user,
 	})
 }
 

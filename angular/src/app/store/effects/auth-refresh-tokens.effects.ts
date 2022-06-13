@@ -44,7 +44,10 @@ export class RefreshTokensEffect {
       this.actions$.pipe(
         ofType(refreshTokenFailureAction),
         tap(() => {
-          console.log('Logout redirection');
+          // clear token from persistanceService
+          this.persistanceService.remove('accessToken');
+          this.persistanceService.remove('refreshToken');
+
           this.router.navigateByUrl('/login');
         })
       ),
