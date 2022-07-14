@@ -2,6 +2,7 @@ import { Action, createAction, props } from '@ngrx/store';
 import { User } from 'src/app/model/user';
 import { BackendErrors } from 'src/app/store/types/backend-errors.interface';
 import { LoginRequest } from 'src/app/store/types/login-request.interface';
+import { RequestResetPassword } from 'src/app/store/types/request-reset.interface';
 
 export enum ActionTypes {
   REGISTER = '[Auth] Register',
@@ -23,6 +24,13 @@ export enum ActionTypes {
   GET_CURRENT_USER = '[Auth] Get current user',
   GET_CURRENT_USER_SUCCESS = '[Auth] Get current user success',
   GET_CURRENT_USER_FAILURE = '[Auth] Get current user failure',
+
+  REQUEST_RESET_PASSWORD = '[Auth] Request reset password',
+  VALIDATE_RESET_PASSWORD = '[Auth] Validate reset password',
+
+  RESET_PASSWORD = '[Auth] Reset password',
+  RESET_PASSWORD_SUCCESS = '[Auth] Reset password sucess',
+  RESET_PASSWORD_FAILURE = '[Auth] Reset password failure',
 }
 
 export const registerAction = createAction(
@@ -85,4 +93,9 @@ export const getCurrentUserSuccessAction = createAction(
 
 export const getCurrentUserFailureAction = createAction(
   ActionTypes.GET_CURRENT_USER_FAILURE
+);
+
+export const requestResetPasswordAction = createAction(
+  ActionTypes.REQUEST_RESET_PASSWORD,
+  props<{ request: RequestResetPassword }>()
 );
