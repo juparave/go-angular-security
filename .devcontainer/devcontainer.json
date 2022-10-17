@@ -6,7 +6,10 @@
 		"dockerfile": "Dockerfile",
 		// Update 'VARIANT' to pick an Ubuntu version: hirsute, focal, bionic
 		// Use hirsute or bionic on local arm64/Apple Silicon.
-		"args": { "VARIANT": "focal" }
+		"args": { "VARIANT": "jammy" },
+        // Options
+        "NODE_VERSION": "16",
+        "GO_VERSION": "1.18",
 	},
 
 	// Set *default* container specific settings.json values on container create.
@@ -25,16 +28,16 @@
 	// // Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [5000, 4200],
 
-	// "portsAttributes": {
-	// 	"5000": {
-	// 		"label": "GoApi",
-	// 		"onAutoForward": "notify"
-	// 	},
-	// 	"4200": {
-	// 		"label": "Angular",
-	// 		"onAutoForward": "notify"
-	// 	}
-	// },
+	"portsAttributes": {
+	    "5000": {
+			"label": "GoApi",
+	 		"onAutoForward": "notify"
+	 	},
+	 	"4200": {
+	 		"label": "Angular",
+	 		"onAutoForward": "notify"
+	 	}
+	},
 
 	"mounts": ["source=codespaces-linux-var-lib-docker,target=/var/lib/docker,type=volume"],
 	"runArgs": [
@@ -53,6 +56,6 @@
 	"features": {
 		"git": "latest",
 		"node": "16",
-		"golang": "1.17"
+		"golang": "1.18"
 	}
 }

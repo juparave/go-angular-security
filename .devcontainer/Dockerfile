@@ -1,7 +1,7 @@
 # See here for image contents: https://github.com/microsoft/vscode-dev-containers/tree/v0.203.0/containers/ubuntu/.devcontainer/base.Dockerfile
 
 # [Choice] Ubuntu version (use hirsuite or bionic on local arm64/Apple Silicon): hirsute, focal, bionic
-ARG VARIANT="hirsute"
+ARG VARIANT="jammy"
 FROM mcr.microsoft.com/vscode/devcontainers/base:0-${VARIANT}
 
 # [Optional] Uncomment this section to install additional OS packages.
@@ -9,6 +9,10 @@ RUN apt-get update \
     && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends \
         build-essential libncurses-dev libssl-dev libffi-dev vim acl pip silversearcher-ag
+
+# Vim and sqlite3
+RUN apt-get -y install --no-install-recommends libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev \
+    libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb vim sqlite3
 
 # Install docker
 RUN apt-get update && apt-get install -y --no-install-recommends \
