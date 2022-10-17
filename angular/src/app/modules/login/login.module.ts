@@ -4,13 +4,13 @@ import { LoginComponent } from 'src/app/modules/login/login.component';
 import { ResetPasswordComponent } from 'src/app/modules/login/reset-password/reset-password.component';
 import { RequestResetPasswordComponent } from 'src/app/modules/login/request-reset-password/request-reset-password.component';
 import { LoginFormComponent } from 'src/app/modules/login/form/login-form.component';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Routes } from '@angular/router';
 import { SharedModule } from 'src/app/shared/shared.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { SignUpComponent } from './sign-up/sign-up.component';
 import { BackendErrorMessagesModule } from 'src/app/shared/modules/backend-error-messages/backend-error-messages.module';
 
-export const routes = [
+export const routes: Routes = [
   {
     path: '',
     component: LoginComponent,

@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import {
   AbstractControl,
-  FormBuilder,
-  FormGroup,
+  UntypedFormBuilder,
+  UntypedFormGroup,
   Validators,
 } from '@angular/forms';
 import { Store } from '@ngrx/store';
@@ -23,11 +23,11 @@ import { BackendErrors } from 'src/app/store/types/backend-errors.interface';
   styleUrls: ['./sign-up.component.scss'],
 })
 export class SignUpComponent implements OnInit {
-  signUpForm: FormGroup;
+  signUpForm: UntypedFormGroup;
   isSubmitting$!: Observable<boolean>;
   backendErrors$!: Observable<BackendErrors | null>;
 
-  constructor(private store: Store<AppState>, private fb: FormBuilder) {
+  constructor(private store: Store<AppState>, private fb: UntypedFormBuilder) {
     this.signUpForm = this.fb.group(
       {
         firstName: [''],

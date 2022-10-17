@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
 import { requestResetPasswordAction } from 'src/app/store/actions/auth.actions';
@@ -14,11 +14,11 @@ import { RequestResetPassword } from 'src/app/store/types/request-reset.interfac
   styleUrls: ['./reset-password.component.scss'],
 })
 export class ResetPasswordComponent implements OnInit {
-  form: FormGroup;
+  form: UntypedFormGroup;
   isSubmitting$!: Observable<boolean>;
   backendErrors$!: Observable<BackendErrors | null>;
 
-  constructor(private store: Store<AppState>, private fb: FormBuilder) {
+  constructor(private store: Store<AppState>, private fb: UntypedFormBuilder) {
     this.form = this.fb.group({
       email: ['', Validators.required],
     });
