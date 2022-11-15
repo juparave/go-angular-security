@@ -1,6 +1,7 @@
 package util
 
 import (
+	"fmt"
 	"go-app/models"
 	"log"
 	"strings"
@@ -88,6 +89,14 @@ func GenerateUserTokens(user *models.User) error {
 
 	user.AccessToken = accessToken
 	user.RefreshToken = refreshToken
-
 	return nil
+}
+
+func GenerateResetPasswordToken(user *models.User) (string, error) {
+	// add expiry time to token for 24 hours
+	expiry := time.Now().Add(time.Hour * 24)
+	// use user email with expiry time to generate token string
+	token := fmt.Sprintf("%s|%s", user.Email, expiry.Format(time.RFC3339))
+	// encrypt token string with secret key
+	return Encrypt(token, SecretKey)
 }

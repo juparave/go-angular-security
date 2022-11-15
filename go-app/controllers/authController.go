@@ -186,6 +186,7 @@ func User(c *fiber.Ctx) error {
 func Logout(c *fiber.Ctx) error {
 	// set expiration time to the past to remove cookie
 	cookie := fiber.Cookie{
+
 		Name:    "jwt",
 		Value:   "",
 		Expires: time.Now().Add(-time.Hour),
@@ -251,4 +252,40 @@ func UpdatePassword(c *fiber.Ctx) error {
 	database.DB.Model(&user).Updates(user)
 
 	return c.JSON(user)
+}
+
+func RequestResetPassword(c *fiber.Ctx) error {
+	var data map[string]string
+
+	if err := c.BodyParser(&data); err != nil {
+		return err
+	}
+
+	var user models.User
+
+	database.DB.Where("email = ?", data["email"]).First(&user)
+
+	if user.ID == "" {
+		c.Status(404)
+		return c.JSON(fiber.Map{
+			"errors": fiber.Map{
+				"user": []string{"not found"},
+			},
+		})
+	}
+
+	encToken, err := util.GenerateResetPasswordToken(&user)
+	if err != nil {
+		return c.SendStatus(fiber.StatusInternalServerError)
+	}
+
+	// send email with token
+	err = util.SendResetPasswordEmail(&user, encToken)
+	if err != nil {
+		return c.SendStatus(fiber.StatusInternalServerError)
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "success",
+	})
 }
