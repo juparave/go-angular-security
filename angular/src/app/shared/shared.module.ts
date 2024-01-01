@@ -1,8 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-import { FlexLayoutModule } from '@angular/flex-layout';
-
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatInputModule } from '@angular/material/input';
 import { MatCardModule } from '@angular/material/card';
@@ -18,7 +16,6 @@ import { MatOptionModule } from '@angular/material/core';
   declarations: [],
   imports: [
     CommonModule,
-    FlexLayoutModule,
     MatToolbarModule,
     MatInputModule,
     MatCardModule,
@@ -31,7 +28,6 @@ import { MatOptionModule } from '@angular/material/core';
     MatOptionModule,
   ],
   exports: [
-    FlexLayoutModule,
     MatToolbarModule,
     MatInputModule,
     MatCardModule,
@@ -44,4 +40,4 @@ import { MatOptionModule } from '@angular/material/core';
     MatOptionModule,
   ],
 })
-export class SharedModule {}
+export class SharedModule { }

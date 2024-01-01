@@ -14,20 +14,24 @@ export const routes: Routes = [
   {
     path: '',
     component: LoginComponent,
+    title: 'Authentication',
     children: [
       { path: '', redirectTo: 'form', pathMatch: 'full' },
-      { path: 'form', component: LoginFormComponent },
+      { path: 'form', component: LoginFormComponent, title: 'Login' },
       {
         path: 'request-reset-password',
         component: RequestResetPasswordComponent,
+        title: 'Request Reset Password',
       },
       {
         path: 'reset-password/:token/:email',
         component: ResetPasswordComponent,
+        title: 'Reset Password',
       },
       {
         path: 'sign-up',
         component: SignUpComponent,
+        title: 'Sign Up',
       },
     ],
   },
@@ -52,4 +56,4 @@ export const routes: Routes = [
     RouterModule.forChild(routes),
   ],
 })
-export class LoginModule {}
+export class LoginModule { }

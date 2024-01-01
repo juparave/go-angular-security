@@ -1,23 +1,22 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import {
-  CanActivate,
   ActivatedRouteSnapshot,
   RouterStateSnapshot,
   Router,
+  CanActivateFn,
 } from '@angular/router';
 
 import { select, Store } from '@ngrx/store';
-import { map, Observable, tap } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { AppState } from 'src/app/store/interfaces/app-state';
 import { isAnonymousSelector } from 'src/app/store/selectors/auth.selectors';
 
+/** UnAuthentication Guard, only unauthenticated users with no JWT Token on localstorage */
 @Injectable({
   providedIn: 'root',
 })
-/** UnAuthentication Guard, only unauthenticated users with no JWT Token on localstorage */
-@Injectable()
-export class UnAuthGuard implements CanActivate {
-  constructor(private store: Store<AppState>, public router: Router) {}
+export class UnAuthGuard {
+  constructor(private store: Store<AppState>, public router: Router) { }
 
   canActivate(
     route: ActivatedRouteSnapshot,
@@ -33,3 +32,7 @@ export class UnAuthGuard implements CanActivate {
     );
   }
 }
+
+export const canActivateAnon: CanActivateFn = (route: ActivatedRouteSnapshot, state: RouterStateSnapshot) => {
+  return inject(UnAuthGuard).canActivate(route, state);
+};

@@ -16,6 +16,7 @@ export const routes: Routes = [
         path: '',
         redirectTo: 'home',
         pathMatch: 'full',
+        title: 'Root redirect to /app/home',
       },
       {
         path: 'home',
@@ -34,4 +35,4 @@ export const routes: Routes = [
     TopBarModule,
   ],
 })
-export class MyAppModule {}
+export class MyAppModule { }

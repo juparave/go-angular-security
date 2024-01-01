@@ -5,17 +5,12 @@ import {
   HttpClient,
   HttpErrorResponse,
   HttpHeaders,
-  HttpResponse,
 } from '@angular/common/http';
 
 import {
-  catchError,
   map,
   Observable,
-  of,
   shareReplay,
-  take,
-  tap,
   throwError,
 } from 'rxjs';
 
@@ -37,7 +32,7 @@ export class AuthService {
     'Content-Type',
     'application/json; charset=utf-8'
   );
-  constructor(private http: HttpClient, public router: Router) {}
+  constructor(private http: HttpClient, public router: Router) { }
 
   /**
    * Calls Register service

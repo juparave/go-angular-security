@@ -2,10 +2,13 @@
 
 :host {
   height: 100%;
-  
+
   .login-wrapper {
     height: 100%;
     background: main-palette(300);
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
   .positronx {
     text-decoration: none;
@@ -24,7 +27,7 @@
     -webkit-transform: scale(1);
     -ms-transform: scale(1);
     z-index: 5;
-    max-width: 330px;
+    max-width: 430px;
   }
   .box.back {
     transform: scale(0.95);
@@ -53,14 +56,15 @@
     font-size: 30px;
     margin: 0;
   }
-  .login-wrapper .mat-card {
-    padding: 40px 70px 50px;
+  .login-wrapper .mat-mdc-card {
+    padding: 30px 60px 40px;
   }
-  .login-wrapper .mat-stroked-button {
+  .login-wrapper .mat-mdc-outlined-button {
     border: 1px solid currentColor;
     line-height: 54px;
     background: #fff7fa;
   }
+  /* TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version.*/
   .login-wrapper .mat-form-field-appearance-legacy .mat-form-field-infix {
     padding: 0.8375em 0;
   }

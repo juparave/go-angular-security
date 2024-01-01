@@ -1,9 +1,9 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import {
-  CanActivate,
   ActivatedRouteSnapshot,
   RouterStateSnapshot,
   Router,
+  CanActivateFn,
 } from '@angular/router';
 
 import { select, Store } from '@ngrx/store';
@@ -11,13 +11,12 @@ import { map, Observable, tap } from 'rxjs';
 import { AppState } from 'src/app/store/interfaces/app-state';
 import { isLoggedInSelector } from 'src/app/store/selectors/auth.selectors';
 
+/** Authentication Guard, only authenticated users with JWT Token on localstorage */
 @Injectable({
   providedIn: 'root',
 })
-/** Authentication Guard, only authenticated users with JWT Token on localstorage */
-@Injectable()
-export class AuthGuard implements CanActivate {
-  constructor(private store: Store<AppState>, public router: Router) {}
+export class AuthGuard {
+  constructor(private store: Store<AppState>, public router: Router) { }
 
   canActivate(
     route: ActivatedRouteSnapshot,
@@ -34,3 +33,7 @@ export class AuthGuard implements CanActivate {
     );
   }
 }
+
+export const canActivateAuth: CanActivateFn = (route: ActivatedRouteSnapshot, state: RouterStateSnapshot) => {
+  return inject(AuthGuard).canActivate(route, state);
+};

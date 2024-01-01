@@ -7,7 +7,6 @@ import { AppComponent } from './app.component';
 import { StoreModule } from '@ngrx/store';
 import { EffectsModule } from '@ngrx/effects';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
-import { articleReducers } from 'src/app/store/reducers/article.reducer';
 import { HeaderComponent } from './header/header.component';
 import { LoginEffect } from './store/effects/auth-login.effects';
 import { RegisterEffect } from './store/effects/auth-register.effects';
@@ -41,12 +40,6 @@ const APP_PROVIDERS = [
     HttpClientJsonpModule,
     AppRoutingModule,
 
-    // StoreModule.forRoot(
-    //   {
-    //     articles: articleReducers,
-    //   },
-    //   {}
-    // ),
     StoreModule.forRoot({
       auth: authReducer,
     }),
@@ -65,4 +58,4 @@ const APP_PROVIDERS = [
   providers: [APP_PROVIDERS],
   bootstrap: [AppComponent],
 })
-export class AppModule {}
+export class AppModule { }

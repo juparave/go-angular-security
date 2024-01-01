@@ -19,7 +19,7 @@ export class RegisterEffect {
     private authService: AuthService,
     private persistanceService: PersistanceService,
     private router: Router
-  ) {}
+  ) { }
 
   register$ = createEffect(() =>
     this.actions$.pipe(
@@ -35,7 +35,7 @@ export class RegisterEffect {
             return registerSuccessAction({ currentUser });
           }),
           catchError((errorResponse: HttpErrorResponse) => {
-            console.log('register error response: ', errorResponse.error);
+            console.log('register error response: ', errorResponse);
             return of(
               registerFailureAction({
                 errors: { register: [errorResponse.error.message] },
