@@ -2,8 +2,14 @@ import { Component, OnInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
+import { requestResetPasswordAction } from 'src/app/store/actions/auth.actions';
 import { AppState } from 'src/app/store/interfaces/app-state';
 import { BackendErrors } from 'src/app/store/types/backend-errors.interface';
+import { RequestResetPassword } from 'src/app/store/types/request-reset.interface';
+import {
+  isSubmittingSelector,
+  validationErrorsSelector,
+} from 'src/app/store/selectors/auth.selectors';
 
 @Component({
   selector: 'app-request-reset-password',
@@ -22,8 +28,21 @@ export class RequestResetPasswordComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.initializeValues();
+  }
+
+  private initializeValues() {
+    this.isSubmitting$ = this.store.select(isSubmittingSelector);
+    this.backendErrors$ = this.store.select(validationErrorsSelector);
   }
 
   doRequestResetPassword() {
+    if (this.form.valid) {
+      const request: RequestResetPassword = {
+        email: this.form.value.email,
+      };
+      console.log(request);
+      this.store.dispatch(requestResetPasswordAction({ request }));
+    }
   }
 }
