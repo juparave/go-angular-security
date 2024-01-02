@@ -14,14 +14,18 @@ func Register(c *fiber.Ctx) error {
 	var data map[string]string
 
 	if err := c.BodyParser(&data); err != nil {
-		return err
+		return c.Status(fiber.StatusBadRequest).
+			JSON(fiber.Map{
+				"message": err,
+			})
 	}
 
 	if data["password"] != data["confirmPassword"] {
 		c.Status(400)
-		return c.JSON(fiber.Map{
-			"message": "passwords do not match",
-		})
+		return c.Status(fiber.StatusBadRequest).
+			JSON(fiber.Map{
+				"message": "passwords do not match",
+			})
 	}
 
 	user := models.User{
@@ -35,15 +39,18 @@ func Register(c *fiber.Ctx) error {
 	res := database.DB.Create(&user)
 	// verify if user was created
 	if res.Error != nil {
-		c.Status(400)
-		return c.JSON(fiber.Map{
-			"message": res.Error.Error(),
-		})
+		return c.Status(fiber.StatusBadRequest).
+			JSON(fiber.Map{
+				"message": res.Error.Error(),
+			})
 	}
 
 	err := util.GenerateUserTokens(&user)
 	if err != nil {
-		return c.SendStatus(fiber.StatusInternalServerError)
+		return c.Status(fiber.StatusInternalServerError).
+			JSON(fiber.Map{
+				"internal server error": err,
+			})
 	}
 
 	return c.JSON(user)
@@ -61,21 +68,21 @@ func Login(c *fiber.Ctx) error {
 	database.DB.Where("email = ?", data["email"]).First(&user)
 
 	if user.ID == "" {
-		c.Status(404)
-		return c.JSON(fiber.Map{
-			"errors": fiber.Map{
-				"user": []string{"not found"},
-			},
-		})
+		return c.Status(fiber.StatusNotFound).
+			JSON(fiber.Map{
+				"errors": fiber.Map{
+					"user": []string{"not found"},
+				},
+			})
 	}
 
 	if err := user.ComparePassword(data["password"]); err != nil {
-		c.Status(400)
-		return c.JSON(fiber.Map{
-			"errors": fiber.Map{
-				"password": []string{"incorrect"},
-			},
-		})
+		return c.Status(fiber.StatusBadRequest).
+			JSON(fiber.Map{
+				"errors": fiber.Map{
+					"password": []string{"incorrect"},
+				},
+			})
 	}
 
 	err := util.GenerateUserTokens(&user)
@@ -101,10 +108,10 @@ func RefreshToken(c *fiber.Ctx) error {
 
 	issuer, err := util.ParseJwt(refreshToken)
 	if err != nil {
-		c.Status(fiber.StatusBadRequest)
-		return c.JSON(fiber.Map{
-			"message": "token invalid or expired",
-		})
+		return c.Status(fiber.StatusBadRequest).
+			JSON(fiber.Map{
+				"message": "token invalid or expired",
+			})
 	}
 
 	user := models.User{
@@ -112,30 +119,22 @@ func RefreshToken(c *fiber.Ctx) error {
 	}
 
 	if err := database.DB.First(&user).Error; err != nil {
-		c.Status(404)
-		return c.JSON(fiber.Map{
-			"errors": fiber.Map{
-				"user": []string{"not found"},
-			},
-		})
+		return c.Status(fiber.StatusNotFound).
+			JSON(fiber.Map{
+				"errors": fiber.Map{
+					"user": []string{"not found"},
+				},
+			})
 	}
 
-	token, err := util.GenerateJwt(user.ID)
+	err = util.GenerateUserTokens(&user)
 	if err != nil {
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
-
-	newRefreshToken, err := util.GenerateRefreshJwt(user.ID)
-	if err != nil {
-		return c.SendStatus(fiber.StatusInternalServerError)
-	}
-
-	user.AccessToken = token
-	user.RefreshToken = newRefreshToken
 
 	cookie := fiber.Cookie{
 		Name:    "jwt",
-		Value:   token,
+		Value:   user.AccessToken,
 		Expires: time.Now().Add(time.Hour * 24 * 7),
 		// only accesible by backend
 		HTTPOnly: true,
@@ -145,7 +144,7 @@ func RefreshToken(c *fiber.Ctx) error {
 
 	refreshCookie := fiber.Cookie{
 		Name:    "refreshjwt",
-		Value:   newRefreshToken,
+		Value:   user.RefreshToken,
 		Expires: time.Now().Add(time.Hour * 24 * 7),
 		// only accesible by backend
 		HTTPOnly: true,
@@ -161,10 +160,8 @@ func RefreshToken(c *fiber.Ctx) error {
 }
 
 func User(c *fiber.Ctx) error {
-	var jwt string
 	// get jwt from header or cookie
-	jwt = util.GetJWT(c)
-
+	jwt := util.GetJWT(c)
 	id, _ := util.ParseJwt(jwt)
 
 	var user models.User
@@ -173,11 +170,12 @@ func User(c *fiber.Ctx) error {
 
 	if user.ID == "" {
 		c.Status(404)
-		return c.JSON(fiber.Map{
-			"errors": fiber.Map{
-				"user": []string{"token valid but user not found"},
-			},
-		})
+		return c.Status(fiber.StatusNotFound).
+			JSON(fiber.Map{
+				"errors": fiber.Map{
+					"user": []string{"token valid but user not found"},
+				},
+			})
 	}
 
 	return c.JSON(user)
@@ -186,7 +184,6 @@ func User(c *fiber.Ctx) error {
 func Logout(c *fiber.Ctx) error {
 	// set expiration time to the past to remove cookie
 	cookie := fiber.Cookie{
-
 		Name:    "jwt",
 		Value:   "",
 		Expires: time.Now().Add(-time.Hour),
@@ -209,9 +206,9 @@ func UpdateInfo(c *fiber.Ctx) error {
 		return err
 	}
 
-	cookie := c.Cookies("jwt")
-
-	userID, _ := util.ParseJwt(cookie)
+	// get jwt from header or cookie
+	jwt := util.GetJWT(c)
+	userID, _ := util.ParseJwt(jwt)
 
 	user := models.User{
 		ID:        userID,
@@ -221,7 +218,6 @@ func UpdateInfo(c *fiber.Ctx) error {
 	}
 
 	database.DB.Model(&user).Where("id = ?", userID).Updates(user)
-
 	return c.JSON(user)
 }
 
@@ -239,9 +235,9 @@ func UpdatePassword(c *fiber.Ctx) error {
 		})
 	}
 
-	cookie := c.Cookies("jwt")
-
-	userID, _ := util.ParseJwt(cookie)
+	// get jwt from header or cookie
+	jwt := util.GetJWT(c)
+	userID, _ := util.ParseJwt(jwt)
 
 	user := models.User{
 		ID: userID,
