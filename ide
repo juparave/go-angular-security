@@ -7,7 +7,7 @@ tmux split-window -h -p 50
 tmux send-keys -t -1 "cd angular" Enter
 tmux send-keys -t -1 "ng serve" Enter
 
-tmux send-keys "cd go-app" Enter
+tmux send-keys "cd server" Enter
 tmux send-keys "air" Enter
 
 
