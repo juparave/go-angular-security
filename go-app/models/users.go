@@ -33,7 +33,7 @@ func (user *User) BeforeCreate(tx *gorm.DB) (err error) {
 }
 
 func (user *User) SetPassword(password string) {
-	hashPassword, _ := bcrypt.GenerateFromPassword([]byte(password), 14)
+	hashPassword, _ := bcrypt.GenerateFromPassword([]byte(password), 12)
 	user.Password = hashPassword
 }
 
