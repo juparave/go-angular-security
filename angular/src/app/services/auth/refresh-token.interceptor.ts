@@ -1,4 +1,4 @@
-/// ref: https://www.bezkoder.com/angular-12-refresh-token/
+/// ref: https://www.bezkoder.com/angular-16-refresh-token/
 import { Injectable } from '@angular/core';
 import {
   HttpInterceptor,
@@ -10,7 +10,6 @@ import {
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { catchError, filter, switchMap, take, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
-import { isLoggedInSelector } from 'src/app/store/selectors/auth.selectors';
 import { AuthService } from './auth.service';
 import {
   refreshTokenAction,
@@ -21,7 +20,7 @@ import { PersistanceService } from 'src/app/services/persistance.service';
 import { AppState } from 'src/app/store/interfaces/app-state';
 import { User } from 'src/app/model/user';
 
-const TOKEN_HEADER_KEY = 'Token';
+const TOKEN_HEADER_KEY = 'Authorization';
 
 @Injectable()
 export class RefreshTokenInterceptor implements HttpInterceptor {
@@ -34,14 +33,17 @@ export class RefreshTokenInterceptor implements HttpInterceptor {
     private store: Store<AppState>,
     private persistanceService: PersistanceService,
     private authService: AuthService
-  ) {}
+  ) { }
 
   intercept(
     req: HttpRequest<any>,
     next: HttpHandler
   ): Observable<HttpEvent<Object>> {
+    req = req.clone({
+      withCredentials: true,
+    });
     let authReq = req;
-    const token = this.persistanceService.get('accessToken');
+    const token = this.persistanceService.get('token');
     if (token != null) {
       authReq = this.addTokenHeader(req, token);
     }
@@ -65,29 +67,29 @@ export class RefreshTokenInterceptor implements HttpInterceptor {
     if (!this.isRefreshing) {
       this.isRefreshing = true;
       this.refreshTokenSubject.next(null);
-      this.store.dispatch(refreshTokenAction());
+      /// this provokes an infinite loop
+      // this.store.dispatch(refreshTokenAction());
 
       const refreshToken = this.persistanceService.get('refreshToken');
 
-      if (refreshToken)
+      if (refreshToken) {
         return this.authService.refreshTokens(refreshToken).pipe(
           switchMap((user: User) => {
-            console.log('Refresh token success');
+            // console.log('Refresh token success');
             this.isRefreshing = false;
 
             this.store.dispatch(
               refreshTokenSuccessAction({ currentUser: user })
             );
 
-            this.refreshTokenSubject.next(user.accessToken);
+            this.refreshTokenSubject.next(user.token);
 
-            return next.handle(this.addTokenHeader(request, user.accessToken));
+            return next.handle(this.addTokenHeader(request, user.token));
           }),
           catchError((err) => {
-            console.log('Refresh token failed');
+            // console.log('Refresh token failed');
             this.isRefreshing = false;
 
-            // this.authService.logout().then(() => console.log("Logout"));
             this.store.dispatch(
               refreshTokenFailureAction({
                 errors: { ['error']: ['Refresh token failed'] },
@@ -96,6 +98,7 @@ export class RefreshTokenInterceptor implements HttpInterceptor {
             return throwError(() => err);
           })
         );
+      }
     }
 
     return this.refreshTokenSubject.pipe(
@@ -114,7 +117,7 @@ export class RefreshTokenInterceptor implements HttpInterceptor {
 
     /* for Node.js Express back-end */
     return request.clone({
-      headers: request.headers.set(TOKEN_HEADER_KEY, token),
+      headers: request.headers.set(TOKEN_HEADER_KEY, 'Bearer ' + token),
     });
   }
 }

@@ -32,6 +32,8 @@ export const routes: Routes = [
         path: 'sign-up',
         component: SignUpComponent,
         title: 'Sign Up',
+        // temporary disabled
+        canActivate: [() => false]
       },
     ],
   },

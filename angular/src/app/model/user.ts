@@ -5,6 +5,6 @@ export interface User {
   email: string;
 
   // transient members
-  accessToken: string;
+  token: string;
   refreshToken: string;
 }

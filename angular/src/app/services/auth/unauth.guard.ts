@@ -6,10 +6,10 @@ import {
   CanActivateFn,
 } from '@angular/router';
 
-import { select, Store } from '@ngrx/store';
-import { Observable, tap } from 'rxjs';
+import { Store } from '@ngrx/store';
+import { Observable, tap, map, filter } from 'rxjs';
 import { AppState } from 'src/app/store/interfaces/app-state';
-import { isAnonymousSelector } from 'src/app/store/selectors/auth.selectors';
+import { selectIsAnonymous } from 'src/app/store/selectors/auth.selectors';
 
 /** UnAuthentication Guard, only unauthenticated users with no JWT Token on localstorage */
 @Injectable({
@@ -22,13 +22,14 @@ export class UnAuthGuard {
     route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
   ): Observable<boolean> {
-    return this.store.pipe(
-      select(isAnonymousSelector),
-      tap((isAnon) => {
-        if (!isAnon) {
+    return this.store.select(selectIsAnonymous).pipe(
+      filter(state => !state.isLoading),
+      tap((state) => {
+        if (!state.isAnon) {
           this.router.navigateByUrl('/app');
         }
-      })
+      }),
+      map((state) => state.isAnon),
     );
   }
 }

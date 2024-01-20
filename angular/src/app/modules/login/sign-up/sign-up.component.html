@@ -1,10 +1,10 @@
-<div class="login-wrapper" fxLayout="row" fxLayoutAlign="center center">
+<div class="login-wrapper">
   <mat-card appearance="outlined" class="box">
     <mat-card-header>
       <mat-card-title>Register</mat-card-title>
     </mat-card-header>
     <form
-      [formGroup]="signUpForm"
+      [formGroup]="form"
       (ngSubmit)="doRegister()"
       class="example-form"
     >
@@ -25,10 +25,7 @@
         </mat-form-field>
         <mat-form-field class="full-width">
           <input matInput placeholder="Email" formControlName="email" />
-          <mat-error *ngIf="f['email'].errors">
-            <div *ngIf="f['email'].errors['required']">Email is required</div>
-            <div *ngIf="f['email'].errors['email']">Email must be valid</div>
-          </mat-error>
+          <mat-error>{{ errorMessages['email'] }} </mat-error>
         </mat-form-field>
         <mat-form-field class="full-width">
           <input
@@ -37,16 +34,7 @@
             placeholder="Password"
             formControlName="password"
           />
-          <mat-error *ngIf="f['password'].errors">
-            <div *ngIf="f['password'].errors['required']">
-              Password is required
-            </div>
-            <div *ngIf="f['password'].errors['minlength']">
-              Password must be at least
-              {{ f["password"].errors["minlength"].requiredLength }}
-              characters long
-            </div>
-          </mat-error>
+          <mat-error>{{ errorMessages['password'] }} </mat-error>
         </mat-form-field>
         <mat-form-field class="full-width">
           <input
@@ -55,20 +43,13 @@
             placeholder="Confim Password"
             formControlName="confirmPassword"
           />
-          <mat-error *ngIf="f['confirmPassword'].errors">
-            <div *ngIf="f['confirmPassword'].errors['required']">
-              Confirm password is required
-            </div>
-            <div *ngIf="f['confirmPassword'].errors['mustMatch']">
-              Passwords must match
-            </div>
-          </mat-error>
+          <mat-error>{{ errorMessages['confirmPassword'] }} </mat-error>
         </mat-form-field>
       </mat-card-content>
       <button mat-raised-button color="primary" class="btn-block">
         Register
       </button>
-      <div class="additional-info" fxLayout="row" fxLayoutAlign="space-between">
+      <div class="additional-info">
         <a href="#" [routerLink]="['../', 'form']">Login</a>
         <span class="divider"></span>
         <a href="#" [routerLink]="['/login', 'request-reset-password']"

@@ -1,0 +1,19 @@
+<div class="sidenav-header">
+  <img [width]="profilePicSize()" src="/assets/images/logo-no-background.png" alt="logo">
+  <div class="header-text" [class.hide-header-text]="sidenavCollapsed()">
+    <h2>{{ (currentUser$ | async)?.email }}</h2>
+    <h4>Administrador</h4>
+  </div>
+</div>
+<mat-nav-list (click)="onClickMenuItem()">
+  @for (item of menuItems(); track item) {
+  <a mat-list-item class="menu-item" [routerLink]="item.route" routerLinkActive="selected-menu-item"
+    #rla="routerLinkActive" [activated]="rla.isActive">
+    <mat-icon [fontSet]="rla.isActive ? 'material-icons' : 'material-icons-outlined'" matListItemIcon>{{ item.icon
+      }}</mat-icon>
+    @if (!sidenavCollapsed()) {
+    <span matListItemTitle>{{ item.label }}</span>
+    }
+  </a>
+  }
+</mat-nav-list>

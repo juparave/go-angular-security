@@ -19,15 +19,15 @@ export class LoginEffect {
     private authService: AuthService,
     private persistanceService: PersistanceService,
     private router: Router
-  ) {}
+  ) { }
 
-  login$ = createEffect(() =>
-    this.actions$.pipe(
+  login$ = createEffect(() => {
+    return this.actions$.pipe(
       ofType(loginAction),
       switchMap((action) => {
         return this.authService.login(action.request).pipe(
           map((currentUser: User) => {
-            this.persistanceService.set('accessToken', currentUser.accessToken);
+            this.persistanceService.set('token', currentUser.token);
             this.persistanceService.set(
               'refreshToken',
               currentUser.refreshToken
@@ -43,16 +43,17 @@ export class LoginEffect {
         );
       })
     )
-  );
+  });
 
   redirecAfterSubmit$ = createEffect(
-    () =>
-      this.actions$.pipe(
+    () => {
+      return this.actions$.pipe(
         ofType(loginSuccessAction),
         tap(() => {
           this.router.navigateByUrl('/app');
         })
-      ),
+      );
+    },
     // doesn't return an Observable, so we set dispatch to false
     { dispatch: false }
   );

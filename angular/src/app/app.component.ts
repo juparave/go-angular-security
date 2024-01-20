@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { getCurrentUserAction } from './store/actions/auth.actions';
 
@@ -6,9 +6,10 @@ import { getCurrentUserAction } from './store/actions/auth.actions';
   selector: 'app-root',
   template: `<router-outlet></router-outlet>`,
 })
-export class AppComponent implements OnInit {
-  title = 'angular';
-  constructor(private store: Store) {}
+export class AppComponent {
+  title = 'Austral QC Dashboard';
+
+  constructor(private store: Store) { }
 
   ngOnInit() {
     this.store.dispatch(getCurrentUserAction());

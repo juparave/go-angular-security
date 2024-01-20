@@ -1,0 +1,39 @@
+<mat-form-field class="example-full-width">
+  <mat-label>{{ label }}</mat-label>
+  <input type="text"
+    #inputAutoComplete
+    [placeholder]="placeholder"
+    aria-label=""
+    matInput
+    [formControl]="myControl"
+    [matAutocomplete]="auto"
+    #trigger="matAutocompleteTrigger"
+    >
+      <div matSuffix style="display:flex">
+      <button
+        (click)="clearInput($event)"
+        *ngIf=" myControl?.value!==null && myControl?.value!==''"
+        aria-label="Clear"
+        mat-icon-button
+        type="button"
+      >
+        <mat-icon>clear</mat-icon>
+      </button>
+
+      <button
+        (click)="openOrClosePanel($event, trigger)"
+        aria-label="Clear"
+        mat-icon-button
+        type="button"
+      >
+        <mat-icon>arrow_drop_down</mat-icon>
+      </button>
+    </div>
+  {{ '' // displayFn bind to this to get the autocomplete to work, otherwise allOptions is undefined }}
+  {{ '' // ref: https://stackoverflow.com/questions/49162076/material-angular-io-mat-autocomplete-displaywith-function-update-scope-variabl }}
+  <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn.bind(this)">
+    @for (option of options$ | async; track option) {
+      <mat-option [value]="option.value">{{ option.label }}</mat-option>
+    }
+  </mat-autocomplete>
+</mat-form-field>

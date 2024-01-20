@@ -1,0 +1,41 @@
+<!--
+Creates the toolbar and sidenav for the application.
+
+The toolbar is always visible, but the sidenav is collapsible and can be hidden on smaller screens.
+
+`isHandset$` is an observable that is true when the screen is smaller than 600px.
+
+`collapsed` is a signal that returns true when the sidenav is collapsed.
+
+`isShowing` is a signal that returns true when the sidenav is showing on small screens.
+-->
+<mat-toolbar color="primary" *ngIf="!(isHandset$ | async)">
+  <button mat-icon-button (click)="collapsed.set(!collapsed())" disableRipple="true">
+    <mat-icon>menu</mat-icon>
+  </button>
+</mat-toolbar>
+<mat-sidenav-container *ngIf="!(isHandset$ | async)">
+  <mat-sidenav [style.width]="sidenavWidth()" role="navigation" mode="side" opened="true">
+    <app-custom-sidenav [collapsed]="collapsed()"></app-custom-sidenav>
+  </mat-sidenav>
+  <mat-sidenav-content class="content" [style.margin-left]="sidenavWidth()">
+    <!-- Add Content Here -->
+    <router-outlet></router-outlet>
+  </mat-sidenav-content>
+</mat-sidenav-container>
+
+<mat-toolbar color="primary" *ngIf="(isHandset$ | async)">
+  <button mat-icon-button (click)="isShowing.set(!isShowing())" disableRipple="true">
+    <mat-icon>menu</mat-icon>
+  </button>
+</mat-toolbar>
+<mat-sidenav-container *ngIf="(isHandset$ | async)" (backdropClick)="isShowing.set(false)">
+  <mat-sidenav role="dialog" mode="over" [opened]="isShowing()">
+    <!-- Receives the `closeSidenav` event from the `CustomSidenavComponent` and closes the sidenav on small screens. -->
+    <app-custom-sidenav [collapsed]="collapsed()" (closeSidenav)="closeSidenav()"></app-custom-sidenav>
+  </mat-sidenav>
+  <mat-sidenav-content>
+    <!-- Add Content Here -->
+    <router-outlet></router-outlet>
+  </mat-sidenav-content>
+</mat-sidenav-container>

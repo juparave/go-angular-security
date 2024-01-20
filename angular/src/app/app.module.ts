@@ -7,7 +7,6 @@ import { AppComponent } from './app.component';
 import { StoreModule } from '@ngrx/store';
 import { EffectsModule } from '@ngrx/effects';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
-import { HeaderComponent } from './header/header.component';
 import { LoginEffect } from './store/effects/auth-login.effects';
 import { RegisterEffect } from './store/effects/auth-register.effects';
 import {
@@ -31,7 +30,9 @@ const APP_PROVIDERS = [
 ];
 
 @NgModule({
-  declarations: [AppComponent, HeaderComponent],
+  declarations: [
+    AppComponent
+  ],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,
@@ -53,9 +54,10 @@ const APP_PROVIDERS = [
     StoreDevtoolsModule.instrument({
       maxAge: 25,
       logOnly: environment.production,
+      connectInZone: true
     }),
   ],
   providers: [APP_PROVIDERS],
-  bootstrap: [AppComponent],
+  bootstrap: [AppComponent]
 })
 export class AppModule { }

@@ -6,10 +6,10 @@ import {
   CanActivateFn,
 } from '@angular/router';
 
-import { select, Store } from '@ngrx/store';
-import { map, Observable, tap } from 'rxjs';
+import { Store } from '@ngrx/store';
+import { map, Observable, tap, filter } from 'rxjs';
 import { AppState } from 'src/app/store/interfaces/app-state';
-import { isLoggedInSelector } from 'src/app/store/selectors/auth.selectors';
+import { selectIsLoggedIn } from 'src/app/store/selectors/auth.selectors';
 
 /** Authentication Guard, only authenticated users with JWT Token on localstorage */
 @Injectable({
@@ -22,14 +22,14 @@ export class AuthGuard {
     route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
   ): Observable<boolean> {
-    return this.store.pipe(
-      select(isLoggedInSelector),
-      tap((loggedIn) => {
-        if (!loggedIn) {
+    return this.store.select(selectIsLoggedIn).pipe(
+      filter(state => !state.isLoading),
+      tap((state) => {
+        if (!state.isLoggedIn) {
           this.router.navigateByUrl('/login');
         }
       }),
-      map((loggedIn) => loggedIn ?? false)
+      map((state) => state.isLoggedIn ?? false)
     );
   }
 }

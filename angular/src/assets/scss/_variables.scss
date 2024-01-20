@@ -23,8 +23,7 @@ $main-palette: (
   A200: #2e4cff,
   A400: #0024fa,
   A700: #0020e0,
-  contrast: (
-    50: #000000,
+  contrast: (50: #000000,
     100: #000000,
     200: #000000,
     300: #ffffff,
@@ -40,9 +39,11 @@ $main-palette: (
     A700: #ffffff,
   ),
 );
+
 @function main-palette($key: $main-palette) {
   @return map-get($main-palette, $key);
 }
+
 @function main-palette-contrast($key: $main-palette) {
   @return map-get(map-get($main-palette, contrast), $key);
 }
@@ -63,8 +64,7 @@ $accent-palette: (
   A200: #e1ecff,
   A400: #aeccff,
   A700: #95bcff,
-  contrast: (
-    50: #000000,
+  contrast: (50: #000000,
     100: #000000,
     200: #000000,
     300: #000000,
@@ -80,9 +80,11 @@ $accent-palette: (
     A700: #000000,
   ),
 );
+
 @function accent-palette($key: $accent-palette) {
   @return map-get($accent-palette, $key);
 }
+
 @function accent-palette-contrast($key: $accent-palette) {
   @return map-get(map-get($accent-palette, contrast), $key);
 }
@@ -117,37 +119,21 @@ $second-ff: "Roboto Serif", serif;
 $animation: ease-in-out;
 
 //Media
-$max543: only screen and
-  (
-    max-width: 543px,
+$max543: only screen and (max-width: 543px,
   );
-$min544: only screen and
-  (
-    min-width: 544px,
+$min544: only screen and (min-width: 544px,
   );
-$max767: only screen and
-  (
-    max-width: 767px,
+$max767: only screen and (max-width: 767px,
   );
-$min768: only screen and
-  (
-    min-width: 768px,
+$min768: only screen and (min-width: 768px,
   );
-$max991: only screen and
-  (
-    max-width: 991px,
+$max991: only screen and (max-width: 991px,
   );
-$min992: only screen and
-  (
-    min-width: 992px,
+$min992: only screen and (min-width: 992px,
   );
-$max1199: only screen and
-  (
-    max-width: 1199px,
+$max1199: only screen and (max-width: 1199px,
   );
-$min1200: only screen and
-  (
-    min-width: 1200px,
+$min1200: only screen and (min-width: 1200px,
   );
 
 //Headers

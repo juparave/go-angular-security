@@ -1,4 +1,4 @@
-import { Action, createAction, props } from '@ngrx/store';
+import { createAction, props } from '@ngrx/store';
 import { User } from 'src/app/model/user';
 import { BackendErrors } from 'src/app/store/types/backend-errors.interface';
 import { LoginRequest } from 'src/app/store/types/login-request.interface';

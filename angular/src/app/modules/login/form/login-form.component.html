@@ -1,5 +1,6 @@
 <div class="login-wrapper">
   <mat-card appearance="outlined" class="box">
+    <mat-progress-bar *ngIf="isSubmitting$ | async" mode="indeterminate"></mat-progress-bar>
     <mat-card-header>
       <mat-card-title>Log in</mat-card-title>
     </mat-card-header>

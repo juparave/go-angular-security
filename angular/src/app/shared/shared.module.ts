@@ -11,6 +11,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSelectModule } from '@angular/material/select';
 import { MatOptionModule } from '@angular/material/core';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 @NgModule({
   declarations: [],
@@ -26,6 +27,7 @@ import { MatOptionModule } from '@angular/material/core';
     MatSlideToggleModule,
     MatSelectModule,
     MatOptionModule,
+    MatProgressBarModule,
   ],
   exports: [
     MatToolbarModule,
@@ -38,6 +40,7 @@ import { MatOptionModule } from '@angular/material/core';
     MatSlideToggleModule,
     MatSelectModule,
     MatOptionModule,
+    MatProgressBarModule,
   ],
 })
 export class SharedModule { }

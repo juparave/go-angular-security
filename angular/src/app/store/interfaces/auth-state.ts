@@ -1,5 +1,5 @@
-import { User } from 'src/app/model/user';
-import { BackendErrors } from 'src/app/store/types/backend-errors.interface';
+import { User } from '@src/app/model/user';
+import { BackendErrors } from '@src/app/store/types/backend-errors.interface';
 
 export interface AuthState {
   isSubmitting: boolean;

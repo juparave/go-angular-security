@@ -4,7 +4,7 @@ import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
 import { requestResetPasswordAction } from 'src/app/store/actions/auth.actions';
 import { AppState } from 'src/app/store/interfaces/app-state';
-import { isSubmittingSelector, validationErrorsSelector } from 'src/app/store/selectors/auth.selectors';
+import { selectIsSubmitting, selectValidationErrors } from 'src/app/store/selectors/auth.selectors';
 import { BackendErrors } from 'src/app/store/types/backend-errors.interface';
 import { RequestResetPassword } from 'src/app/store/types/request-reset.interface';
 
@@ -29,8 +29,8 @@ export class ResetPasswordComponent implements OnInit {
   }
 
   private initializeValues() {
-    this.isSubmitting$ = this.store.select(isSubmittingSelector);
-    this.backendErrors$ = this.store.select(validationErrorsSelector);
+    this.isSubmitting$ = this.store.select(selectIsSubmitting);
+    this.backendErrors$ = this.store.select(selectValidationErrors);
   }
 
   doRequestResetPassword() {

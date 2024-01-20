@@ -1,0 +1,17 @@
+mat-sidenav-container {
+    height: calc(100vh - 64px);
+}
+
+mat-toolbar {
+    position: relative;
+    z-index: 7;
+}
+
+// only trigger animations on desktop
+@media (min-width: 599px) {
+
+    mat-sidenav,
+    mat-sidenav-content {
+        transition: all 500ms ease-in-out;
+    }
+}

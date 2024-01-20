@@ -27,7 +27,7 @@ import {
   providedIn: 'root',
 })
 export class AuthService {
-  private serviceUrl = environment.apiPath + '/';
+  private serviceUrl = environment.apiUrl + '/';
   headers = new HttpHeaders().set(
     'Content-Type',
     'application/json; charset=utf-8'
@@ -39,7 +39,7 @@ export class AuthService {
    * @param data: User
    */
   register(data: User): Observable<User> {
-    const url = environment.apiPath + '/register';
+    const url = environment.apiUrl + '/register';
     return this.http.post<User>(url, data);
   }
 
@@ -48,7 +48,7 @@ export class AuthService {
    * @param data: LoginRequest
    */
   login(data: LoginRequest): Observable<User> {
-    const url = environment.apiPath + '/login';
+    const url = environment.apiUrl + '/login';
     return this.http.post<any>(url, data.user).pipe(
       map((res) => res.user),
       shareReplay()
@@ -56,27 +56,28 @@ export class AuthService {
   }
 
   getCurrentUser(): Observable<User> {
-    const url = environment.apiPath + '/user';
-    return this.http.get<User>(url);
+    const url = environment.apiUrl + '/user';
+    // check if user is not null
+    return this.http.get<User>(url).pipe(
+      map(user => {
+        if (user === null) {
+          throw new HttpErrorResponse({ status: 401, statusText: 'unauthenticated' });
+        }
+        return user;
+      })
+    );
   }
 
   /**
    * RefreshTokens from server, user must be logged in
    */
   public refreshTokens(refreshToken: string) {
-    const url = environment.apiPath + '/refresh_token';
+    const url = environment.apiUrl + '/refresh_token';
     let headers = new HttpHeaders();
     headers = headers.set('Content-Type', 'application/json; charset=utf-8');
     console.log('auth service get tokens...');
 
-    return this.http
-      .post<any>(
-        url,
-        {
-          refreshToken: refreshToken,
-        },
-        { headers: headers }
-      )
+    return this.http.post<any>(url, { refreshToken: refreshToken, }, { headers: headers })
       .pipe(map((res) => res.user));
   }
 
@@ -100,6 +101,11 @@ export class AuthService {
 
   public resetPassword(data: ResetPassword) {
     return this.http.post<any>(`${this.serviceUrl}reset_password`, data);
+  }
+
+  public isTokenExpired(token: string): boolean {
+    const expiry = (JSON.parse(atob(token.split('.')[1]))).exp;
+    return (Math.floor((new Date).getTime() / 1000)) >= expiry;
   }
 
   private handleErrors(errorResponse: HttpErrorResponse) {
