@@ -25,3 +25,5 @@
     ng generate component modules/app/base
     ng generate component modules/app/custom-sidenav
     ng generate component modules/app/dashboard
+    ng generate pipe shared/pipes/role --skip-tests true
+

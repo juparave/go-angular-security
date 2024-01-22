@@ -2,7 +2,11 @@
   <img [width]="profilePicSize()" src="/assets/images/logo-no-background.png" alt="logo">
   <div class="header-text" [class.hide-header-text]="sidenavCollapsed()">
     <h2>{{ (currentUser$ | async)?.email }}</h2>
+    @if ((currentUser$ | async)?.roles | role:'admin') {
     <h4>Administrador</h4>
+    } @else if ((currentUser$ | async)?.roles | role:'supervisor') {
+    <h4>Supervisor</h4>
+    }
   </div>
 </div>
 <mat-nav-list (click)="onClickMenuItem()">

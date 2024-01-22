@@ -13,6 +13,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { RouterModule, Routes } from '@angular/router';
 import { CustomSidenavComponent } from './custom-sidenav/custom-sidenav.component';
 
+import { RolePipe } from 'src/app/shared/pipes/role.pipe';
 
 export const routes: Routes = [
   {
@@ -52,7 +53,9 @@ export const routes: Routes = [
     MatListModule,
     MatGridListModule,
     MatCardModule,
-    MatMenuModule
+    MatMenuModule,
+
+    RolePipe,
   ]
 })
 export class AppModule { }
