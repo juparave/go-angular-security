@@ -20,4 +20,10 @@
     }
   </a>
   }
+  <a mat-list-item class="menu-item" (click)="doLogout()">
+    <mat-icon matListItemIcon>logout</mat-icon>
+    @if (!sidenavCollapsed()) {
+    <span matListItemTitle>Salir</span>
+    }
+  </a>
 </mat-nav-list>

@@ -63,4 +63,8 @@ export class CustomSidenavComponent implements OnInit {
   initializeValues() {
     this.currentUser$ = this.store.select(selectCurrentUser);
   }
+
+  doLogout() {
+    this.store.dispatch(logoutAction());
+  }
 }
