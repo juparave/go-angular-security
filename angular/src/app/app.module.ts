@@ -20,11 +20,17 @@ import { RefreshTokensEffect } from './store/effects/auth-refresh-tokens.effects
 import { authReducer } from './store/reducers/auth.reducers';
 import { environment } from 'src/environments/environment';
 import { RefreshTokenInterceptor } from './services/auth/refresh-token.interceptor';
+import { LoadingInterceptor } from './services/loading.interceptors';
 
 const APP_PROVIDERS = [
   {
     provide: HTTP_INTERCEPTORS,
     useClass: RefreshTokenInterceptor,
+    multi: true,
+  },
+  {
+    provide: HTTP_INTERCEPTORS,
+    useClass: LoadingInterceptor,
     multi: true,
   },
 ];
