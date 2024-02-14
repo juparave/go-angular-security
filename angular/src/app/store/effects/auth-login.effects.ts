@@ -32,7 +32,7 @@ export class LoginEffect {
               'refreshToken',
               currentUser.refreshToken
             );
-            return loginSuccessAction({ currentUser });
+            return loginSuccessAction({ currentUser, returnUrl: action.returnUrl });
           }),
           catchError((errorResponse: HttpErrorResponse) => {
             // console.log(errorResponse);
@@ -49,8 +49,8 @@ export class LoginEffect {
     () => {
       return this.actions$.pipe(
         ofType(loginSuccessAction),
-        tap(() => {
-          this.router.navigateByUrl('/app');
+        tap((action) => {
+          this.router.navigateByUrl(action.returnUrl);
         })
       );
     },

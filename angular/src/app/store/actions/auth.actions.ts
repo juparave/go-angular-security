@@ -1,7 +1,7 @@
 import { createAction, props } from '@ngrx/store';
 import { User } from 'src/app/model/user';
 import { BackendErrors } from 'src/app/store/types/backend-errors.interface';
-import { LoginRequest } from 'src/app/store/types/login-request.interface';
+import { LoginRequest, ReturnUrl } from 'src/app/store/types/login-request.interface';
 import { RequestResetPassword } from 'src/app/store/types/request-reset.interface';
 
 export enum ActionTypes {
@@ -50,12 +50,12 @@ export const registerFailureAction = createAction(
 
 export const loginAction = createAction(
   ActionTypes.LOGIN,
-  props<{ request: LoginRequest }>()
+  props<{ request: LoginRequest, returnUrl: ReturnUrl }>()
 );
 
 export const loginSuccessAction = createAction(
   ActionTypes.LOGIN_SUCCESS,
-  props<{ currentUser: User }>()
+  props<{ currentUser: User, returnUrl: ReturnUrl }>()
 );
 
 export const loginFailureAction = createAction(

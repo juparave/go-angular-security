@@ -23,10 +23,10 @@ export class AuthGuard {
     state: RouterStateSnapshot
   ): Observable<boolean> {
     return this.store.select(selectIsLoggedIn).pipe(
-      filter(state => !state.isLoading),
-      tap((state) => {
-        if (!state.isLoggedIn) {
-          this.router.navigateByUrl('/login');
+      filter(s => !s.isLoading),
+      tap((s) => {
+        if (!s.isLoggedIn) {
+          this.router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
         }
       }),
       map((state) => state.isLoggedIn ?? false)
