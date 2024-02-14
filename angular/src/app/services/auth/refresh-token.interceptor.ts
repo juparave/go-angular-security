@@ -10,7 +10,7 @@ import {
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { catchError, filter, switchMap, take, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
-import { isLoggedInSelector } from 'src/app/store/selectors/auth.selectors';
+import { selectIsLoggedIn } from 'src/app/store/selectors/auth.selectors';
 import { AuthService } from './auth.service';
 import {
   refreshTokenAction,
@@ -34,7 +34,7 @@ export class RefreshTokenInterceptor implements HttpInterceptor {
     private store: Store<AppState>,
     private persistanceService: PersistanceService,
     private authService: AuthService
-  ) {}
+  ) { }
 
   intercept(
     req: HttpRequest<any>,

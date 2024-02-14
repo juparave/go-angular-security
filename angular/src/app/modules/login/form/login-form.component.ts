@@ -1,12 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
 import { loginAction } from 'src/app/store/actions/auth.actions';
 import { AppState } from 'src/app/store/interfaces/app-state';
 import {
-  isSubmittingSelector,
-  validationErrorsSelector,
+  selectIsSubmiting,
+  selectValidationErrors,
 } from 'src/app/store/selectors/auth.selectors';
 import { BackendErrors } from 'src/app/store/types/backend-errors.interface';
 import { LoginRequest } from 'src/app/store/types/login-request.interface';
@@ -33,8 +33,8 @@ export class LoginFormComponent implements OnInit {
   }
 
   private initializeValues() {
-    this.isSubmitting$ = this.store.select(isSubmittingSelector);
-    this.backendErrors$ = this.store.select(validationErrorsSelector);
+    this.isSubmitting$ = this.store.select(selectIsSubmiting);
+    this.backendErrors$ = this.store.select(selectValidationErrors);
   }
 
   doLogin() {

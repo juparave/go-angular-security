@@ -7,9 +7,9 @@ import {
 } from '@angular/router';
 
 import { select, Store } from '@ngrx/store';
-import { map, Observable, tap } from 'rxjs';
+import { filter, map, Observable, tap } from 'rxjs';
 import { AppState } from 'src/app/store/interfaces/app-state';
-import { isLoggedInSelector } from 'src/app/store/selectors/auth.selectors';
+import { selectIsLoggedIn } from 'src/app/store/selectors/auth.selectors';
 
 /** Authentication Guard, only authenticated users with JWT Token on localstorage */
 @Injectable({
@@ -22,14 +22,14 @@ export class AuthGuard {
     route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
   ): Observable<boolean> {
-    return this.store.pipe(
-      select(isLoggedInSelector),
-      tap((loggedIn) => {
-        if (!loggedIn) {
+    return this.store.select(selectIsLoggedIn).pipe(
+      filter(s => !s.isLoading),
+      tap((s) => {
+        if (!s.isLoggedIn) {
           this.router.navigateByUrl('/login');
         }
       }),
-      map((loggedIn) => loggedIn ?? false)
+      map((s) => s.isLoggedIn ?? false)
     );
   }
 }

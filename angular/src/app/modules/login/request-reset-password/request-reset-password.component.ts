@@ -7,8 +7,8 @@ import { AppState } from 'src/app/store/interfaces/app-state';
 import { BackendErrors } from 'src/app/store/types/backend-errors.interface';
 import { RequestResetPassword } from 'src/app/store/types/request-reset.interface';
 import {
-  isSubmittingSelector,
-  validationErrorsSelector,
+  selectIsSubmiting,
+  selectValidationErrors,
 } from 'src/app/store/selectors/auth.selectors';
 
 @Component({
@@ -32,8 +32,8 @@ export class RequestResetPasswordComponent implements OnInit {
   }
 
   private initializeValues() {
-    this.isSubmitting$ = this.store.select(isSubmittingSelector);
-    this.backendErrors$ = this.store.select(validationErrorsSelector);
+    this.isSubmitting$ = this.store.select(selectIsSubmiting);
+    this.backendErrors$ = this.store.select(selectValidationErrors);
   }
 
   doRequestResetPassword() {

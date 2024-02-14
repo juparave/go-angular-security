@@ -7,9 +7,9 @@ import {
 } from '@angular/router';
 
 import { select, Store } from '@ngrx/store';
-import { Observable, tap } from 'rxjs';
+import { filter, map, Observable, tap } from 'rxjs';
 import { AppState } from 'src/app/store/interfaces/app-state';
-import { isAnonymousSelector } from 'src/app/store/selectors/auth.selectors';
+import { selectIsAnonymous } from 'src/app/store/selectors/auth.selectors';
 
 /** UnAuthentication Guard, only unauthenticated users with no JWT Token on localstorage */
 @Injectable({
@@ -22,13 +22,14 @@ export class UnAuthGuard {
     route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
   ): Observable<boolean> {
-    return this.store.pipe(
-      select(isAnonymousSelector),
-      tap((isAnon) => {
-        if (!isAnon) {
+    return this.store.select(selectIsAnonymous).pipe(
+      filter(s => !s.isLoading),
+      tap((s) => {
+        if (!s.isAnon) {
           this.router.navigateByUrl('/app');
         }
-      })
+      }),
+      map((s) => s.isAnon ?? false)
     );
   }
 }
