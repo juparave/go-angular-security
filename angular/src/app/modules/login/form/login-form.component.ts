@@ -1,5 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
 import { loginAction } from 'src/app/store/actions/auth.actions';
@@ -20,6 +21,7 @@ export class LoginFormComponent implements OnInit {
   loginForm: UntypedFormGroup;
   isSubmitting$!: Observable<boolean>;
   backendErrors$!: Observable<BackendErrors | null>;
+  route = inject(ActivatedRoute);
 
   constructor(private store: Store<AppState>, private fb: UntypedFormBuilder) {
     this.loginForm = this.fb.group({
@@ -42,7 +44,9 @@ export class LoginFormComponent implements OnInit {
       const request: LoginRequest = {
         user: this.loginForm.value,
       };
-      this.store.dispatch(loginAction({ request }));
+      // get return url from query parameters or default to home page
+      const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/app';
+      this.store.dispatch(loginAction({ request, returnUrl }));
     }
   }
 }

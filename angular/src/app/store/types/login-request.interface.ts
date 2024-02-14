@@ -4,3 +4,5 @@ export interface LoginRequest {
     password: string;
   };
 }
+
+export type ReturnUrl = string;

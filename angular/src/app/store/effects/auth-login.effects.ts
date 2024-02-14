@@ -19,7 +19,7 @@ export class LoginEffect {
     private authService: AuthService,
     private persistanceService: PersistanceService,
     private router: Router
-  ) {}
+  ) { }
 
   login$ = createEffect(() =>
     this.actions$.pipe(
@@ -32,7 +32,7 @@ export class LoginEffect {
               'refreshToken',
               currentUser.refreshToken
             );
-            return loginSuccessAction({ currentUser });
+            return loginSuccessAction({ currentUser, returnUrl: action.returnUrl });
           }),
           catchError((errorResponse: HttpErrorResponse) => {
             // console.log(errorResponse);
@@ -49,8 +49,8 @@ export class LoginEffect {
     () =>
       this.actions$.pipe(
         ofType(loginSuccessAction),
-        tap(() => {
-          this.router.navigateByUrl('/app');
+        tap((action) => {
+          this.router.navigateByUrl(action.returnUrl);
         })
       ),
     // doesn't return an Observable, so we set dispatch to false

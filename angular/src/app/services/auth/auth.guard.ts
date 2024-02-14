@@ -26,7 +26,7 @@ export class AuthGuard {
       filter(s => !s.isLoading),
       tap((s) => {
         if (!s.isLoggedIn) {
-          this.router.navigateByUrl('/login');
+          this.router.navigate(['/login'], { queryParams: { returnUrl: state.url } })
         }
       }),
       map((s) => s.isLoggedIn ?? false)
