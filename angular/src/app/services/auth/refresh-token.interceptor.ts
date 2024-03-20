@@ -98,6 +98,12 @@ export class RefreshTokenInterceptor implements HttpInterceptor {
             return throwError(() => err);
           })
         );
+      } else {
+        this.store.dispatch(
+          refreshTokenFailureAction({
+            errors: { ['error']: ['Refresh token not found'] },
+          })
+        );
       }
     }
 
