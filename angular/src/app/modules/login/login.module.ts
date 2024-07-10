@@ -33,7 +33,7 @@ export const routes: Routes = [
         component: SignUpComponent,
         title: 'Sign Up',
         // temporary disabled
-        canActivate: [() => false]
+        // canActivate: [() => false]
       },
     ],
   },
