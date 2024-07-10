@@ -7,7 +7,7 @@ export const environment = {
   protocol: 'http',
   domain: 'localhost',
   port: '5000',
-  apiUrl: '/api',
+  apiUrl: '/api/v1',
 };
 
 /*
