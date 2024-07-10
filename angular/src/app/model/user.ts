@@ -6,6 +6,6 @@ export interface User {
   roles: string;
 
   // transient members
-  token: string;
+  accessToken: string;
   refreshToken: string;
 }

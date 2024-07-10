@@ -82,9 +82,9 @@ export class RefreshTokenInterceptor implements HttpInterceptor {
               refreshTokenSuccessAction({ currentUser: user })
             );
 
-            this.refreshTokenSubject.next(user.token);
+            this.refreshTokenSubject.next(user.accessToken);
 
-            return next.handle(this.addTokenHeader(request, user.token));
+            return next.handle(this.addTokenHeader(request, user.accessToken));
           }),
           catchError((err) => {
             // console.log('Refresh token failed');

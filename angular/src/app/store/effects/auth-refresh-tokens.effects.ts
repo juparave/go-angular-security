@@ -28,7 +28,7 @@ export class RefreshTokensEffect {
         tap((action) => {
           this.persistanceService.set(
             'token',
-            action.currentUser.token
+            action.currentUser.accessToken
           );
           this.persistanceService.set(
             'refreshToken',
