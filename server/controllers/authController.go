@@ -53,6 +53,9 @@ func Register(c *fiber.Ctx) error {
 			})
 	}
 
+	// set cookie with jwt
+	setCookies(c, user)
+
 	return c.JSON(user)
 }
 
@@ -89,6 +92,9 @@ func Login(c *fiber.Ctx) error {
 	if err != nil {
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
+
+	// set jwt and refreshjwt cookies
+	setCookies(c, user)
 
 	return c.JSON(fiber.Map{
 		"message": "success",
@@ -132,25 +138,8 @@ func RefreshToken(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
 
-	cookie := fiber.Cookie{
-		Name:    "jwt",
-		Value:   user.AccessToken,
-		Expires: time.Now().Add(time.Hour * 24 * 7),
-		// only accesible by backend
-		HTTPOnly: true,
-	}
-
-	c.Cookie(&cookie)
-
-	refreshCookie := fiber.Cookie{
-		Name:    "refreshjwt",
-		Value:   user.RefreshToken,
-		Expires: time.Now().Add(time.Hour * 24 * 7),
-		// only accesible by backend
-		HTTPOnly: true,
-	}
-
-	c.Cookie(&refreshCookie)
+	// set new jwt and refreshjwt cookies
+	setCookies(c, user)
 
 	return c.JSON(fiber.Map{
 		"message": "success",
@@ -284,4 +273,29 @@ func RequestResetPassword(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"message": "success",
 	})
+}
+
+// setCookies sets jwt and refreshjwt cookies
+// must be called after setTokens
+func setCookies(c *fiber.Ctx, user models.User) {
+	// set jwt cookie
+	cookie := fiber.Cookie{
+		Name:    "jwt",
+		Value:   user.AccessToken,
+		Expires: time.Now().Add(util.AccessTokenDuration),
+		// only accesible by backend
+		HTTPOnly: true,
+	}
+
+	c.Cookie(&cookie)
+
+	refreshCookie := fiber.Cookie{
+		Name:    "refreshjwt",
+		Value:   user.RefreshToken,
+		Expires: time.Now().Add(util.RefreshTokenDuration),
+		// only accesible by backend
+		HTTPOnly: true,
+	}
+
+	c.Cookie(&refreshCookie)
 }
