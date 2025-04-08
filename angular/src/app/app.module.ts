@@ -9,11 +9,7 @@ import { EffectsModule } from '@ngrx/effects';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 import { LoginEffect } from './store/effects/auth-login.effects';
 import { RegisterEffect } from './store/effects/auth-register.effects';
-import {
-  HttpClientJsonpModule,
-  HttpClientModule,
-  HTTP_INTERCEPTORS,
-} from '@angular/common/http';
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi, withJsonpSupport } from '@angular/common/http';
 import { LogoutEffect } from './store/effects/auth-logout.effects';
 import { GetCurrentUserEffect } from './store/effects/auth-get-current-user.effects';
 import { RefreshTokensEffect } from './store/effects/auth-refresh-tokens.effects';
@@ -39,14 +35,13 @@ const APP_PROVIDERS = [
   declarations: [
     AppComponent
   ],
+  bootstrap: [
+    AppComponent
+  ],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,
-
-    HttpClientModule,
-    HttpClientJsonpModule,
     AppRoutingModule,
-
     StoreModule.forRoot({
       auth: authReducer,
     }),
@@ -61,9 +56,10 @@ const APP_PROVIDERS = [
       maxAge: 25,
       logOnly: environment.production,
       connectInZone: true
-    }),
+    })],
+  providers: [
+    APP_PROVIDERS,
+    provideHttpClient(withInterceptorsFromDi(), withJsonpSupport())
   ],
-  providers: [APP_PROVIDERS],
-  bootstrap: [AppComponent]
 })
 export class AppModule { }
