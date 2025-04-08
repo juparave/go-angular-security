@@ -18,3 +18,4 @@ tmp
 go-app/tmp
 
 go-app/uploads/*
+.aider*
