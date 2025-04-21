@@ -2,7 +2,7 @@ package util
 
 import (
 	"fmt"
-	"go-app/models"
+	"server/internal/models"
 )
 
 // SendResetPasswordEmail sends a mail to the user with a validation request link

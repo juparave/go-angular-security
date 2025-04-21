@@ -1,7 +1,7 @@
 package database
 
 import (
-	"go-app/models"
+	"server/internal/models"
 
 	// "gorm.io/driver/mysql"
 	"gorm.io/driver/sqlite"

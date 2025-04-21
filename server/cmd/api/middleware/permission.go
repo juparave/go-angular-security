@@ -2,9 +2,9 @@ package middleware
 
 import (
 	"errors"
-	"go-app/database"
-	"go-app/models"
-	"go-app/util"
+	"server/internal/database"
+	"server/internal/models"
+	"server/internal/util"
 
 	"github.com/gofiber/fiber/v2"
 )

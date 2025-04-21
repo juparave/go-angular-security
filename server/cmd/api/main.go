@@ -1,8 +1,8 @@
 package main
 
 import (
-	"go-app/database"
-	"go-app/routes"
+	"server/cmd/api/routes"
+	"server/internal/database"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -16,6 +16,7 @@ func main() {
 
 	// let frontend get and store the auth cookie from diferent ports
 	app.Use(cors.New(cors.Config{
+		AllowOrigins:     "http://localhost:4200", // let angular frontend
 		AllowCredentials: true,
 	}))
 

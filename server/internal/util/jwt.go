@@ -2,8 +2,8 @@ package util
 
 import (
 	"fmt"
-	"go-app/models"
 	"log"
+	"server/internal/models"
 	"strings"
 	"time"
 

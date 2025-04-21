@@ -1,10 +1,10 @@
-package controllers
+package handlers
 
 import (
 	"fmt"
-	"go-app/database"
-	"go-app/models"
-	"go-app/util"
+	"server/internal/database"
+	"server/internal/models"
+	"server/internal/util"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
