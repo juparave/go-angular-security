@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"errors"
+	"net/http"
 	"server/internal/database"
 	"server/internal/models"
 	"server/internal/util"
@@ -36,7 +37,7 @@ func IsAuthorized(c *fiber.Ctx, reqPerm string) error {
 	userID, err := util.ParseJwt(cookie)
 	if err != nil {
 		// If JWT parsing fails, consider the user unauthorized
-		c.Status(fiber.StatusUnauthorized)
+		c.Status(http.StatusUnauthorized)
 		return errors.New("unauthorized: invalid token")
 	}
 
@@ -64,7 +65,7 @@ func IsAuthorized(c *fiber.Ctx, reqPerm string) error {
 	requiredViewPerm := "view_" + reqPerm
 	requiredEditPerm := "edit_" + reqPerm
 
-	if c.Method() == fiber.MethodGet {
+	if c.Method() == http.MethodGet {
 		// For GET requests, view or edit permissions are sufficient
 		for _, permission := range permissions {
 			if permission.Name == requiredViewPerm || permission.Name == requiredEditPerm {
@@ -81,6 +82,6 @@ func IsAuthorized(c *fiber.Ctx, reqPerm string) error {
 	}
 
 	// If no matching permission was found, deny access
-	c.Status(fiber.StatusForbidden)
+	c.Status(http.StatusForbidden)
 	return errors.New("forbidden: insufficient permissions")
 }
