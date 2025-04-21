@@ -11,15 +11,11 @@ import (
 
 const (
 	keyPassword        = "password"
-	keyConfirmPassword = "confirmPassword"
-	keyFirstName       = "firstName"
-	keyLastName        = "lastName"
-	keyEmail           = "email"
-	keyRefreshToken    = "refreshToken"
-	keyFirstNameUpdate = "firstName" // Note: different key used in UpdateInfo
-	keyLastNameUpdate  = "lastName"  // Note: different key used in UpdateInfo
-	keyEmailUpdate     = "email"      // Note: same key used in UpdateInfo
-	keyPasswordConfirm = "confirmPassword" // Note: different key used in UpdatePassword
+	keyConfirmPassword = "confirmPassword" // Used in Register and UpdatePassword
+	keyFirstName       = "firstName"       // Used in Register and UpdateInfo
+	keyLastName        = "lastName"        // Used in Register and UpdateInfo
+	keyEmail           = "email"           // Used in Register, Login, UpdateInfo, RequestResetPassword
+	keyRefreshToken    = "refreshToken"    // Used in RefreshToken
 )
 
 // Register handles new user registration.
@@ -239,9 +235,9 @@ func UpdateInfo(c *fiber.Ctx) error {
 
 	user := models.User{
 		ID:        userID,
-		FirstName: data[keyFirstNameUpdate],
-		LastName:  data[keyLastNameUpdate],
-		Email:     data[keyEmailUpdate],
+		FirstName: data[keyFirstName],
+		LastName:  data[keyLastName],
+		Email:     data[keyEmail],
 	}
 
 	database.DB.Model(&user).Where("id = ?", userID).Updates(user)
@@ -261,7 +257,7 @@ func UpdatePassword(c *fiber.Ctx) error {
 		return err
 	}
 
-	if data[keyPassword] != data[keyPasswordConfirm] {
+	if data[keyPassword] != data[keyConfirmPassword] {
 		c.Status(400)
 		return c.JSON(fiber.Map{
 			"message": "passwords do not match",
