@@ -16,10 +16,10 @@ const (
 	keyLastName        = "lastName"
 	keyEmail           = "email"
 	keyRefreshToken    = "refreshToken"
-	keyFirstNameUpdate = "first_name" // Note: different key used in UpdateInfo
-	keyLastNameUpdate  = "last_name"  // Note: different key used in UpdateInfo
+	keyFirstNameUpdate = "firstName" // Note: different key used in UpdateInfo
+	keyLastNameUpdate  = "lastName"  // Note: different key used in UpdateInfo
 	keyEmailUpdate     = "email"      // Note: same key used in UpdateInfo
-	keyPasswordConfirm = "password_confirm" // Note: different key used in UpdatePassword
+	keyPasswordConfirm = "confirmPassword" // Note: different key used in UpdatePassword
 )
 
 // Register handles new user registration.
