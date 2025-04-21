@@ -1,6 +1,6 @@
-module go-app
+module server
 
-go 1.20
+go 1.24.2
 
 require (
 	github.com/gofiber/fiber/v2 v2.51.0
