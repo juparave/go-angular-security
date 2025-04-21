@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log/slog"
+	"os"
 	"server/cmd/api/routes"
 	"server/internal/database"
 
@@ -9,6 +11,11 @@ import (
 )
 
 func main() {
+	// Setup structured logger
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
+	slog.Info("Starting application setup...") // Optional: Log startup
 
 	database.Connect()
 
@@ -29,5 +36,6 @@ func main() {
 
 	routes.Setup(v1)
 
+	slog.Info("Starting server on port 5000")
 	app.Listen(":5000")
 }
