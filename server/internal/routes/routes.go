@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"server/cmd/api/handlers"
-	"server/cmd/api/middleware"
+	"server/internal/handlers"
+	"server/internal/middleware"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -17,7 +17,7 @@ func Setup(app fiber.Router) {
 	// Protected endpoints: require authentication.
 	app.Use(middleware.IsAuthenticated) // Applies authentication middleware.
 
-	app.Put("/users/info", handlers.UpdateInfo)     // Updates user information.
+	app.Put("/users/info", handlers.UpdateInfo)         // Updates user information.
 	app.Put("/users/password", handlers.UpdatePassword) // Updates user password.
 
 	app.Post("/logout", handlers.Logout) // Logs out the current user.

@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"net/http"
-	"server/internal/util"
+	util "server/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
 )

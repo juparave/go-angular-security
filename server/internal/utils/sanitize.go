@@ -1,7 +1,7 @@
 // Package util. SanitizeFilename implements utility routines for
 // manipulating slash-separated filename paths.
 // ref: https://www.socketloop.com/tutorials/golang-perform-sanity-checks-on-filename-example
-package util
+package utils
 
 import (
 	"fmt"

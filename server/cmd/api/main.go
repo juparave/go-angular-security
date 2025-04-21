@@ -3,8 +3,8 @@ package main
 import (
 	"log/slog"
 	"os"
-	"server/cmd/api/routes"
 	"server/internal/database"
+	"server/internal/routes"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"

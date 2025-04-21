@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"server/internal/database"
 	"server/internal/models"
-	"server/internal/util"
+	"server/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -34,7 +34,7 @@ func IsAuthorized(c *fiber.Ctx, reqPerm string) error {
 	cookie := c.Cookies("jwt")
 
 	// Parse JWT to get user ID
-	userID, err := util.ParseJwt(cookie)
+	userID, err := utils.ParseJwt(cookie)
 	if err != nil {
 		// If JWT parsing fails, consider the user unauthorized
 		c.Status(http.StatusUnauthorized)

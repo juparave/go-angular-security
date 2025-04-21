@@ -3,7 +3,7 @@ package handlers
 import (
 	"server/internal/database"
 	"server/internal/models"
-	"server/internal/util"
+	"server/internal/utils"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -58,7 +58,7 @@ func Register(c *fiber.Ctx) error {
 			})
 	}
 
-	err := util.GenerateUserTokens(&user)
+	err := utils.GenerateUserTokens(&user)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).
 			JSON(fiber.Map{
@@ -106,7 +106,7 @@ func Login(c *fiber.Ctx) error {
 			})
 	}
 
-	err := util.GenerateUserTokens(&user)
+	err := utils.GenerateUserTokens(&user)
 	if err != nil {
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
@@ -135,7 +135,7 @@ func RefreshToken(c *fiber.Ctx) error {
 	}
 	refreshToken := data[keyRefreshToken]
 
-	issuer, err := util.ParseJwt(refreshToken)
+	issuer, err := utils.ParseJwt(refreshToken)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).
 			JSON(fiber.Map{
@@ -156,7 +156,7 @@ func RefreshToken(c *fiber.Ctx) error {
 			})
 	}
 
-	err = util.GenerateUserTokens(&user)
+	err = utils.GenerateUserTokens(&user)
 	if err != nil {
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
@@ -177,8 +177,8 @@ func RefreshToken(c *fiber.Ctx) error {
 // Returns 404 if the user associated with the valid token is not found.
 func User(c *fiber.Ctx) error {
 	// get jwt from header or cookie
-	jwt := util.GetJWT(c)
-	id, _ := util.ParseJwt(jwt)
+	jwt := utils.GetJWT(c)
+	id, _ := utils.ParseJwt(jwt)
 
 	var user models.User
 
@@ -230,8 +230,8 @@ func UpdateInfo(c *fiber.Ctx) error {
 	}
 
 	// get jwt from header or cookie
-	jwt := util.GetJWT(c)
-	userID, _ := util.ParseJwt(jwt)
+	jwt := utils.GetJWT(c)
+	userID, _ := utils.ParseJwt(jwt)
 
 	user := models.User{
 		ID:        userID,
@@ -265,8 +265,8 @@ func UpdatePassword(c *fiber.Ctx) error {
 	}
 
 	// get jwt from header or cookie
-	jwt := util.GetJWT(c)
-	userID, _ := util.ParseJwt(jwt)
+	jwt := utils.GetJWT(c)
+	userID, _ := utils.ParseJwt(jwt)
 
 	user := models.User{
 		ID: userID,
@@ -305,13 +305,13 @@ func RequestResetPassword(c *fiber.Ctx) error {
 		})
 	}
 
-	encToken, err := util.GenerateResetPasswordToken(&user)
+	encToken, err := utils.GenerateResetPasswordToken(&user)
 	if err != nil {
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
 
 	// send email with token
-	err = util.SendResetPasswordEmail(&user, encToken)
+	err = utils.SendResetPasswordEmail(&user, encToken)
 	if err != nil {
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
@@ -329,7 +329,7 @@ func setCookies(c *fiber.Ctx, user models.User) {
 	cookie := fiber.Cookie{
 		Name:    "jwt",
 		Value:   user.AccessToken,
-		Expires: time.Now().Add(util.AccessTokenDuration),
+		Expires: time.Now().Add(utils.AccessTokenDuration),
 		// only accesible by backend
 		HTTPOnly: true,
 	}
@@ -339,7 +339,7 @@ func setCookies(c *fiber.Ctx, user models.User) {
 	refreshCookie := fiber.Cookie{
 		Name:    "refreshjwt",
 		Value:   user.RefreshToken,
-		Expires: time.Now().Add(util.RefreshTokenDuration),
+		Expires: time.Now().Add(utils.RefreshTokenDuration),
 		// only accesible by backend
 		HTTPOnly: true,
 	}
