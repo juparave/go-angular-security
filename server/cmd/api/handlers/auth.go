@@ -1,13 +1,25 @@
 package handlers
 
 import (
-	"fmt"
 	"server/internal/database"
 	"server/internal/models"
 	"server/internal/util"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+)
+
+const (
+	keyPassword        = "password"
+	keyConfirmPassword = "confirmPassword"
+	keyFirstName       = "firstName"
+	keyLastName        = "lastName"
+	keyEmail           = "email"
+	keyRefreshToken    = "refreshToken"
+	keyFirstNameUpdate = "first_name" // Note: different key used in UpdateInfo
+	keyLastNameUpdate  = "last_name"  // Note: different key used in UpdateInfo
+	keyEmailUpdate     = "email"      // Note: same key used in UpdateInfo
+	keyPasswordConfirm = "password_confirm" // Note: different key used in UpdatePassword
 )
 
 // Register handles new user registration.
@@ -25,7 +37,7 @@ func Register(c *fiber.Ctx) error {
 			})
 	}
 
-	if data["password"] != data["confirmPassword"] {
+	if data[keyPassword] != data[keyConfirmPassword] {
 		c.Status(400)
 		return c.Status(fiber.StatusBadRequest).
 			JSON(fiber.Map{
@@ -34,12 +46,12 @@ func Register(c *fiber.Ctx) error {
 	}
 
 	user := models.User{
-		FirstName: data["firstName"],
-		LastName:  data["lastName"],
-		Email:     data["email"],
+		FirstName: data[keyFirstName],
+		LastName:  data[keyLastName],
+		Email:     data[keyEmail],
 	}
 
-	user.SetPassword(data["password"])
+	user.SetPassword(data[keyPassword])
 
 	res := database.DB.Create(&user)
 	// verify if user was created
@@ -61,7 +73,7 @@ func Register(c *fiber.Ctx) error {
 	// set cookie with jwt
 	setCookies(c, user)
 
-	return c.JSON(user)
+	return c.Status(fiber.StatusOK).JSON(user)
 }
 
 // Login handles user authentication.
@@ -78,7 +90,7 @@ func Login(c *fiber.Ctx) error {
 
 	var user models.User
 
-	database.DB.Where("email = ?", data["email"]).First(&user)
+	database.DB.Where("email = ?", data[keyEmail]).First(&user)
 
 	if user.ID == "" {
 		return c.Status(fiber.StatusNotFound).
@@ -89,7 +101,7 @@ func Login(c *fiber.Ctx) error {
 			})
 	}
 
-	if err := user.ComparePassword(data["password"]); err != nil {
+	if err := user.ComparePassword(data[keyPassword]); err != nil {
 		return c.Status(fiber.StatusBadRequest).
 			JSON(fiber.Map{
 				"errors": fiber.Map{
@@ -106,7 +118,7 @@ func Login(c *fiber.Ctx) error {
 	// set jwt and refreshjwt cookies
 	setCookies(c, user)
 
-	return c.JSON(fiber.Map{
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "success",
 		"user":    user,
 	})
@@ -122,11 +134,10 @@ func RefreshToken(c *fiber.Ctx) error {
 	var data map[string]string
 
 	if err := c.BodyParser(&data); err != nil {
-		fmt.Println("refreshToken error:", err)
+		// Consider using a proper logger instead of fmt.Println or just returning
 		return err
 	}
-
-	refreshToken := data["refreshToken"]
+	refreshToken := data[keyRefreshToken]
 
 	issuer, err := util.ParseJwt(refreshToken)
 	if err != nil {
@@ -157,7 +168,7 @@ func RefreshToken(c *fiber.Ctx) error {
 	// set new jwt and refreshjwt cookies
 	setCookies(c, user)
 
-	return c.JSON(fiber.Map{
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "success",
 		// return user object with token and refreshToken
 		"user": user,
@@ -187,7 +198,7 @@ func User(c *fiber.Ctx) error {
 			})
 	}
 
-	return c.JSON(user)
+	return c.Status(fiber.StatusOK).JSON(user)
 }
 
 // Logout handles user logout by invalidating the JWT cookie.
@@ -205,7 +216,7 @@ func Logout(c *fiber.Ctx) error {
 
 	c.Cookie(&cookie)
 
-	return c.JSON(fiber.Map{
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "success",
 	})
 
@@ -228,13 +239,13 @@ func UpdateInfo(c *fiber.Ctx) error {
 
 	user := models.User{
 		ID:        userID,
-		FirstName: data["first_name"],
-		LastName:  data["last_name"],
-		Email:     data["email"],
+		FirstName: data[keyFirstNameUpdate],
+		LastName:  data[keyLastNameUpdate],
+		Email:     data[keyEmailUpdate],
 	}
 
 	database.DB.Model(&user).Where("id = ?", userID).Updates(user)
-	return c.JSON(user)
+	return c.Status(fiber.StatusOK).JSON(user)
 }
 
 // UpdatePassword handles changing the authenticated user's password.
@@ -250,7 +261,7 @@ func UpdatePassword(c *fiber.Ctx) error {
 		return err
 	}
 
-	if data["password"] != data["password_confirm"] {
+	if data[keyPassword] != data[keyPasswordConfirm] {
 		c.Status(400)
 		return c.JSON(fiber.Map{
 			"message": "passwords do not match",
@@ -265,11 +276,11 @@ func UpdatePassword(c *fiber.Ctx) error {
 		ID: userID,
 	}
 
-	user.SetPassword(data["password"])
+	user.SetPassword(data[keyPassword])
 
 	database.DB.Model(&user).Updates(user)
 
-	return c.JSON(user)
+	return c.Status(fiber.StatusOK).JSON(user)
 }
 
 // RequestResetPassword handles the initiation of a password reset process.
@@ -287,7 +298,7 @@ func RequestResetPassword(c *fiber.Ctx) error {
 
 	var user models.User
 
-	database.DB.Where("email = ?", data["email"]).First(&user)
+	database.DB.Where("email = ?", data[keyEmail]).First(&user)
 
 	if user.ID == "" {
 		c.Status(404)
@@ -309,7 +320,7 @@ func RequestResetPassword(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
 
-	return c.JSON(fiber.Map{
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "success",
 	})
 }
