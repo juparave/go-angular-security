@@ -10,6 +10,11 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// Register handles new user registration.
+// It parses user details (firstName, lastName, email, password, confirmPassword) from the request body.
+// It validates that the passwords match, creates a new user record in the database,
+// generates JWT access and refresh tokens, sets them as HTTP-only cookies,
+// and returns the newly created user object (excluding password).
 func Register(c *fiber.Ctx) error {
 	var data map[string]string
 
@@ -59,6 +64,11 @@ func Register(c *fiber.Ctx) error {
 	return c.JSON(user)
 }
 
+// Login handles user authentication.
+// It parses the email and password from the request body.
+// It finds the user by email, verifies the password, generates new JWT access and refresh tokens,
+// sets them as HTTP-only cookies, and returns a success message along with the authenticated user object.
+// Returns 404 if the user is not found or 400 if the password is incorrect.
 func Login(c *fiber.Ctx) error {
 	var data map[string]string
 
@@ -102,6 +112,12 @@ func Login(c *fiber.Ctx) error {
 	})
 }
 
+// RefreshToken handles the renewal of JWT access tokens using a refresh token.
+// It expects the refresh token in the request body.
+// It parses and validates the refresh token, finds the associated user,
+// generates new JWT access and refresh tokens, sets them as HTTP-only cookies,
+// and returns a success message along with the user object containing the new tokens.
+// Returns 400 if the token is invalid/expired or 404 if the user is not found.
 func RefreshToken(c *fiber.Ctx) error {
 	var data map[string]string
 
@@ -148,6 +164,10 @@ func RefreshToken(c *fiber.Ctx) error {
 	})
 }
 
+// User retrieves the details of the currently authenticated user.
+// It extracts the JWT from the request (header or cookie), parses the user ID from it,
+// fetches the user details from the database, and returns the user object.
+// Returns 404 if the user associated with the valid token is not found.
 func User(c *fiber.Ctx) error {
 	// get jwt from header or cookie
 	jwt := util.GetJWT(c)
@@ -170,6 +190,9 @@ func User(c *fiber.Ctx) error {
 	return c.JSON(user)
 }
 
+// Logout handles user logout by invalidating the JWT cookie.
+// It sets the 'jwt' cookie's expiration time to a past date, effectively removing it.
+// Returns a success message.
 func Logout(c *fiber.Ctx) error {
 	// set expiration time to the past to remove cookie
 	cookie := fiber.Cookie{
@@ -188,6 +211,10 @@ func Logout(c *fiber.Ctx) error {
 
 }
 
+// UpdateInfo handles updating the authenticated user's profile information (first name, last name, email).
+// It parses the updated data from the request body.
+// It identifies the user based on the JWT, updates the corresponding user record in the database,
+// and returns the updated user object.
 func UpdateInfo(c *fiber.Ctx) error {
 	var data map[string]string
 
@@ -210,6 +237,12 @@ func UpdateInfo(c *fiber.Ctx) error {
 	return c.JSON(user)
 }
 
+// UpdatePassword handles changing the authenticated user's password.
+// It parses the new password and confirmation from the request body.
+// It validates that the passwords match, identifies the user via JWT,
+// sets the new hashed password for the user, updates the database record,
+// and returns the updated user object (excluding password).
+// Returns 400 if the passwords do not match.
 func UpdatePassword(c *fiber.Ctx) error {
 	var data map[string]string
 
@@ -239,6 +272,12 @@ func UpdatePassword(c *fiber.Ctx) error {
 	return c.JSON(user)
 }
 
+// RequestResetPassword handles the initiation of a password reset process.
+// It parses the user's email from the request body.
+// It finds the user by email, generates an encrypted password reset token,
+// sends an email to the user containing the reset link/token (implementation pending),
+// and returns a success message.
+// Returns 404 if the user email is not found.
 func RequestResetPassword(c *fiber.Ctx) error {
 	var data map[string]string
 
@@ -275,8 +314,9 @@ func RequestResetPassword(c *fiber.Ctx) error {
 	})
 }
 
-// setCookies sets jwt and refreshjwt cookies
-// must be called after setTokens
+// setCookies is a helper function to set the JWT access and refresh tokens
+// as HTTP-only cookies in the Fiber context.
+// It takes the Fiber context and the user object (which should contain the generated tokens) as input.
 func setCookies(c *fiber.Ctx, user models.User) {
 	// set jwt cookie
 	cookie := fiber.Cookie{
