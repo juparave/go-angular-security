@@ -27,6 +27,9 @@ export class SignUpComponent implements OnInit {
   isSubmitting$!: Observable<boolean>;
   backendErrors$!: Observable<BackendErrors | null>;
 
+  hidePassword = true;
+  hideConfirmPassword = true;
+
   constructor(private store: Store<AppState>, private fb: UntypedFormBuilder) {
     this.form = this.fb.group(
       {

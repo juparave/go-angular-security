@@ -13,7 +13,20 @@
           <mat-error> Please provide a valid email address </mat-error>
         </mat-form-field>
         <mat-form-field class="full-width">
-          <input matInput type="password" placeholder="Password" formControlName="password" name="password" required />
+          <input matInput
+                 [type]="hidePassword ? 'password' : 'text'"
+                 placeholder="Password"
+                 formControlName="password"
+                 name="password"
+                 required />
+          <button mat-icon-button
+                  matSuffix
+                  type="button"
+                  (click)="hidePassword = !hidePassword"
+                  [attr.aria-label]="'Hide password'"
+                  [attr.aria-pressed]="hidePassword">
+            <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
           <mat-error> Please provide a valid password </mat-error>
         </mat-form-field>
         <button mat-raised-button color="primary" (click)="doLogin()" [disabled]="isSubmitting$ | async">

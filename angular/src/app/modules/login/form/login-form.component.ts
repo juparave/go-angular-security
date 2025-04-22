@@ -23,6 +23,8 @@ export class LoginFormComponent implements OnInit {
   backendErrors$!: Observable<BackendErrors | null>;
   route = inject(ActivatedRoute);
 
+  hidePassword = true;
+
   constructor(private store: Store<AppState>, private fb: UntypedFormBuilder) {
     this.loginForm = this.fb.group({
       email: ['', Validators.required],

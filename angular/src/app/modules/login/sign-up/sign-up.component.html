@@ -18,11 +18,33 @@
           <mat-error>{{ errorMessages['email'] }} </mat-error>
         </mat-form-field>
         <mat-form-field class="full-width">
-          <input matInput type="password" placeholder="Password" formControlName="password" />
+          <input matInput
+                 [type]="hidePassword ? 'password' : 'text'"
+                 placeholder="Password"
+                 formControlName="password" />
+          <button mat-icon-button
+                  matSuffix
+                  type="button"
+                  (click)="hidePassword = !hidePassword"
+                  [attr.aria-label]="'Hide password'"
+                  [attr.aria-pressed]="hidePassword">
+            <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
           <mat-error>{{ errorMessages['password'] }} </mat-error>
         </mat-form-field>
         <mat-form-field class="full-width">
-          <input matInput type="password" placeholder="Confim Password" formControlName="confirmPassword" />
+          <input matInput
+                 [type]="hideConfirmPassword ? 'password' : 'text'"
+                 placeholder="Confim Password"
+                 formControlName="confirmPassword" />
+          <button mat-icon-button
+                  matSuffix
+                  type="button"
+                  (click)="hideConfirmPassword = !hideConfirmPassword"
+                  [attr.aria-label]="'Hide confirm password'"
+                  [attr.aria-pressed]="hideConfirmPassword">
+            <mat-icon>{{ hideConfirmPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
           <mat-error>{{ errorMessages['confirmPassword'] }} </mat-error>
         </mat-form-field>
         <button mat-raised-button color="primary" class="btn-block">
