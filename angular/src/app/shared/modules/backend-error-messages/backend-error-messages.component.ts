@@ -3,6 +3,7 @@ import { BackendErrors } from 'src/app/store/types/backend-errors.interface';
 
 @Component({
   selector: 'app-backend-error-messages',
+  standalone: false,
   styles: [],
   templateUrl: './backend-error-messages.component.html',
 })
