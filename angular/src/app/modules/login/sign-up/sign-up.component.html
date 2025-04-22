@@ -3,22 +3,12 @@
     <mat-card-header>
       <mat-card-title>Register</mat-card-title>
     </mat-card-header>
-    <form
-      [formGroup]="form"
-      (ngSubmit)="doRegister()"
-      class="example-form"
-    >
-      <app-backend-error-messages
-        *ngIf="backendErrors$ | async"
-        [backendErrors]="backendErrors$ | async"
-      ></app-backend-error-messages>
+    <form [formGroup]="form" (ngSubmit)="doRegister()" class="example-form">
+      <app-backend-error-messages *ngIf="backendErrors$ | async"
+        [backendErrors]="backendErrors$ | async"></app-backend-error-messages>
       <mat-card-content>
         <mat-form-field class="full-width">
-          <input
-            matInput
-            placeholder="First Name"
-            formControlName="firstName"
-          />
+          <input matInput placeholder="First Name" formControlName="firstName" />
         </mat-form-field>
         <mat-form-field class="full-width">
           <input matInput placeholder="Last Name" formControlName="lastName" />
@@ -28,34 +18,22 @@
           <mat-error>{{ errorMessages['email'] }} </mat-error>
         </mat-form-field>
         <mat-form-field class="full-width">
-          <input
-            matInput
-            type="password"
-            placeholder="Password"
-            formControlName="password"
-          />
+          <input matInput type="password" placeholder="Password" formControlName="password" />
           <mat-error>{{ errorMessages['password'] }} </mat-error>
         </mat-form-field>
         <mat-form-field class="full-width">
-          <input
-            matInput
-            type="password"
-            placeholder="Confim Password"
-            formControlName="confirmPassword"
-          />
+          <input matInput type="password" placeholder="Confim Password" formControlName="confirmPassword" />
           <mat-error>{{ errorMessages['confirmPassword'] }} </mat-error>
         </mat-form-field>
+        <button mat-raised-button color="primary" class="btn-block">
+          Register
+        </button>
+        <div class="additional-info">
+          <a href="#" [routerLink]="['../', 'form']">Login</a>
+          <span class="divider"></span>
+          <a href="#" [routerLink]="['/login', 'request-reset-password']">Recuperar Contraseña</a>
+        </div>
       </mat-card-content>
-      <button mat-raised-button color="primary" class="btn-block">
-        Register
-      </button>
-      <div class="additional-info">
-        <a href="#" [routerLink]="['../', 'form']">Login</a>
-        <span class="divider"></span>
-        <a href="#" [routerLink]="['/login', 'request-reset-password']"
-          >Recuperar Contraseña</a
-        >
-      </div>
     </form>
   </mat-card>
 </div>

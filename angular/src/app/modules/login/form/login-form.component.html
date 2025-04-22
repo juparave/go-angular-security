@@ -4,8 +4,8 @@
     <mat-card-header>
       <mat-card-title>Log in</mat-card-title>
     </mat-card-header>
-    <mat-card-content>
-      <form [formGroup]="loginForm" class="example-form">
+    <form [formGroup]="loginForm" class="example-form">
+      <mat-card-content>
         <app-backend-error-messages *ngIf="backendErrors$ | async"
           [backendErrors]="backendErrors$ | async"></app-backend-error-messages>
         <mat-form-field class="full-width">
@@ -24,7 +24,7 @@
           <span class="divider"></span>
           <a href="#" [routerLink]="['/login', 'request-reset-password']">Recuperar Contraseña</a>
         </div>
-      </form>
-    </mat-card-content>
+      </mat-card-content>
+    </form>
   </mat-card>
 </div>
