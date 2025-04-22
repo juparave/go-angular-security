@@ -54,7 +54,6 @@
 
   .login-wrapper mat-card-header {
     text-align: center;
-    width: 100%;
     display: block;
     font-weight: 700;
   }
@@ -65,7 +64,7 @@
   }
 
   .login-wrapper .mat-mdc-card {
-    padding: 30px 60px 40px;
+    padding: 14px 21px 21px;
   }
 
   .login-wrapper .mat-mdc-outlined-button {
@@ -87,6 +86,9 @@
     .additional-info {
       // top & bottom module-rem, left & right 0
       padding: $module-rem 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
 
       .divider {
         border-left: 1px solid rgba(#000, 0.2);
