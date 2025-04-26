@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output, computed, signal } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
-import { User } from 'src/app/model/user';
+import { User } from 'src/app/models/user';
 import { AppState } from 'src/app/store/interfaces/app-state';
 import { selectCurrentUser } from '@store/selectors/auth.selectors';
 import { logoutAction } from '@store/actions/auth.actions';

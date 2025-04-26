@@ -27,6 +27,8 @@ import { LoadingInterceptor } from './services/loading.interceptors'; // Custom 
 // NgRx Reducers and Environment Configuration
 import { authReducer } from './store/reducers/auth.reducers'; // Reducer function responsible for managing the 'auth' slice of the application state.
 import { environment } from 'src/environments/environment'; // Environment-specific configuration (e.g., API URLs, production flags).
+import { GetSubscriptionEffect } from './store/effects/subscription.effects';
+import { subscriptionReducer } from './store/reducers/subscription.reducers';
 
 // Array defining application-wide providers, specifically HTTP interceptors.
 // These interceptors will process every outgoing HTTP request.
@@ -63,6 +65,7 @@ const APP_PROVIDERS = [
     // The `auth` key maps to the state slice managed by `authReducer`.
     StoreModule.forRoot({
       auth: authReducer,
+      subscription: subscriptionReducer,
     }),
     // Registers NgRx effects classes at the root level.
     // These effects listen for actions and perform side effects.
@@ -72,6 +75,7 @@ const APP_PROVIDERS = [
       LogoutEffect,
       GetCurrentUserEffect,
       RefreshTokensEffect,
+      GetSubscriptionEffect,
     ]),
     // Configures the NgRx Store Devtools extension.
     StoreDevtoolsModule.instrument({

@@ -18,7 +18,7 @@ import {
 } from 'src/app/store/actions/auth.actions';
 import { PersistanceService } from 'src/app/services/persistance.service';
 import { AppState } from 'src/app/store/interfaces/app-state';
-import { User } from 'src/app/model/user';
+import { User } from 'src/app/models/user';
 
 const TOKEN_HEADER_KEY = 'Authorization';
 

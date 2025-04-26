@@ -1,58 +1,105 @@
-import { inject } from '@angular/core';
-import {
-  ActivatedRouteSnapshot,
-  RouterStateSnapshot,
-  Router,
-  CanActivateFn,
-} from '@angular/router';
-import { Store, select } from '@ngrx/store';
-import { map, Observable, tap, filter, take } from 'rxjs';
+import { inject, Injectable } from '@angular/core';
+import { CanActivateFn, Router, UrlTree, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { Observable, map, filter } from 'rxjs';
+import { Store } from '@ngrx/store';
 import { AppState } from 'src/app/store/interfaces/app-state';
-import { selectCurrentUser } from 'src/app/store/selectors/auth.selectors';
-import { User } from 'src/app/model/user';
-
-// --- Base Logic ---
+import {
+  selectHasActiveTrial,
+  selectHasActiveBasic,
+  selectHasActivePro,
+  selectHasActivePaid,
+  selectIsSubscriptionActive
+} from 'src/app/store/selectors/subscription.selectors';
 
 /**
- * Base function to create a subscription status guard.
- * Checks if the current user's subscription status is one of the allowed statuses.
- * Redirects to '/app/subscription' if the status is not allowed or user/subscription is missing.
- *
- * @param allowedStatuses Array of allowed subscription statuses.
- * @returns CanActivateFn
+ * Base Subscription Guard class that provides subscription verification functionality
  */
-const createSubscriptionGuard = (allowedStatuses: string[]): CanActivateFn => {
-  return (route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> => {
-    const store = inject(Store<AppState>);
-    const router = inject(Router);
+@Injectable({
+  providedIn: 'root',
+})
+export class SubscriptionGuard {
+  constructor(private store: Store<AppState>, public router: Router) { }
 
-    return store.pipe(
-      select(selectCurrentUser),
-      take(1), // Ensure the observable completes after getting the first value
-      map((user: User | null) => {
-        const currentStatus = user?.subscription?.status;
-        const isAllowed = !!currentStatus && allowedStatuses.includes(currentStatus);
+  /**
+   * Creates a guard function that verifies subscription requirements
+   * @param selector The selector to use for subscription verification
+   * @param redirectTo The route to redirect to if the subscription check fails
+   */
+  createGuard(
+    selector: any,
+    redirectTo: string = '/upgrade'
+  ) {
+    return (
+      route: ActivatedRouteSnapshot,
+      state: RouterStateSnapshot
+    ): Observable<boolean | UrlTree> => {
+      return this.store.select(selector).pipe(
+        filter(state => !state.isLoading),
+        map(result => {
+          // Extract the boolean result from the selector result
+          // Each selector returns an object with a different key that indicates whether the check passed
+          const passed = Object.values(result).find(val => typeof val === 'boolean' && val !== result.isLoading);
 
-        if (!isAllowed) {
-          // Redirect if status is not allowed, or if user/subscription is missing
-          // Consider redirecting to a specific subscription page if available
-          router.navigate(['/app/subscription']); // Or '/login' or another appropriate route
-          return false;
-        }
-        return true;
-      })
-    );
-  };
+          if (passed) {
+            return true;
+          } else {
+            // Keep the returnUrl in the query params
+            return this.router.createUrlTree([redirectTo], {
+              queryParams: { returnUrl: state.url }
+            });
+          }
+        })
+      );
+    };
+  }
+}
+
+/**
+ * Guard to check if user has an active trial subscription
+ */
+export const canActivateTrial: CanActivateFn = (
+  route: ActivatedRouteSnapshot,
+  state: RouterStateSnapshot
+) => {
+  return inject(SubscriptionGuard).createGuard(selectHasActiveTrial, '/upgrade')(route, state);
 };
 
-// --- Specific Guards ---
+/**
+ * Guard to check if user has a basic subscription
+ */
+export const canActivateBasic: CanActivateFn = (
+  route: ActivatedRouteSnapshot,
+  state: RouterStateSnapshot
+) => {
+  return inject(SubscriptionGuard).createGuard(selectHasActiveBasic, '/upgrade')(route, state);
+};
 
 /**
- * Guard: Allows access only if the user's subscription status is 'active' or 'canceled'.
+ * Guard to check if user has a pro subscription
  */
-export const canActivateActiveCanceledSubscription: CanActivateFn = createSubscriptionGuard(['active', 'canceled']);
+export const canActivatePro: CanActivateFn = (
+  route: ActivatedRouteSnapshot,
+  state: RouterStateSnapshot
+) => {
+  return inject(SubscriptionGuard).createGuard(selectHasActivePro, '/upgrade')(route, state);
+};
 
 /**
- * Guard: Allows access only if the user's subscription status is 'active', 'trialing', or 'canceled'.
+ * Guard to check if user has at least a basic subscription (basic or pro)
  */
-export const canActivateActiveTrialingCanceledSubscription: CanActivateFn = createSubscriptionGuard(['active', 'trialing', 'canceled']);
+export const canActivatePaid: CanActivateFn = (
+  route: ActivatedRouteSnapshot,
+  state: RouterStateSnapshot
+) => {
+  return inject(SubscriptionGuard).createGuard(selectHasActivePaid, '/upgrade')(route, state);
+};
+
+/**
+ * Guard to check if user has any active subscription
+ */
+export const canActivateAnySubscription: CanActivateFn = (
+  route: ActivatedRouteSnapshot,
+  state: RouterStateSnapshot
+) => {
+  return inject(SubscriptionGuard).createGuard(selectIsSubscriptionActive, '/renew-subscription')(route, state);
+};

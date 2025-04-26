@@ -1,5 +1,5 @@
 import { createAction, props } from '@ngrx/store';
-import { User } from 'src/app/model/user';
+import { User } from 'src/app/models/user';
 import { BackendErrors } from 'src/app/store/types/backend-errors.interface';
 import { LoginRequest, ReturnUrl } from 'src/app/store/types/login-request.interface';
 import { RequestResetPassword } from 'src/app/store/types/request-reset.interface';

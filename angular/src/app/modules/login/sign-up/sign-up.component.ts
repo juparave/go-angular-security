@@ -7,7 +7,7 @@ import {
 } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
-import { User } from 'src/app/model/user';
+import { User } from 'src/app/models/user';
 import { MustMatch } from 'src/app/shared/validators/must-match.validator';
 import { registerAction } from 'src/app/store/actions/auth.actions';
 import { AppState } from 'src/app/store/interfaces/app-state';

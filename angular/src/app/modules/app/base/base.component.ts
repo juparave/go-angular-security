@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from 'src/app/store/interfaces/app-state';
-import { User } from 'src/app/model/user';
+import { User } from 'src/app/models/user';
 import { selectCurrentUser } from 'src/app/store/selectors/auth.selectors';
 import { logoutAction } from 'src/app/store/actions/auth.actions';
 

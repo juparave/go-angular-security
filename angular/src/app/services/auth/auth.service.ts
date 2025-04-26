@@ -16,7 +16,7 @@ import {
 
 import { environment } from 'src/environments/environment';
 import { LoginRequest } from 'src/app/store/types/login-request.interface';
-import { User } from 'src/app/model/user';
+import { User } from 'src/app/models/user';
 import {
   RequestResetPassword,
   ResetPassword,
