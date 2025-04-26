@@ -30,6 +30,9 @@ func Setup(app fiber.Router) {
 	app.Post("/subscriptions/:id/reactivate", handlers.PostReactivateSubscription)
 	app.Post("/subscriptions/:id/change-plan", handlers.PostChangeSubscription)
 
+	// Stripe WebHook
+	app.Post("/stripe/webhook", handlers.PostStripeWebhook)
+
 	// Serve static files from the uploads directory.
 	app.Static("/uploads", "./uploads")
 }
