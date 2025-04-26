@@ -1,4 +1,4 @@
-import { User } from '@src/app/model/user';
+import { User } from '@src/app/models/user';
 import { BackendErrors } from '@src/app/store/types/backend-errors.interface';
 
 export interface AuthState {

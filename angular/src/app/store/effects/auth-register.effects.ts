@@ -5,7 +5,7 @@ import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { catchError, map, of, switchMap, tap } from 'rxjs';
 import { AuthService } from 'src/app/services/auth/auth.service';
 import { PersistanceService } from 'src/app/services/persistance.service';
-import { User } from 'src/app/model/user';
+import { User } from 'src/app/models/user';
 import {
   registerAction,
   registerSuccessAction,
