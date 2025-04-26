@@ -1,6 +1,6 @@
 # Angular Project Conventions
 
-This document outlines the key conventions and patterns used in our Angular project, with a focus on state management, route guarding, subscription management, and shared components organization.
+This document outlines the key conventions and patterns used in our Angular project, with a focus on state management, route guarding, subscription management, and overall project organization.
 
 ## Table of Contents
 
@@ -10,25 +10,34 @@ This document outlines the key conventions and patterns used in our Angular proj
 4. [Subscription Management](#subscription-management)
 5. [API Calls](#api-calls)
 6. [Shared Module Organization](#shared-module-organization)
-7. [Component Organization](#component-organization)
-8. [Naming Conventions](#naming-conventions)
-9. [Testing](#testing)
-10. [Forms and Validation](#forms-and-validation)
+7. [Feature Module Organization](#feature-module-organization)
+8. [Component Organization](#component-organization)
+9. [Naming Conventions](#naming-conventions)
+10. [Testing](#testing)
+11. [Forms and Validation](#forms-and-validation)
+12. [Styling](#styling)
 
 ## Project Structure
+
+Our project follows a modular architecture with a clear separation of concerns:
 
 ```
 src/
 ├── app/
-│   ├── components/             # Shared components
-│   ├── features/               # Feature modules
-│   │   ├── auth/               # Authentication feature
-│   │   ├── basic/              # Basic subscription features
-│   │   ├── pro/                # Pro subscription features
-│   │   └── trial/              # Trial subscription features
-│   ├── guards/                 # Route guards
 │   ├── models/                 # TypeScript interfaces
+│   ├── modules/                # Feature modules
+│   │   ├── app/                # Main app feature
+│   │   │   ├── base/           # Base layout
+│   │   │   ├── custom-sidenav/ # Navigation
+│   │   │   └── dashboard/      # Dashboard
+│   │   └── login/              # Authentication features
+│   │       ├── form/           # Login form
+│   │       ├── request-reset-password/
+│   │       ├── reset-password/
+│   │       └── sign-up/
 │   ├── services/               # HTTP and utility services
+│   │   ├── auth/               # Authentication services and guards
+│   │   └── ...                 # Other services
 │   ├── shared/                 # Shared modules and components
 │   │   ├── components/         # Standalone shared components
 │   │   ├── modules/            # Shared module bundles
@@ -42,6 +51,13 @@ src/
 │       ├── reducers/           # State reducers
 │       ├── selectors/          # Memoized selectors
 │       └── types/              # Type definitions
+├── assets/                     # Static assets
+│   ├── images/                 # Image files
+│   └── scss/                   # Global SCSS
+│       ├── _mixins.scss        # SCSS mixins
+│       ├── _variables.scss     # SCSS variables
+│       └── styles.scss         # Main styles
+└── environments/               # Environment configuration
 ```
 
 ## NgRx State Management
@@ -208,6 +224,18 @@ export class GetSubscriptionEffect {
 
 ## Route Guards
 
+### Guards Location and Organization
+
+Route guards are located in the `services/auth` directory:
+
+```
+services/
+└── auth/
+    ├── auth.guard.ts
+    ├── unauth.guard.ts
+    └── subscription.guard.ts
+```
+
 ### Class + Function Approach
 
 Use a class-based guard with a functional wrapper:
@@ -282,6 +310,23 @@ const routes: Routes = [
 
 ## API Calls
 
+### Service Organization
+
+Services are organized in the `services` directory:
+
+```
+services/
+├── auth/
+│   ├── auth.service.ts
+│   └── refresh-token.interceptor.ts
+├── file-upload.service.ts
+├── loading.interceptors.ts
+├── loading.service.ts
+├── notification.service.ts
+├── persistance.service.ts
+└── subscription.service.ts
+```
+
 ### Service Pattern
 
 - Create dedicated services for API calls
@@ -300,6 +345,21 @@ export class SubscriptionService {
   }
   
   // Additional methods for CRUD operations
+}
+```
+
+### HTTP Interceptors
+
+Use interceptors for cross-cutting concerns:
+
+```typescript
+@Injectable()
+export class RefreshTokenInterceptor implements HttpInterceptor {
+  constructor(private store: Store<AppState>) {}
+
+  intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
+    // Implementation for handling token refresh
+  }
 }
 ```
 
@@ -360,7 +420,59 @@ Feature-specific shared modules should:
 export class AlertModule {}
 ```
 
+## Feature Module Organization
+
+Our application is organized into feature modules:
+
+```
+modules/
+├── app/                # Main application feature
+│   ├── base/           # Base layout component
+│   ├── custom-sidenav/ # Navigation sidebar
+│   └── dashboard/      # Dashboard component
+└── login/              # Authentication feature
+    ├── form/           # Login form
+    ├── request-reset-password/
+    ├── reset-password/
+    └── sign-up/
+```
+
+### Feature Module Structure
+
+Each feature module includes:
+- Components for the feature UI
+- A module file for dependency management
+- Feature-specific routing if needed
+
+```typescript
+@NgModule({
+  declarations: [
+    LoginComponent,
+    LoginFormComponent,
+    RequestResetPasswordComponent,
+    ResetPasswordComponent,
+    SignUpComponent
+  ],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    RouterModule.forChild(routes),
+    SharedModule,
+    BackendErrorMessagesModule
+  ]
+})
+export class LoginModule {}
+```
+
 ## Component Organization
+
+### Component Structure
+
+Each component consists of:
+- HTML template (*.component.html)
+- SCSS styles (*.component.scss)
+- TypeScript logic (*.component.ts)
+- Test specifications (*.component.spec.ts)
 
 ### Standalone vs Module-based Components
 
@@ -410,7 +522,7 @@ export class BackendErrorMessagesModule {}
 
 ### Variables and Methods
 
-- Observables end with ` (e.g., `user)
+- Observables end with `$` (e.g., `user$`)
 - Boolean variables start with is/has/should (e.g., `isLoading`, `hasAccess`)
 - Actions follow the pattern:
   - `[get/update/delete/etc][Entity]Action`
@@ -476,24 +588,78 @@ export function MustMatch(
 }
 ```
 
-### Custom Pipes
+### Form Structure
 
-Create reusable pipes in the shared/pipes directory:
+Forms should follow these patterns:
+- Use Reactive Forms over Template-driven forms
+- Group related form controls with FormGroup
+- Apply validators at both field and form level
+- Use custom validators for complex validation logic
 
 ```typescript
-@Pipe({
-  name: 'role',
-  standalone: true
-})
-export class RolePipe implements PipeTransform {
-  transform(roles: string | string[] | undefined, roleName: string): boolean {
-    if (!roles) {
-      return false;
-    }
-    if (typeof roles === 'string') {
-      roles = roles.split(',');
-    }
-    return roles.includes(roleName);
+// Example login form
+this.loginForm = this.formBuilder.group({
+  email: ['', [Validators.required, Validators.email]],
+  password: ['', [Validators.required, Validators.minLength(8)]]
+});
+```
+
+### Error Handling
+
+Use the BackendErrorMessages component for displaying server-side errors:
+
+```html
+<app-backend-error-messages 
+  [backendErrors]="validationErrors$ | async">
+</app-backend-error-messages>
+```
+
+## Styling
+
+### SCSS Organization
+
+Styles are organized in a dedicated SCSS directory:
+
+```
+assets/
+└── scss/
+    ├── _mixins.scss    # Reusable SCSS mixins
+    ├── _variables.scss # Global SCSS variables
+    └── styles.scss     # Main styles entry point
+```
+
+### Component Styling
+
+- Each component has its own SCSS file
+- Component styles should be scoped to the component
+- Use BEM naming for CSS classes when appropriate
+- Leverage Angular Material's theming system
+
+```scss
+// Example component SCSS structure
+.container {
+  width: 100%;
+}
+
+.mat-mdc-card {
+  width: 380px;
+  position: absolute;
+  top: 20%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+```
+
+### Theme Variables
+
+Use the variables defined in _variables.scss for consistent styling:
+
+```scss
+// Example of using global variables
+.alert {
+  &.alert-success {
+    background: $success-color;
+    color: $success-contrast;
   }
 }
 ```
