@@ -338,15 +338,58 @@ services/
   providedIn: 'root'
 })
 export class SubscriptionService {
+  private baseUrl = `${environment.apiUrl}/subscriptions`;
+
   constructor(private http: HttpClient) {}
 
   getSubscription(): Observable<Subscription> {
-    return this.http.get<Subscription>(`${environment.apiUrl}/subscriptions/current`);
+    return this.http.get<Subscription>(`${this.baseUrl}/current`);
   }
   
   // Additional methods for CRUD operations
 }
 ```
+
+### Environment Configuration
+
+For consistent API URL handling, follow this standardized approach:
+
+1. Define the base API URL in the environment files:
+   ```typescript
+   // environment.ts
+   export const environment = {
+     production: false,
+     apiUrl: 'http://localhost:3000/api'
+   };
+   ```
+
+2. In service classes, define a base URL property for the resource:
+   ```typescript
+   // Define a base URL property in the service class
+   private baseUrl = `${environment.apiUrl}/resource`;
+   ```
+
+3. Reference this property for all endpoints within the service:
+   ```typescript
+   // Get all resources
+   getAll(): Observable<Resource[]> {
+     return this.http.get<Resource[]>(this.baseUrl);
+   }
+   
+   // Get single resource by ID
+   getById(id: string): Observable<Resource> {
+     return this.http.get<Resource>(`${this.baseUrl}/${id}`);
+   }
+   ```
+
+4. For services that handle multiple resource types, organize URLs by resource:
+   ```typescript
+   private urls = {
+     users: `${environment.apiUrl}/users`,
+     profiles: `${environment.apiUrl}/profiles`,
+     settings: `${environment.apiUrl}/settings`
+   };
+   ```
 
 ### HTTP Interceptors
 
