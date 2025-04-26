@@ -23,6 +23,13 @@ func Setup(app fiber.Router) {
 	app.Post("/logout", handlers.Logout) // Logs out the current user.
 	app.Get("/user", handlers.User)      // Retrieves information about the current user.
 
+	// Subscription endpoints:
+	app.Get("/subscriptions/current", handlers.GetCurrentSubscription)
+	app.Patch("/subscriptions/:id", handlers.PatchSubscription)
+	app.Post("/subscriptions/:id/cancel", handlers.PostCancelSubscription)
+	app.Post("/subscriptions/:id/reactivate", handlers.PostReactivateSubscription)
+	app.Post("/subscriptions/:id/change-plan", handlers.PostChangeSubscription)
+
 	// Serve static files from the uploads directory.
 	app.Static("/uploads", "./uploads")
 }
