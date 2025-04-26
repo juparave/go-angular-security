@@ -1,8 +1,6 @@
 # Angular Project Conventions
 
-This document outlines the key conventions and patterns used in our Angular
-project, with a focus on state management, route guarding, and feature
-organization.
+This document outlines the key conventions and patterns used in our Angular project, with a focus on state management, route guarding, subscription management, and shared components organization.
 
 ## Table of Contents
 
@@ -11,8 +9,11 @@ organization.
 3. [Route Guards](#route-guards)
 4. [Subscription Management](#subscription-management)
 5. [API Calls](#api-calls)
-6. [Naming Conventions](#naming-conventions)
-7. [Module Organization](#module-organization)
+6. [Shared Module Organization](#shared-module-organization)
+7. [Component Organization](#component-organization)
+8. [Naming Conventions](#naming-conventions)
+9. [Testing](#testing)
+10. [Forms and Validation](#forms-and-validation)
 
 ## Project Structure
 
@@ -21,9 +22,19 @@ src/
 ├── app/
 │   ├── components/             # Shared components
 │   ├── features/               # Feature modules
+│   │   ├── auth/               # Authentication feature
+│   │   ├── basic/              # Basic subscription features
+│   │   ├── pro/                # Pro subscription features
+│   │   └── trial/              # Trial subscription features
 │   ├── guards/                 # Route guards
 │   ├── models/                 # TypeScript interfaces
 │   ├── services/               # HTTP and utility services
+│   ├── shared/                 # Shared modules and components
+│   │   ├── components/         # Standalone shared components
+│   │   ├── modules/            # Shared module bundles
+│   │   ├── pipes/              # Custom pipes
+│   │   ├── util/               # Utility functions
+│   │   └── validators/         # Custom form validators
 │   └── store/                  # NgRx state management
 │       ├── actions/            # Action creators
 │       ├── effects/            # Side effects
@@ -46,7 +57,7 @@ src/
 ```typescript
 // Feature state interface (e.g., src/app/store/interfaces/subscription-state.ts)
 export interface SubscriptionState {
-  someData: DataType | null;
+  subscription: Subscription | null;
   isLoading: boolean;
   isUpdating: boolean;
   validationErrors: BackendErrors | null;
@@ -70,18 +81,18 @@ export interface AppState {
 
 ```typescript
 export enum ActionTypes {
-  GET_ENTITY = '[Feature] Get entity',
-  GET_ENTITY_SUCCESS = '[Feature] Get entity success',
-  GET_ENTITY_FAILURE = '[Feature] Get entity failure',
+  GET_SUBSCRIPTION = '[Subscription] Get subscription',
+  GET_SUBSCRIPTION_SUCCESS = '[Subscription] Get subscription success',
+  GET_SUBSCRIPTION_FAILURE = '[Subscription] Get subscription failure',
 }
 
-export const getEntityAction = createAction(ActionTypes.GET_ENTITY);
-export const getEntitySuccessAction = createAction(
-  ActionTypes.GET_ENTITY_SUCCESS,
-  props<{ entity: Entity }>()
+export const getSubscriptionAction = createAction(ActionTypes.GET_SUBSCRIPTION);
+export const getSubscriptionSuccessAction = createAction(
+  ActionTypes.GET_SUBSCRIPTION_SUCCESS,
+  props<{ subscription: Subscription }>()
 );
-export const getEntityFailureAction = createAction(
-  ActionTypes.GET_ENTITY_FAILURE,
+export const getSubscriptionFailureAction = createAction(
+  ActionTypes.GET_SUBSCRIPTION_FAILURE,
   props<{ errors: BackendErrors }>()
 );
 ```
@@ -94,27 +105,27 @@ export const getEntityFailureAction = createAction(
 - Return a new state object, don't mutate the existing state
 
 ```typescript
-export const featureReducer = createReducer(
+export const subscriptionReducer = createReducer(
   initialState,
   on(
-    getEntityAction,
-    (state): FeatureState => ({
+    getSubscriptionAction,
+    (state): SubscriptionState => ({
       ...state,
       isLoading: true,
       validationErrors: null,
     })
   ),
   on(
-    getEntitySuccessAction,
-    (state, action): FeatureState => ({
+    getSubscriptionSuccessAction,
+    (state, action): SubscriptionState => ({
       ...state,
       isLoading: false,
-      entity: action.entity,
+      subscription: action.subscription,
     })
   ),
   on(
-    getEntityFailureAction,
-    (state, action): FeatureState => ({
+    getSubscriptionFailureAction,
+    (state, action): SubscriptionState => ({
       ...state,
       isLoading: false,
       validationErrors: action.errors,
@@ -132,15 +143,31 @@ export const featureReducer = createReducer(
 
 ```typescript
 // Base selector
-export const selectFeatureState = (state: AppState): FeatureState => state.feature;
+export const selectSubscriptionState = (state: AppState): SubscriptionState => state.subscription;
 
 // Derived selectors
-export const selectEntity = createSelector(
-  selectFeatureState,
-  (state: FeatureState): { entity: Entity | null; isLoading: boolean } => ({
-    entity: state.entity,
+export const selectSubscription = createSelector(
+  selectSubscriptionState,
+  (state: SubscriptionState): { subscription: Subscription | null; isLoading: boolean } => ({
+    subscription: state.subscription,
     isLoading: state.isLoading
   })
+);
+
+export const selectHasActivePro = createSelector(
+  selectSubscription,
+  (state): { hasActivePro: boolean; isLoading: boolean } => {
+    const subscription = state.subscription;
+    
+    const hasActivePro = !!subscription && 
+      subscription.plan === 'pro' && 
+      isActiveSubscription(subscription);
+    
+    return {
+      hasActivePro,
+      isLoading: state.isLoading
+    };
+  }
 );
 ```
 
@@ -153,23 +180,23 @@ export const selectEntity = createSelector(
 
 ```typescript
 @Injectable()
-export class GetEntityEffect {
+export class GetSubscriptionEffect {
   constructor(
     private actions$: Actions,
-    private entityService: EntityService
+    private subscriptionService: SubscriptionService
   ) {}
 
-  getEntity$ = createEffect(() => {
+  getSubscription$ = createEffect(() => {
     return this.actions$.pipe(
-      ofType(getEntityAction),
+      ofType(getSubscriptionAction),
       switchMap(() => {
-        return this.entityService.getEntity().pipe(
-          map((entity: Entity) => {
-            return getEntitySuccessAction({ entity });
+        return this.subscriptionService.getSubscription().pipe(
+          map((subscription: Subscription) => {
+            return getSubscriptionSuccessAction({ subscription });
           }),
           catchError((errorResponse: HttpErrorResponse) => {
-            return of(getEntityFailureAction({
-              errors: { entity: [errorResponse.error.message] },
+            return of(getSubscriptionFailureAction({
+              errors: { subscription: [errorResponse.error.message] },
             }));
           })
         );
@@ -189,21 +216,21 @@ Use a class-based guard with a functional wrapper:
 @Injectable({
   providedIn: 'root',
 })
-export class FeatureGuard {
+export class SubscriptionGuard {
   constructor(private store: Store<AppState>, public router: Router) {}
 
-  createGuard(selector: any, redirectTo: string = '/fallback') {
+  createGuard(selector: any, redirectTo: string = '/upgrade') {
     return (route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean | UrlTree> => {
-      // Implementation...
+      // Implementation using the selector to determine access
     };
   }
 }
 
-export const canActivateFeature: CanActivateFn = (
+export const canActivatePro: CanActivateFn = (
   route: ActivatedRouteSnapshot,
   state: RouterStateSnapshot
 ) => {
-  return inject(FeatureGuard).createGuard(selectFeatureAccess)(route, state);
+  return inject(SubscriptionGuard).createGuard(selectHasActivePro, '/upgrade')(route, state);
 };
 ```
 
@@ -226,7 +253,10 @@ export const selectHasActivePro = createSelector(
     
     const hasActivePro = !!subscription && 
       subscription.plan === 'pro' && 
-      isActiveSubscription(subscription);
+      (subscription.status === 'active' || 
+       (subscription.status === 'canceled' && 
+         subscription.currentPeriodEnd && 
+         new Date() < new Date(subscription.currentPeriodEnd)));
     
     return {
       hasActivePro,
@@ -262,13 +292,103 @@ const routes: Routes = [
 @Injectable({
   providedIn: 'root'
 })
-export class EntityService {
+export class SubscriptionService {
   constructor(private http: HttpClient) {}
 
-  getEntity(): Observable<Entity> {
-    return this.http.get<Entity>(`${environment.apiUrl}/entities/current`);
+  getSubscription(): Observable<Subscription> {
+    return this.http.get<Subscription>(`${environment.apiUrl}/subscriptions/current`);
   }
+  
+  // Additional methods for CRUD operations
 }
+```
+
+## Shared Module Organization
+
+### Module Structure
+
+Our shared modules are organized as follows:
+
+```
+shared/
+├── components/         # Standalone shared components
+│   ├── autocomplete/   # Example component
+│   └── page-not-found/ # Example component
+├── modules/            # Shared module bundles
+│   ├── alert/          # Alert module with component
+│   └── backend-error-messages/ # Error handling module
+├── pipes/              # Custom pipes
+├── util/               # Utility functions
+└── validators/         # Custom form validators
+```
+
+### SharedModule
+
+The main `SharedModule` exports commonly used Angular Material modules:
+
+```typescript
+@NgModule({
+  declarations: [],
+  imports: [
+    CommonModule,
+    MatToolbarModule,
+    MatInputModule,
+    // ...other Angular Material modules
+  ],
+  exports: [
+    MatToolbarModule,
+    MatInputModule,
+    // ...same Angular Material modules
+  ],
+})
+export class SharedModule { }
+```
+
+### Feature-specific Shared Modules
+
+Feature-specific shared modules should:
+- Group related components, directives, and pipes
+- Export all declarations that need to be used outside the module
+- Import only what they need
+
+```typescript
+@NgModule({
+  declarations: [AlertComponent],
+  imports: [CommonModule],
+  exports: [AlertComponent],
+})
+export class AlertModule {}
+```
+
+## Component Organization
+
+### Standalone vs Module-based Components
+
+- Use standalone components for simple, self-contained UI elements
+- Use module-based components when they have complex dependencies or need to be grouped
+
+### Standalone Components
+
+```typescript
+@Component({
+  selector: 'app-page-not-found',
+  standalone: true,
+  imports: [MatCardModule, MatButtonModule, RouterModule],
+  templateUrl: './page-not-found.component.html',
+  styleUrl: './page-not-found.component.scss'
+})
+export class PageNotFoundComponent { }
+```
+
+### Component Modules
+
+```typescript
+@NgModule({
+  declarations: [BackendErrorMessagesComponent],
+  imports: [CommonModule, AlertModule],
+  exports: [BackendErrorMessagesComponent],
+})
+export class BackendErrorMessagesModule {}
 ```
 
 ## Naming Conventions
@@ -285,60 +405,97 @@ export class EntityService {
 - Reducers: `feature-name.reducers.ts`
 - Selectors: `feature-name.selectors.ts`
 - Effects: `feature-name-action-name.effects.ts`
+- Pipes: `pipe-name.pipe.ts`
+- Validators: `validator-name.validator.ts`
 
 ### Variables and Methods
 
-- Observables end with `$` (e.g., `user$`)
+- Observables end with ` (e.g., `user)
 - Boolean variables start with is/has/should (e.g., `isLoading`, `hasAccess`)
 - Actions follow the pattern:
   - `[get/update/delete/etc][Entity]Action`
   - `[get/update/delete/etc][Entity]SuccessAction`
   - `[get/update/delete/etc][Entity]FailureAction`
 
-## Module Organization
+## Testing
 
-### Lazy Loading
+### Component Testing
 
-- Use lazy loading for feature modules
-- Apply route guards at the feature module level
-- Structure routes hierarchically
+Each component should have a spec file with basic tests:
 
 ```typescript
-const routes: Routes = [
-  {
-    path: 'app',
-    children: [
-      { 
-        path: 'features/premium', 
-        loadChildren: () => import('./features/premium/premium.module').then(m => m.PremiumModule),
-        canActivate: [canActivatePremium]
-      }
-    ],
-    canActivate: [canActivateAuth]
-  }
-];
+describe('PageNotFoundComponent', () => {
+  let component: PageNotFoundComponent;
+  let fixture: ComponentFixture<PageNotFoundComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [PageNotFoundComponent]
+    })
+    .compileComponents();
+    
+    fixture = TestBed.createComponent(PageNotFoundComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});
 ```
 
-### Feature Module Structure
+## Forms and Validation
 
-Feature modules should:
-- Have their own routing
-- Declare components used only within the feature
-- Import only what they need
+### Custom Validators
+
+Create reusable validators in the shared/validators directory:
 
 ```typescript
-@NgModule({
-  declarations: [
-    FeatureComponent,
-    FeatureDetailComponent
-  ],
-  imports: [
-    CommonModule,
-    RouterModule.forChild(routes),
-    // Other needed modules
-  ]
+// Example of a password confirmation validator
+export function MustMatch(
+  controlName: string,
+  matchingControlName: string
+): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const originalControl = control.get(controlName);
+    const matchingControl = control.get(matchingControlName);
+
+    if (matchingControl!.errors && !matchingControl!.errors['mustMatch']) {
+      return null;
+    }
+
+    if (originalControl!.value !== matchingControl!.value) {
+      matchingControl!.setErrors({ mustMatch: true });
+      return { mustMatch: true };
+    } else {
+      matchingControl!.setErrors(null);
+    }
+    return null;
+  };
+}
+```
+
+### Custom Pipes
+
+Create reusable pipes in the shared/pipes directory:
+
+```typescript
+@Pipe({
+  name: 'role',
+  standalone: true
 })
-export class FeatureModule {}
+export class RolePipe implements PipeTransform {
+  transform(roles: string | string[] | undefined, roleName: string): boolean {
+    if (!roles) {
+      return false;
+    }
+    if (typeof roles === 'string') {
+      roles = roles.split(',');
+    }
+    return roles.includes(roleName);
+  }
+}
 ```
 
 ## Conclusion
