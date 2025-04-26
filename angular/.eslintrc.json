@@ -13,17 +13,10 @@
     "sourceType": "module"
   },
   "plugins": [
-    "@typescript-eslint"
+    "@typescript-eslint",
+    "@ngrx"
   ],
-  "rules": {},
-  "overrides": [
-    {
-      "files": [
-        "*.ts"
-      ],
-      "extends": [
-        "plugin:@ngrx/recommended"
-      ]
-    }
-  ]
+  "rules": {
+    "@ngrx/avoid-cyclic-effects": "error"
+  }
 }
