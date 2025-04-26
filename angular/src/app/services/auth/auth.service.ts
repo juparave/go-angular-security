@@ -27,11 +27,12 @@ import {
   providedIn: 'root',
 })
 export class AuthService {
-  private serviceUrl = environment.apiUrl + '/';
-  headers = new HttpHeaders().set(
+  private baseUrl = `${environment.apiUrl}`;
+  private headers = new HttpHeaders().set(
     'Content-Type',
     'application/json; charset=utf-8'
   );
+
   constructor(private http: HttpClient, public router: Router) { }
 
   /**
@@ -39,8 +40,7 @@ export class AuthService {
    * @param data: User
    */
   register(data: User): Observable<User> {
-    const url = environment.apiUrl + '/register';
-    return this.http.post<User>(url, data);
+    return this.http.post<User>(`${this.baseUrl}/register`, data);
   }
 
   /**
@@ -48,17 +48,17 @@ export class AuthService {
    * @param data: LoginRequest
    */
   login(data: LoginRequest): Observable<User> {
-    const url = environment.apiUrl + '/login';
-    return this.http.post<any>(url, data.user).pipe(
+    return this.http.post<any>(`${this.baseUrl}/login`, data.user).pipe(
       map((res) => res.user),
       shareReplay()
     );
   }
 
+  /**
+   * Gets the current logged-in user
+   */
   getCurrentUser(): Observable<User> {
-    const url = environment.apiUrl + '/user';
-    // check if user is not null
-    return this.http.get<User>(url).pipe(
+    return this.http.get<User>(`${this.baseUrl}/user`).pipe(
       map(user => {
         if (user === null) {
           throw new HttpErrorResponse({ status: 401, statusText: 'unauthenticated' });
@@ -69,45 +69,70 @@ export class AuthService {
   }
 
   /**
-   * RefreshTokens from server, user must be logged in
+   * Refreshes tokens from server, user must be logged in
+   * @param refreshToken The refresh token
    */
-  public refreshTokens(refreshToken: string) {
-    const url = environment.apiUrl + '/refresh_token';
-    let headers = new HttpHeaders();
-    headers = headers.set('Content-Type', 'application/json; charset=utf-8');
-    console.log('auth service get tokens...');
-
-    return this.http.post<any>(url, { refreshToken: refreshToken, }, { headers: headers })
-      .pipe(map((res) => res.user));
-  }
-
-  public logout() {
-    throwError(() => Error('Not implemented, use store for logout'));
-  }
-
-  public requestReset(data: RequestResetPassword) {
+  refreshTokens(refreshToken: string): Observable<User> {
     return this.http.post<any>(
-      `${this.serviceUrl}request_reset_password`,
+      `${this.baseUrl}/refresh_token`,
+      { refreshToken },
+      { headers: this.headers }
+    ).pipe(map((res) => res.user));
+  }
+
+  /**
+   * Logout method
+   * Note: Implementation delegated to NgRx store
+   */
+  logout(): Observable<never> {
+    return throwError(() => new Error('Not implemented, use store for logout'));
+  }
+
+  /**
+   * Request password reset
+   * @param data Request reset data with email
+   */
+  requestReset(data: RequestResetPassword): Observable<any> {
+    return this.http.post<any>(
+      `${this.baseUrl}/request_reset_password`,
       data
     );
   }
 
-  public validateRequestReset(data: ValidateRequestResetPassword) {
+  /**
+   * Validate reset code for password reset
+   * @param data Validation data with email and code
+   */
+  validateRequestReset(data: ValidateRequestResetPassword): Observable<any> {
     return this.http.post<any>(
-      `${this.serviceUrl}validate_request_reset_password`,
+      `${this.baseUrl}/validate_request_reset_password`,
       data
     );
   }
 
-  public resetPassword(data: ResetPassword) {
-    return this.http.post<any>(`${this.serviceUrl}reset_password`, data);
+  /**
+   * Reset password with new credentials
+   * @param data Reset data with email and new password
+   */
+  resetPassword(data: ResetPassword): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/reset_password`, data);
   }
 
-  public isTokenExpired(token: string): boolean {
+  /**
+   * Checks if a JWT token is expired
+   * @param token The JWT token to check
+   * @returns true if token is expired, false otherwise
+   */
+  isTokenExpired(token: string): boolean {
     const expiry = (JSON.parse(atob(token.split('.')[1]))).exp;
     return (Math.floor((new Date).getTime() / 1000)) >= expiry;
   }
 
+  /**
+   * Handles HTTP errors
+   * @param errorResponse The HTTP error response
+   * @returns Observable with error
+   */
   private handleErrors(errorResponse: HttpErrorResponse) {
     console.error('Error: ' + JSON.stringify(errorResponse));
     return throwError(() => errorResponse.error.errors);
