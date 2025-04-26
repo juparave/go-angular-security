@@ -20,3 +20,4 @@ go-app/tmp
 go-app/uploads/*
 .aider*
 .DS_Store
+server/.env
