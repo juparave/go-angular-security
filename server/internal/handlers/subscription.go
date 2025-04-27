@@ -12,6 +12,9 @@ import (
 func GetCurrentSubscription(c *fiber.Ctx) error {
 	customerID := c.Params("customerId")
 
+	// TODO: find a better place to do this initiation
+	stripe.Key = app.Stripe.SecretKey
+
 	params := &stripe.SubscriptionListParams{
 		Customer: stripe.String(customerID),
 		Status:   stripe.String(string(stripe.SubscriptionStatusActive)),

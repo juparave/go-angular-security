@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"server/internal/config"
 	"server/internal/database"
+	"server/internal/handlers"
 	"server/internal/routes"
 
 	"github.com/gofiber/fiber/v2"
@@ -21,6 +22,7 @@ func main() {
 	app.Log.Info("Starting application setup...") // Optional: Log startup
 
 	database.Connect()
+	handlers.SetRepo(app)
 
 	server := fiber.New(fiber.Config{
 		AppName: app.Name,
