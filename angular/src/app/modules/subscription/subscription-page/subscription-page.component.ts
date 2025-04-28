@@ -1,6 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { SubscriptionService } from 'src/app/services/subscription.service'; // Assuming service exists
 
+// Ideally, load these from environment, but hardcoded here for clarity
+const PRICE_IDS: Record<string, string> = {
+  'basic_monthly': 'price_1RIZP44D300v3DFM7QJThARK',
+  'pro_monthly': 'price_1RIZDG4D300v3DFMdmDnDQsS',
+  'basic_yearly': 'price_1RIZDI4D300v3DFMQlQ8czSM',
+  'pro_yearly': 'price_1RIZDJ4D300v3DFMFkyISsbD'
+};
+
 interface PlanFeature {
   name: string;
   included: boolean;
@@ -73,9 +81,9 @@ export class SubscriptionPageComponent implements OnInit {
   }
 
   getPriceId(planIdBase: string): string {
-    // Construct the Stripe Price ID based on the toggle state
-    // IMPORTANT: These IDs must match the Price IDs created in your Stripe account
-    return `price_${planIdBase}_${this.isYearly ? 'yearly' : 'monthly'}`;
+    const period = this.isYearly ? 'yearly' : 'monthly';
+    const key = `${planIdBase}_${period}`;
+    return PRICE_IDS[key] || '';
   }
 
   selectPlan(planIdBase: string): void {
