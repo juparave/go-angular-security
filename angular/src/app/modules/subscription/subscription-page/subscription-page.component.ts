@@ -1,5 +1,11 @@
 import { Component, OnInit } from '@angular/core';
-import { SubscriptionService } from 'src/app/services/subscription.service'; // Assuming service exists
+import { SubscriptionService } from 'src/app/services/subscription.service';
+import { loadStripe, Stripe } from '@stripe/stripe-js'; // Import Stripe types
+import { environment } from 'src/environments/environment'; // For Stripe key
+
+// Declare the stripe object if loaded globally (e.g., via index.html script)
+// A better approach is using the @stripe/stripe-js library directly.
+declare var Stripe: any; // Or use the imported Stripe type if using the library properly
 
 // Ideally, load these from environment, but hardcoded here for clarity
 const PRICE_IDS: Record<string, string> = {
@@ -73,11 +79,37 @@ export class SubscriptionPageComponent implements OnInit {
     }
   ];
 
-  // Inject SubscriptionService if needed for checkout logic
-  constructor(private subscriptionService: SubscriptionService) { }
+  stripePromise: Promise<Stripe | null>; // Hold the Stripe instance promise
+
+  // Inject SubscriptionService
+  constructor(private subscriptionService: SubscriptionService) {
+    // Initialize Stripe.js asynchronously
+    this.stripePromise = loadStripe(environment.stripePublishableKey);
+  }
 
   ngOnInit(): void {
     // Potentially fetch dynamic plan details from backend if needed
+  }
+
+  async redirectToCheckout(sessionId: string) {
+    const stripe = await this.stripePromise;
+    if (!stripe) {
+      console.error('Stripe.js has not loaded yet.');
+      // Handle error display to user
+      return;
+    }
+
+    const { error } = await stripe.redirectToCheckout({
+      sessionId: sessionId
+    });
+
+    // If `redirectToCheckout` fails due to a browser or network
+    // error, display the localized error message to your customer
+    // using `error.message`.
+    if (error) {
+      console.error('Error redirecting to Stripe Checkout:', error);
+      // Handle error display to user (e.g., show a notification)
+    }
   }
 
   getPriceId(planIdBase: string): string {
@@ -91,20 +123,21 @@ export class SubscriptionPageComponent implements OnInit {
     console.log(`Selected plan with Price ID: ${priceId}`);
     // Call the service method to initiate checkout
     // This service method should handle the backend call to create a Stripe Checkout session
-    // and redirect the user to Stripe.
+    // Call the service method to initiate checkout
     this.subscriptionService.createCheckoutSession(priceId).subscribe({
       next: (response) => {
-        // Assuming the backend returns a { url: string } for Stripe redirect
-        if (response && response.url) {
-          window.location.href = response.url;
+        // Backend returns { sessionId: string }
+        if (response && response.sessionId) {
+          // Use Stripe.js to redirect to Checkout
+          this.redirectToCheckout(response.sessionId);
         } else {
-          console.error('Failed to get checkout URL from backend.');
+          console.error('Failed to get sessionId from backend.');
           // Handle error display to user
         }
       },
       error: (err) => {
         console.error('Error creating checkout session:', err);
-        // Handle error display to user
+        // Handle error display to user (e.g., show a notification)
       }
     });
   }

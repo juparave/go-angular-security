@@ -58,11 +58,11 @@ export class SubscriptionService {
   }
 
   /**
-   * Create a Stripe Checkout session for the given price ID
-   * Expects the backend to return an object with a 'url' property for redirection.
+   * Create a Stripe Checkout session for the given price ID.
+   * Expects the backend to return an object with a 'sessionId' property.
    */
-  createCheckoutSession(priceId: string): Observable<{ url: string }> {
-    return this.http.post<{ url: string }>(
+  createCheckoutSession(priceId: string): Observable<{ sessionId: string }> {
+    return this.http.post<{ sessionId: string }>(
       `${environment.apiUrl}/subscriptions/create-checkout-session`,
       { priceId } // Send the selected price ID to the backend
     );
