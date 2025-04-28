@@ -8,6 +8,7 @@ export const environment = {
   domain: 'localhost',
   port: '5000',
   apiUrl: '/api/v1',
+  stripePublishableKey: 'pk_test_51QkvWp4D300v3DFM8en5sRjBM4kYQKPouNgBmVvXZG9UPfUN3FVgy7OjA3cMOo7KhLfbEclAgRfBkyFGtChEm8qd00bC5BNt19',
 };
 
 /*
