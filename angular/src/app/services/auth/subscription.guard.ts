@@ -1,14 +1,17 @@
 import { inject, Injectable } from '@angular/core';
 import { CanActivateFn, Router, UrlTree, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
-import { Observable, map, filter } from 'rxjs';
+// Import combineLatest and necessary operators
+import { Observable, map, filter, combineLatest } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { AppState } from 'src/app/store/interfaces/app-state';
+// Import the auth selector
+import { selectIsLoggedIn } from 'src/app/store/selectors/auth.selectors';
 import {
   selectHasActiveTrial,
   selectHasActiveBasic,
   selectHasActivePro,
   selectHasActivePaid,
-  selectIsSubscriptionActive
+  selectIsSubscriptionActive // Keep this selector
 } from 'src/app/store/selectors/subscription.selectors';
 
 /**
@@ -95,12 +98,37 @@ export const canActivatePaid: CanActivateFn = (
 };
 
 /**
- * Guard to check if user has any active subscription
+ * Guard to check if user has any active subscription.
+ * Ensures both auth and subscription states are loaded and user is logged in with an active subscription.
  */
 export const canActivateAnySubscription: CanActivateFn = (
   route: ActivatedRouteSnapshot,
   state: RouterStateSnapshot
-) => {
-  // Redirect to the new subscription page if no active subscription
-  return inject(SubscriptionGuard).createGuard(selectIsSubscriptionActive, '/subscription')(route, state);
+): Observable<boolean | UrlTree> => {
+  const store = inject(Store<AppState>);
+  const router = inject(Router);
+
+  return combineLatest([
+    store.select(selectIsLoggedIn),
+    store.select(selectIsSubscriptionActive)
+  ]).pipe(
+    // Wait until both auth and subscription states are no longer loading
+    filter(([authState, subState]) => !authState.isLoading && !subState.isLoading),
+    map(([authState, subState]) => {
+      if (authState.isLoggedIn && subState.isActive) {
+        // User is logged in AND has an active subscription
+        return true; // Allow access to the route (e.g., /app)
+      } else if (authState.isLoggedIn && !subState.isActive) {
+        // User is logged in BUT does NOT have an active subscription
+        // Redirect to the subscription page
+        return router.createUrlTree(['/subscription'], {
+          queryParams: { returnUrl: state.url }
+        });
+      } else {
+        // User is not logged in (AuthGuard should ideally handle this first,
+        // but redirecting to login as a fallback)
+        return router.createUrlTree(['/login']);
+      }
+    })
+  );
 };
