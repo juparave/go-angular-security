@@ -100,3 +100,8 @@ func GenerateResetPasswordToken(user *models.User) (string, error) {
 	// encrypt token string with secret key
 	return Encrypt(token, SecretKey)
 }
+
+func GetUserIDFromContext(c *fiber.Ctx) (string, error) {
+	jwt := GetJWT(c)
+	return ParseJwt(jwt)
+}
