@@ -22,6 +22,7 @@
     "@angular/router": "^18.2.13",
     "@ngrx/effects": "^18.1.0",
     "@ngrx/store": "^18.1.0",
+    "@stripe/stripe-js": "^7.2.0",
     "g": "^2.0.1",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
