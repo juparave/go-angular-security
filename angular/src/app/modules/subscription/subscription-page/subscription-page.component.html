@@ -1,3 +1,38 @@
-<p>subscription-page works!</p>
-<p>Please choose a subscription plan to continue.</p>
-<!-- Subscription plan options will go here -->
+<div class="subscription-container">
+  <h1>Choose Your Plan</h1>
+  <p>Select the plan that best fits your needs.</p>
+
+  <div class="toggle-container">
+    <span>Monthly</span>
+    <mat-slide-toggle [(ngModel)]="isYearly" color="primary"></mat-slide-toggle>
+    <span>Yearly (Save ~17%)</span>
+  </div>
+
+  <div class="plans-grid">
+    <mat-card *ngFor="let plan of plans" class="plan-card">
+      <mat-card-header>
+        <mat-card-title>{{ plan.name }}</mat-card-title>
+        <mat-card-subtitle>{{ plan.description }}</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="price">
+          <span class="amount">${{ isYearly ? plan.priceYearly : plan.priceMonthly }}</span>
+          <span class="period">/ {{ isYearly ? 'year' : 'month' }}</span>
+        </div>
+        <mat-list role="list">
+          <mat-list-item *ngFor="let feature of plan.features" role="listitem">
+            <mat-icon matListItemIcon [color]="feature.included ? 'primary' : 'disabled'">
+              {{ feature.included ? 'check_circle' : 'cancel' }}
+            </mat-icon>
+            <span [class.disabled-feature]="!feature.included">{{ feature.name }}</span>
+          </mat-list-item>
+        </mat-list>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-flat-button color="primary" (click)="selectPlan(plan.id)">
+          Choose {{ plan.name }}
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+</div>

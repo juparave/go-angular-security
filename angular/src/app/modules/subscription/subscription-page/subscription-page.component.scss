@@ -1,1 +1,97 @@
 /* Styles for subscription page */
+.subscription-container {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 2rem auto;
+  text-align: center;
+
+  h1 {
+    margin-bottom: 0.5rem;
+  }
+
+  p {
+    margin-bottom: 2rem;
+    color: grey;
+  }
+}
+
+.toggle-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 3rem;
+  gap: 1rem; // Space between elements
+
+  mat-slide-toggle {
+    margin: 0; // Remove default margins if any
+  }
+}
+
+.plans-grid {
+  display: flex;
+  flex-wrap: wrap; // Allow cards to wrap on smaller screens
+  justify-content: center;
+  gap: 2rem; // Space between cards
+}
+
+.plan-card {
+  flex: 1 1 300px; // Flex properties: grow, shrink, basis
+  max-width: 350px; // Max width for each card
+  display: flex;
+  flex-direction: column; // Stack card content vertically
+  text-align: left;
+
+  mat-card-header {
+    padding-bottom: 0.5rem; // Adjust spacing
+  }
+
+  mat-card-content {
+    flex-grow: 1; // Allow content to fill available space
+    padding-top: 0; // Adjust spacing
+
+    .price {
+      font-size: 2rem;
+      font-weight: bold;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: baseline; // Align amount and period nicely
+
+      .amount {
+        margin-right: 0.5rem;
+      }
+
+      .period {
+        font-size: 1rem;
+        font-weight: normal;
+        color: grey;
+      }
+    }
+
+    mat-list {
+      padding-top: 0;
+    }
+
+    mat-list-item {
+      height: auto !important; // Adjust height if needed
+      padding-bottom: 0.5rem;
+    }
+
+    .disabled-feature {
+      color: rgba(0, 0, 0, 0.54); // Standard disabled text color
+      text-decoration: line-through;
+    }
+
+    mat-icon {
+      margin-right: 8px; // Space between icon and text
+    }
+  }
+
+  mat-card-actions {
+    padding: 16px; // Ensure padding for the button
+    margin-top: auto; // Push actions to the bottom
+
+    button {
+      width: 100%; // Make button full width
+    }
+  }
+}
