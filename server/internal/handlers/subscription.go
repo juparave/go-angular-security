@@ -1,6 +1,11 @@
 package handlers
 
 import (
+	"net/http"
+	"server/internal/database"
+	"server/internal/models"
+	"server/internal/utils"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/stripe/stripe-go/v82"
 	"github.com/stripe/stripe-go/v82/subscription"
@@ -10,7 +15,23 @@ import (
 // Route param: customerId
 // Response: 200 with subscription JSON, or 404 if not found.
 func GetCurrentSubscription(c *fiber.Ctx) error {
-	customerID := c.Params("customerId")
+	userID, err := utils.GetUserIDFromContext(c)
+	if err != nil {
+		return c.Status(http.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+	}
+
+	// get User from database
+	var user models.User
+	if err := database.DB.Where("id = ?", userID).First(&user).Error; err != nil {
+		return c.Status(http.StatusNotFound).JSON(fiber.Map{"error": "User not found"})
+	}
+
+	customerID := user.StripeCustomerID
+	if customerID == "" {
+		// This user does not have a Stripe CustomerID, so we asume
+		// no subscription either
+		return c.Status(http.StatusPaymentRequired).JSON(fiber.Map{"error": "No active subscription found"})
+	}
 
 	// TODO: find a better place to do this initiation
 	stripe.Key = app.Stripe.SecretKey
