@@ -28,6 +28,7 @@ import { LoadingInterceptor } from './services/loading.interceptors'; // Custom 
 import { authReducer } from './store/reducers/auth.reducers'; // Reducer function responsible for managing the 'auth' slice of the application state.
 import { environment } from 'src/environments/environment'; // Environment-specific configuration (e.g., API URLs, production flags).
 import { GetSubscriptionEffect } from './store/effects/subscription.effects';
+import { SyncSubscriptionEffect } from './store/effects/sync-subscription.effects'; // Import the new effect
 import { subscriptionReducer } from './store/reducers/subscription.reducers';
 
 // Array defining application-wide providers, specifically HTTP interceptors.
@@ -76,6 +77,7 @@ const APP_PROVIDERS = [
       GetCurrentUserEffect,
       RefreshTokensEffect,
       GetSubscriptionEffect,
+      SyncSubscriptionEffect, // Add the new effect to the array
     ]),
     // Configures the NgRx Store Devtools extension.
     StoreDevtoolsModule.instrument({

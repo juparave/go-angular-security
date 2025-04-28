@@ -101,5 +101,6 @@ export const canActivateAnySubscription: CanActivateFn = (
   route: ActivatedRouteSnapshot,
   state: RouterStateSnapshot
 ) => {
-  return inject(SubscriptionGuard).createGuard(selectIsSubscriptionActive, '/renew-subscription')(route, state);
+  // Redirect to the new subscription page if no active subscription
+  return inject(SubscriptionGuard).createGuard(selectIsSubscriptionActive, '/subscription')(route, state);
 };

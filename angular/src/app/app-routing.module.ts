@@ -1,7 +1,8 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes, provideRouter, withComponentInputBinding } from '@angular/router';
 import { UnAuthGuard } from 'src/app/services/auth/unauth.guard';
-import { AuthGuard } from './services/auth/auth.guard';
+import { AuthGuard, canActivateAuth } from './services/auth/auth.guard'; // Import canActivateAuth
+import { canActivateAnySubscription } from './services/auth/subscription.guard'; // Import subscription guard
 import { PageNotFoundComponent } from './shared/components/page-not-found/page-not-found.component';
 
 const routes: Routes = [
@@ -22,8 +23,15 @@ const routes: Routes = [
     path: 'app',
     loadChildren: () =>
       import('./modules/app/app.module').then((m) => m.AppModule),
-    canActivate: [AuthGuard],
+    canActivate: [canActivateAuth, canActivateAnySubscription], // Add subscription guard
     title: 'Dashboard :: Austral QC',
+  },
+  {
+    path: 'subscription',
+    loadChildren: () =>
+      import('./modules/subscription/subscription.module').then((m) => m.SubscriptionModule),
+    canActivate: [canActivateAuth], // Protect with AuthGuard
+    title: 'Subscription',
   },
   {
     path: '**',
