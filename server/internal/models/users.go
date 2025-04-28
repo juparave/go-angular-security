@@ -6,14 +6,15 @@ import (
 )
 
 type User struct {
-	ID               string `json:"id" gorm:"size:11"`
-	StripeCustomerID string `json:"stripeCustomerId" gorm:"size:128"`
-	FirstName        string `json:"firstName" gorm:"size:128"`
-	LastName         string `json:"lastName" gorm:"size:128"`
-	Email            string `json:"email" gorm:"size:128; unique"`
-	Password         []byte `json:"-" gorm:"size:64"` // don't return password on json
-	AccessToken      string `json:"accessToken" gorm:"-"`
-	RefreshToken     string `json:"refreshToken" gorm:"-"`
+	ID               string       `json:"id" gorm:"size:11"`
+	StripeCustomerID string       `json:"stripeCustomerId" gorm:"size:16"`
+	FirstName        string       `json:"firstName" gorm:"size:128"`
+	LastName         string       `json:"lastName" gorm:"size:128"`
+	Email            string       `json:"email" gorm:"size:128; unique"`
+	Password         []byte       `json:"-" gorm:"size:64"` // don't return password on json
+	AccessToken      string       `json:"accessToken" gorm:"-"`
+	RefreshToken     string       `json:"refreshToken" gorm:"-"`
+	Subscription     Subscription `json:"subscription" gorm:"foreignKey:CustomerID"`
 
 	Roles []Role `json:"roles" gorm:"many2many:user_roles;"`
 }
