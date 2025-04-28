@@ -25,6 +25,7 @@ func Setup(app fiber.Router) {
 
 	// Subscription endpoints:
 	app.Get("/subscriptions/current", handlers.GetCurrentSubscription)
+	app.Post("/subscriptions/create-checkout-session", handlers.CreateCheckoutSession) // Creates a Stripe checkout session
 	app.Patch("/subscriptions/:id", handlers.PatchSubscription)
 	app.Post("/subscriptions/:id/cancel", handlers.PostCancelSubscription)
 	app.Post("/subscriptions/:id/reactivate", handlers.PostReactivateSubscription)
