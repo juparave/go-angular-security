@@ -13,6 +13,7 @@ var appModels = []interface{}{
 	&models.User{},
 	&models.Role{},
 	&models.Permission{},
+	&models.Subscription{},
 }
 
 var DB *gorm.DB
