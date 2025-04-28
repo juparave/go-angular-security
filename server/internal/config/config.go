@@ -25,7 +25,7 @@ type AppConfig struct {
 	Port        int    `env:"APP_PORT" json:"port"`
 	UploadsPath string `env:"UPLOADS_PATH" json:"uploads_path"`
 	Log         *mylogger.MyLogger
-	MailChan    chan any
+	MailChan    chan any       `json:"-"`
 	Database    DatabaseConfig `json:"database"`
 	Email       EmailConfig
 	Stripe      struct {
@@ -108,7 +108,10 @@ func GetAppConfig() *AppConfig {
 	// 4. Log the loaded configuration (optional, for debugging)
 	// Be cautious about logging sensitive data like passwords in production.
 	log.Println("Info: Configuration loaded successfully.")
-	configJSON, _ := json.MarshalIndent(cfg, "", "  ")
+	configJSON, err := json.MarshalIndent(cfg, "", "  ")
+	if err != nil {
+		log.Printf("Error: Failed to marshal configuration to JSON: %v\n", err)
+	}
 	fmt.Println("--- Loaded Configuration ---")
 	fmt.Println(string(configJSON))
 	fmt.Println("--------------------------")
