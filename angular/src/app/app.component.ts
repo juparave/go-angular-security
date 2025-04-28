@@ -15,9 +15,7 @@ export class AppComponent {
     // Fetch current user data on app start
     this.store.dispatch(getCurrentUserAction());
 
-    // Also fetch subscription data
-    // This typically would be done after the user is authenticated
-    // but we dispatch it here for simplicity
-    this.store.dispatch(getSubscriptionAction());
+    // Subscription data will be fetched by the AuthGetCurrentUserEffects
+    // after the user is successfully retrieved.
   }
 }

@@ -13,6 +13,7 @@ import {
   getCurrentUserFailureAction,
   refreshTokenAction,
 } from 'src/app/store/actions/auth.actions';
+import { getSubscriptionAction } from 'src/app/store/actions/subscription.actions';
 import { Store } from '@ngrx/store';
 
 @Injectable()
@@ -42,8 +43,13 @@ export class GetCurrentUserEffect {
         }
 
         return this.authService.getCurrentUser().pipe(
-          map((currentUser: User) => {
-            return getCurrentUserSuccessAction({ currentUser });
+          // Use switchMap to dispatch multiple actions
+          switchMap((currentUser: User) => {
+            // Dispatch both success action and the action to get subscription
+            return of(
+              getCurrentUserSuccessAction({ currentUser }),
+              getSubscriptionAction() // Dispatch this after user success
+            );
           }),
           catchError(() => {
             return of(getCurrentUserFailureAction());
