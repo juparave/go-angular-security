@@ -182,7 +182,7 @@ func User(c *fiber.Ctx) error {
 
 	var user models.User
 
-	database.DB.Where("id = ?", id).First(&user)
+	database.DB.Preload("Subscription").Where("id = ?", id).First(&user)
 
 	if user.ID == "" {
 		c.Status(404)

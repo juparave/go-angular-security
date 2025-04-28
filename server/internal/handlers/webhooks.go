@@ -78,6 +78,7 @@ func PostStripeWebhook(c *fiber.Ctx) error {
 
 func handleSubscriptionCreated(subscription stripe.Subscription) {
 	// Implement your logic for handling a created subscription
+	app.Log.Info("Subscription created event received", "subscription_id", subscription.ID)
 	// Get customerID from stripe's subscription object
 	customerID := subscription.Customer.ID
 	if customerID == "" {
@@ -102,7 +103,7 @@ func handleSubscriptionCreated(subscription stripe.Subscription) {
 	// Retrieve the full subscription object from Stripe
 	fullSubscription, err := stripeClient.Subscriptions.Get(subscription.ID, nil)
 	if err != nil {
-		app.Log.Error("Error retrieving full subscription from Stripe:", err)
+		app.Log.Error("Error retrieving full subscription from Stripe:", "err", err)
 		return
 	}
 
@@ -124,25 +125,103 @@ func handleSubscriptionCreated(subscription stripe.Subscription) {
 	}
 
 	// Persist subscription in database
-	if err := database.DB.Create(&user.Subscription).Error; err != nil {
-		app.Log.Error("Error persisting subscription in database:", err)
+	if err := database.DB.Save(&user.Subscription).Error; err != nil {
+		app.Log.Error("Error persisting subscription in database:", "err", err)
 		return
 	}
 
 	// Persist user in database
-	if err := database.DB.Save(&user); err != nil {
-		app.Log.Error("Error persisting user in database:", err)
-		return
-	}
+	// if err := database.DB.Save(&user); err != nil {
+	// 	app.Log.Error("Error persisting user in database:", "err", err)
+	// 	return
+	// }
 
 	app.Log.Info("Subscription created successfully")
 
 }
 
 func handleSubscriptionUpdated(subscription stripe.Subscription) {
-	// Implement your logic for handling an updated subscription
+	customerID := subscription.Customer.ID
+	if customerID == "" {
+		app.Log.Error("Customer ID not found in subscription")
+		return
+	}
+
+	// Find the user by Stripe Customer ID and preload their subscription
+	var user models.User
+	if err := database.DB.
+		Preload("Subscription").
+		Where("stripe_customer_id = ?", customerID).
+		First(&user).Error; err != nil {
+		app.Log.Error("User not found with customer ID")
+		return
+	}
+
+	// Get the Stripe client
+	stripeClient := &client.API{}
+	stripeClient.Init(app.Stripe.SecretKey, nil)
+
+	// Retrieve the full subscription object from Stripe
+	fullSubscription, err := stripeClient.Subscriptions.Get(subscription.ID, nil)
+	if err != nil {
+		app.Log.Error("Error retrieving full subscription from Stripe:", "err", err)
+		return
+	}
+
+	var currentPeriodStart, currentPeriodEnd int64
+	if len(fullSubscription.Items.Data) > 0 {
+		currentPeriodStart = fullSubscription.Items.Data[0].CurrentPeriodStart
+		currentPeriodEnd = fullSubscription.Items.Data[0].CurrentPeriodEnd
+	}
+
+	// Update the user's subscription fields
+	sub := &user.Subscription
+	sub.PlanID = fullSubscription.Items.Data[0].Plan.ID
+	sub.Status = string(subscription.Status)
+	sub.CurrentPeriodStart = time.Unix(currentPeriodStart, 0)
+	sub.CurrentPeriodEnd = time.Unix(currentPeriodEnd, 0)
+	sub.CancelAtPeriodEnd = subscription.CancelAtPeriodEnd
+
+	// Persist the updated subscription in the database
+	if err := database.DB.Save(sub).Error; err != nil {
+		app.Log.Error("Error updating subscription in database:", "err", err)
+		return
+	}
+
+	app.Log.Info("Subscription updated successfully")
 }
 
 func handleSubscriptionDeleted(subscription stripe.Subscription) {
-	// Implement your logic for handling a deleted subscription
+	customerID := subscription.Customer.ID
+	if customerID == "" {
+		app.Log.Error("Customer ID not found in subscription")
+		return
+	}
+
+	// Find the user by Stripe Customer ID and preload their subscription
+	var user models.User
+	if err := database.DB.
+		Preload("Subscription").
+		Where("stripe_customer_id = ?", customerID).
+		First(&user).Error; err != nil {
+		app.Log.Error("User not found with customer ID")
+		return
+	}
+
+	// Mark the subscription as canceled in the database
+	sub := &user.Subscription
+	sub.Status = string(subscription.Status)
+	sub.CancelAtPeriodEnd = subscription.CancelAtPeriodEnd
+	if subscription.CanceledAt != 0 {
+		canceledAt := time.Unix(subscription.CanceledAt, 0)
+		sub.CanceledAt = &canceledAt
+	}
+
+	// Persist the updated subscription in the database
+	if err := database.DB.Save(sub).Error; err != nil {
+		app.Log.Error("Error updating subscription in database:", "err", err)
+		return
+	}
+
+	app.Log.Info("Subscription deleted/canceled successfully")
 }

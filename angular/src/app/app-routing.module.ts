@@ -3,6 +3,7 @@ import { RouterModule, Routes, provideRouter, withComponentInputBinding } from '
 import { UnAuthGuard } from 'src/app/services/auth/unauth.guard';
 import { AuthGuard, canActivateAuth } from './services/auth/auth.guard'; // Import canActivateAuth
 import { canActivateAnySubscription } from './services/auth/subscription.guard'; // Import subscription guard
+import { canActivateNoActiveSubscription } from './services/auth/no-active-subscription.guard'; // Import NoActiveSubscriptionGuard
 import { PageNotFoundComponent } from './shared/components/page-not-found/page-not-found.component';
 
 const routes: Routes = [
@@ -30,7 +31,7 @@ const routes: Routes = [
     path: 'subscription',
     loadChildren: () =>
       import('./modules/subscription/subscription.module').then((m) => m.SubscriptionModule),
-    canActivate: [canActivateAuth], // Protect with AuthGuard
+    canActivate: [canActivateAuth, canActivateNoActiveSubscription], // Add NoActiveSubscriptionGuard
     title: 'Subscription',
   },
   {
