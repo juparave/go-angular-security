@@ -34,6 +34,9 @@ func main() {
 		AllowCredentials: true,
 	}))
 
+	// add stripe webhook to the root path
+	server.Post("/stripe/webhook", handlers.PostStripeWebhook)
+
 	// group handlers, set api prefix path to /api/v1
 	api := server.Group("/api")
 	v1 := api.Group("/v1", func(c *fiber.Ctx) error {
