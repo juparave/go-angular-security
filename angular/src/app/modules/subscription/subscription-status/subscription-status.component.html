@@ -1,0 +1,25 @@
+<div *ngIf="subscriptionData$ | async as data; else loadingOrError">
+  <div *ngIf="!data.isLoading && data.subscription; else loadingOrError">
+    <h2>Subscription Status</h2>
+    <p><strong>Status:</strong> {{ data.subscription.status }}</p>
+    <p><strong>Plan:</strong> {{ data.subscription.plan?.nickname || 'N/A' }}</p>
+    <p *ngIf="data.subscription.current_period_end">
+      <strong>Current Period End:</strong> {{ data.subscription.current_period_end * 1000 | date:'medium' }}
+    </p>
+    <p *ngIf="data.subscription.cancel_at_period_end">
+      Your subscription will be canceled at the end of the current period.
+    </p>
+    <!-- Add more details as needed -->
+  </div>
+</div>
+
+<ng-template #loadingOrError>
+  <!-- Check loading state from the observable -->
+  <div *ngIf="(subscriptionData$ | async)?.isLoading">
+    <p>Loading subscription status...</p>
+  </div>
+  <!-- Handle case where subscription is null after loading -->
+  <div *ngIf="!(subscriptionData$ | async)?.isLoading && !(subscriptionData$ | async)?.subscription">
+    <p>Could not load subscription details or no active subscription found.</p>
+  </div>
+</ng-template>

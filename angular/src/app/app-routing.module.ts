@@ -31,7 +31,7 @@ const routes: Routes = [
     path: 'subscription',
     loadChildren: () =>
       import('./modules/subscription/subscription.module').then((m) => m.SubscriptionModule),
-    canActivate: [canActivateAuth, canActivateNoActiveSubscription],
+    canActivate: [canActivateAuth],
     title: 'Subscription',
   },
   {

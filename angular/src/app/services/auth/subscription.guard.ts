@@ -121,7 +121,7 @@ export const canActivateAnySubscription: CanActivateFn = (
       } else if (authState.isLoggedIn && !subState.isActive) {
         // User is logged in BUT does NOT have an active subscription
         // Redirect to the subscription page
-        return router.createUrlTree(['/subscription'], {
+        return router.createUrlTree(['/subscription/select'], {
           queryParams: { returnUrl: state.url }
         });
       } else {

@@ -11,11 +11,13 @@ import { MatIconModule } from '@angular/material/icon';
 
 import { SubscriptionRoutingModule } from './subscription-routing.module';
 import { SubscriptionPageComponent } from './subscription-page/subscription-page.component';
+import { SubscriptionStatusComponent } from './subscription-status/subscription-status.component';
 
 
 @NgModule({
   declarations: [
-    SubscriptionPageComponent
+    SubscriptionPageComponent,
+    SubscriptionStatusComponent
   ],
   imports: [
     CommonModule,
