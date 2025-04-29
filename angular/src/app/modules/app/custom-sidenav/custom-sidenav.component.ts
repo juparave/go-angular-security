@@ -15,6 +15,7 @@ export type MenuItem = {
 
 @Component({
   selector: 'app-custom-sidenav',
+  standalone: false,
   templateUrl: './custom-sidenav.component.html',
   styleUrl: './custom-sidenav.component.scss'
 })
@@ -47,6 +48,11 @@ export class CustomSidenavComponent implements OnInit {
       label: 'Menu 4',
       icon: 'receipt_long',
       route: '/app/menu4',
+    },
+    {
+      label: 'Subscription',
+      icon: 'subscriptions',
+      route: '/subscription/status',
     }
   ]);
 

@@ -10,6 +10,7 @@ import { logoutAction } from 'src/app/store/actions/auth.actions';
 
 @Component({
   selector: 'app-base',
+  standalone: false,
   templateUrl: './base.component.html',
   styleUrls: ['./base.component.scss']
 })
