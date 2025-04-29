@@ -8,6 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { SubscriptionRoutingModule } from './subscription-routing.module';
 import { SubscriptionPageComponent } from './subscription-page/subscription-page.component';
@@ -30,7 +31,8 @@ import { SubscriptionSuccessComponent } from './subscription-success/subscriptio
     MatButtonModule,
     MatSlideToggleModule,
     MatListModule,
-    MatIconModule
+    MatIconModule,
+    MatProgressSpinnerModule
   ]
 })
 export class SubscriptionModule { }

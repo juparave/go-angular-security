@@ -5,6 +5,7 @@ import { SubscriptionStatusComponent } from './subscription-status/subscription-
 import { SubscriptionSuccessComponent } from './subscription-success/subscription-success.component'; // Added import
 import { canActivateNoActiveSubscription } from 'src/app/services/auth/no-active-subscription.guard'; // Keep this import
 import { AuthGuard } from 'src/app/services/auth/auth.guard';
+import { BaseComponent } from '../app/base/base.component';
 
 const routes: Routes = [
   {
@@ -14,8 +15,19 @@ const routes: Routes = [
   },
   {
     path: 'status',
-    component: SubscriptionStatusComponent,
-    canActivate: [AuthGuard]
+    component: BaseComponent,
+    children: [
+      {
+        path: '',
+        redirectTo: 'status',
+        pathMatch: 'full',
+      },
+      {
+        path: 'status',
+        component: SubscriptionStatusComponent,
+        canActivate: [AuthGuard]
+      },
+    ],
   },
   {
     path: 'select',
