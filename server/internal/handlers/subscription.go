@@ -140,7 +140,7 @@ func CreateCheckoutSession(c *fiber.Ctx) error {
 
 	// Get User from database
 	var user models.User
-	if err := database.DB.Where("id = ?", userID).First(&user).Error; err != nil {
+	if err := database.DB.Where("users.id = ?", userID).First(&user).Error; err != nil {
 		return c.Status(http.StatusNotFound).JSON(fiber.Map{"error": "User not found"})
 	}
 

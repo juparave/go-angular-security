@@ -86,7 +86,7 @@ func Login(c *fiber.Ctx) error {
 
 	var user models.User
 
-	database.DB.Where("email = ?", data[keyEmail]).First(&user)
+	database.DB.Preload("Subscription").Where("email = ?", data[keyEmail]).First(&user)
 
 	if user.ID == "" {
 		return c.Status(fiber.StatusNotFound).
@@ -182,7 +182,7 @@ func User(c *fiber.Ctx) error {
 
 	var user models.User
 
-	database.DB.Preload("Subscription").Where("id = ?", id).First(&user)
+	database.DB.Preload("Subscription").Where("users.id = ?", id).First(&user)
 
 	if user.ID == "" {
 		c.Status(404)

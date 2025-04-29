@@ -14,7 +14,7 @@ type User struct {
 	Password         []byte       `json:"-" gorm:"size:64"` // don't return password on json
 	AccessToken      string       `json:"accessToken" gorm:"-"`
 	RefreshToken     string       `json:"refreshToken" gorm:"-"`
-	Subscription     Subscription `json:"subscription" gorm:"foreignKey:CustomerID"`
+	Subscription     Subscription `json:"subscription" gorm:"foreignKey:CustomerID;references:StripeCustomerID"`
 
 	Roles []Role `json:"roles" gorm:"many2many:user_roles;"`
 }
