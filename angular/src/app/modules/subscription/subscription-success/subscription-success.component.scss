@@ -1,0 +1,19 @@
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 80vh; /* Adjust height as needed */
+  padding: 20px;
+}
+
+mat-card {
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+}
+
+mat-card-actions {
+  display: flex;
+  justify-content: center;
+  padding-bottom: 16px;
+}
