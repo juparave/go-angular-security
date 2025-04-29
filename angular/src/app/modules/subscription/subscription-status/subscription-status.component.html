@@ -2,12 +2,12 @@
   <div *ngIf="!data.isLoading && data.subscription; else loadingOrError">
     <h2>Subscription Status</h2>
     <p><strong>Status:</strong> {{ data.subscription.status }}</p>
-    <p><strong>Plan:</strong> {{ data.subscription.plan?.nickname || 'N/A' }}</p>
-    <p *ngIf="data.subscription.current_period_end">
-      <strong>Current Period End:</strong> {{ data.subscription.current_period_end * 1000 | date:'medium' }}
+    <p><strong>Plan:</strong> {{ data.subscription.plan || 'N/A' }}</p>
+    <p *ngIf="data.subscription.currentPeriodEnd">
+      <strong>Current Period End:</strong> {{ data.subscription.currentPeriodEnd | date:'medium' }}
     </p>
-    <p *ngIf="data.subscription.cancel_at_period_end">
-      Your subscription will be canceled at the end of the current period.
+    <p *ngIf="data.subscription.cancelAtPeriodEnd">
+      Subscription will cancel at the end of the current period.
     </p>
     <!-- Add more details as needed -->
   </div>
