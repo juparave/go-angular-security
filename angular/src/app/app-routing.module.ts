@@ -24,14 +24,14 @@ const routes: Routes = [
     path: 'app',
     loadChildren: () =>
       import('./modules/app/app.module').then((m) => m.AppModule),
-    canActivate: [canActivateAuth, canActivateAnySubscription], // Add subscription guard
+    canActivate: [canActivateAuth, canActivateAnySubscription],
     title: 'Dashboard :: Austral QC',
   },
   {
     path: 'subscription',
     loadChildren: () =>
       import('./modules/subscription/subscription.module').then((m) => m.SubscriptionModule),
-    canActivate: [canActivateAuth, canActivateNoActiveSubscription], // Add NoActiveSubscriptionGuard
+    canActivate: [canActivateAuth, canActivateNoActiveSubscription],
     title: 'Subscription',
   },
   {
