@@ -23,6 +23,7 @@ type AppConfig struct {
 	Name        string `env:"APP_NAME" json:"name"`
 	Mode        string `env:"APP_MODE" json:"mode"` // e.g., "development", "production"
 	Port        int    `env:"APP_PORT" json:"port"`
+	Domain      string `env:"APP_DOMAIN" json:"domain"`
 	UploadsPath string `env:"UPLOADS_PATH" json:"uploads_path"`
 	Log         *mylogger.MyLogger
 	MailChan    chan any       `json:"-"`

@@ -7,7 +7,6 @@ import (
 	"server/internal/utils"
 
 	"fmt"
-	"os"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/stripe/stripe-go/v82"
@@ -192,7 +191,7 @@ func CreateCheckoutSession(c *fiber.Ctx) error {
 
 	// Define success and cancel URLs (replace with your actual frontend URLs)
 	// Consider making these configurable
-	domain := os.Getenv("DOMAIN") // Or get from config: app.Server.Domain
+	domain := app.Domain
 	if domain == "" {
 		domain = "http://localhost:4200" // Default fallback
 	}
