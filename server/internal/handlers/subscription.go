@@ -190,15 +190,6 @@ func CreateCheckoutSession(c *fiber.Ctx) error {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Missing priceId in request body"})
 	}
 
-	// Use the global app config for Stripe key
-	// TODO: Refactor to use proper dependency injection instead of global 'app'
-	if app == nil || app.Stripe.SecretKey == "" {
-		// Log the error for debugging
-		fmt.Println("Error: Stripe configuration not initialized in handlers")
-		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "Server configuration error"})
-	}
-	stripe.Key = app.Stripe.SecretKey
-
 	// Define success and cancel URLs (replace with your actual frontend URLs)
 	// Consider making these configurable
 	domain := os.Getenv("DOMAIN") // Or get from config: app.Server.Domain
