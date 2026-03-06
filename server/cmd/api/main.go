@@ -107,7 +107,7 @@ func main() {
 	server.Get("/health", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
 			"status":  "ok",
-			"version": "1.0.0",
+			"version": app.Version,
 		})
 	})
 
@@ -115,7 +115,7 @@ func main() {
 	app.Log.Info(fmt.Sprintf("Starting server on port %d", app.Port))
 	go func() {
 		if err := server.Listen(fmt.Sprintf(":%d", app.Port)); err != nil {
-			log.Printf("Server stopped: %v", err)
+			app.Log.Error("Server stopped", "error", err)
 		}
 	}()
 
@@ -126,6 +126,6 @@ func main() {
 
 	app.Log.Info("Shutting down server...")
 	if err := server.Shutdown(); err != nil {
-		log.Printf("Error during server shutdown: %v", err)
+		app.Log.Error("Server shutdown error", "error", err)
 	}
 }
