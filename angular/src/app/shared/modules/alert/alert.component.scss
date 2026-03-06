@@ -1,4 +1,5 @@
-@import 'variables';
+@use 'sass:map';
+@use 'variables' as *;
 
 $_module-rem: $module-rem;
 $_border-width: 1px;
@@ -102,14 +103,14 @@ $_types: (
 
   @each $_type, $_color in $_types {
     &.alert-#{$_type} {
-      background: map-get($_color, bg);
-      color: map-get($_color, color);
-      border-color: map-get($map: $_color, $key: border-color);
+      background: map.get($_color, bg);
+      color: map.get($_color, color);
+      border-color: map.get($_color, border-color);
       margin: 14px 0;
 
       &.outline {
         background: transparent;
-        color: map-get($_color, bg);
+        color: map.get($_color, bg);
       }
     }
   }

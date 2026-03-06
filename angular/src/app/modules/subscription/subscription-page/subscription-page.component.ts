@@ -1,11 +1,14 @@
 import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatListModule } from '@angular/material/list';
+import { MatIconModule } from '@angular/material/icon';
 import { SubscriptionService } from 'src/app/services/subscription.service';
-import { loadStripe, Stripe } from '@stripe/stripe-js'; // Import Stripe types
-import { environment } from 'src/environments/environment'; // For Stripe key
-
-// Declare the stripe object if loaded globally (e.g., via index.html script)
-// A better approach is using the @stripe/stripe-js library directly.
-declare const Stripe: (key: string) => unknown; // Or use the imported Stripe type if using the library properly
+import { loadStripe, Stripe } from '@stripe/stripe-js';
+import { environment } from 'src/environments/environment';
 
 // Ideally, load these from environment, but hardcoded here for clarity
 const PRICE_IDS: Record<string, string> = {
@@ -33,6 +36,16 @@ interface Plan {
   selector: 'app-subscription-page',
   templateUrl: './subscription-page.component.html',
   styleUrls: ['./subscription-page.component.scss'],
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatCardModule,
+    MatButtonModule,
+    MatSlideToggleModule,
+    MatListModule,
+    MatIconModule,
+  ],
 })
 export class SubscriptionPageComponent {
   isYearly: boolean = false; // Default to monthly

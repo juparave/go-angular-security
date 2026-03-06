@@ -1,33 +1,34 @@
 // Headings
 @use 'sass:math';
+@use 'sass:map';
 
 @function h1($key: $h1) {
-  @return map-get($h1, $key);
+  @return map.get($h1, $key);
 }
 @function h2($key: $h2) {
-  @return map-get($h2, $key);
+  @return map.get($h2, $key);
 }
 @function h3($key: $h3) {
-  @return map-get($h3, $key);
+  @return map.get($h3, $key);
 }
 @function h4($key: $h4) {
-  @return map-get($h4, $key);
+  @return map.get($h4, $key);
 }
 @function h5($key: $h5) {
-  @return map-get($h5, $key);
+  @return map.get($h5, $key);
 }
 @function h6($key: $h6) {
-  @return map-get($h6, $key);
+  @return map.get($h6, $key);
 }
 
 //Preloader
 @function loader-colors($key: $loader-colors) {
-  @return map-get($loader-colors, $key);
+  @return map.get($loader-colors, $key);
 }
 
 //Menu
 @function menu($key: $menu) {
-  @return map-get($menu, $key);
+  @return map.get($menu, $key);
 }
 
 //Font Awesome

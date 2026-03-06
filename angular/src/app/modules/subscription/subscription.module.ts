@@ -16,16 +16,15 @@ import { SubscriptionStatusComponent } from './subscription-status/subscription-
 import { SubscriptionSuccessComponent } from './subscription-success/subscription-success.component';
 
 @NgModule({
-  declarations: [
+  imports: [
+    CommonModule,
+    FormsModule,
+    SubscriptionRoutingModule,
+    // Standalone components must be imported, not declared
     SubscriptionPageComponent,
     SubscriptionStatusComponent,
     SubscriptionSuccessComponent,
-  ],
-  imports: [
-    CommonModule,
-    FormsModule, // Add FormsModule
-    SubscriptionRoutingModule,
-    // Add Angular Material Modules
+    // Angular Material Modules
     MatCardModule,
     MatButtonModule,
     MatSlideToggleModule,

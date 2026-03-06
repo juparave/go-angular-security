@@ -1,4 +1,8 @@
 import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Store, select } from '@ngrx/store';
 import { Observable } from 'rxjs';
 import { Subscription } from 'src/app/models/subscription';
@@ -9,6 +13,8 @@ import { selectSubscription } from 'src/app/store/selectors/subscription.selecto
   selector: 'app-subscription-status',
   templateUrl: './subscription-status.component.html',
   styleUrls: ['./subscription-status.component.scss'],
+  standalone: true,
+  imports: [CommonModule, MatCardModule, MatIconModule, MatProgressSpinnerModule],
 })
 export class SubscriptionStatusComponent implements OnInit {
   // Observable for the subscription data from the store

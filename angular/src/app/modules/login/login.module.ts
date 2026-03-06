@@ -40,13 +40,7 @@ export const routes: Routes = [
 ];
 
 @NgModule({
-  declarations: [
-    LoginComponent,
-    ResetPasswordComponent,
-    RequestResetPasswordComponent,
-    LoginFormComponent,
-    SignUpComponent,
-  ],
+  declarations: [],
   imports: [
     CommonModule,
     FormsModule,
@@ -56,6 +50,12 @@ export const routes: Routes = [
 
     SharedModule,
     RouterModule.forChild(routes),
+
+    LoginComponent,
+    ResetPasswordComponent,
+    RequestResetPasswordComponent,
+    LoginFormComponent,
+    SignUpComponent,
   ],
 })
 export class LoginModule {}

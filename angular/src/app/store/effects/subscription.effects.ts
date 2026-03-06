@@ -82,7 +82,7 @@ export class GetSubscriptionEffect {
 
     // Process billing period data if available
     if (this.hasItemsData(response)) {
-      const item = response.items.data[0];
+      const item = response.items!.data[0];
       subscription.currentPeriodEnd = this.toDateFromTimestamp(item.current_period_end);
       subscription.currentPeriodStart = this.toDateFromTimestamp(item.current_period_start);
     } else {
@@ -113,7 +113,7 @@ export class GetSubscriptionEffect {
    * Helper method to check if response has items data
    */
   private hasItemsData(response: SubscriptionApiResponse): boolean {
-    return response.items?.data?.length > 0;
+    return (response.items?.data?.length ?? 0) > 0;
   }
 
   /**

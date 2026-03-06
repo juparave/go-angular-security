@@ -1,6 +1,6 @@
 @use 'sass:math';
-
-@import './mixins';
+@use 'sass:map';
+@use './mixins' as *;
 
 // Material palettes:
 // $mat-red, $mat-pink, $mat-purple, $mat-deep-purple, $mat-indigo, $mat-blue, $mat-light-blue, $mat-cyan, $mat-teal,
@@ -42,11 +42,11 @@ $main-palette: (
 );
 
 @function main-palette($key: $main-palette) {
-  @return map-get($main-palette, $key);
+  @return map.get($main-palette, $key);
 }
 
 @function main-palette-contrast($key: $main-palette) {
-  @return map-get(map-get($main-palette, contrast), $key);
+  @return map.get(map.get($main-palette, contrast), $key);
 }
 
 //Accent palette
@@ -84,11 +84,11 @@ $accent-palette: (
 );
 
 @function accent-palette($key: $accent-palette) {
-  @return map-get($accent-palette, $key);
+  @return map.get($accent-palette, $key);
 }
 
 @function accent-palette-contrast($key: $accent-palette) {
-  @return map-get(map-get($accent-palette, contrast), $key);
+  @return map.get(map.get($accent-palette, contrast), $key);
 }
 
 $success-color: #81c784;

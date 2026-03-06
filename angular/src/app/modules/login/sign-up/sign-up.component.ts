@@ -1,18 +1,44 @@
 import { Component, OnInit } from '@angular/core';
-import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import {
+  AbstractControl,
+  ReactiveFormsModule,
+  UntypedFormBuilder,
+  UntypedFormGroup,
+  Validators,
+} from '@angular/forms';
+import { RouterModule } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
 import { User } from 'src/app/models/user';
 import { MustMatch } from 'src/app/shared/validators/must-match.validator';
 import { registerAction } from 'src/app/store/actions/auth.actions';
 import { AppState } from 'src/app/store/interfaces/app-state';
-import { selectIsSubmiting, selectValidationErrors } from 'src/app/store/selectors/auth.selectors';
+import { selectIsSubmitting, selectValidationErrors } from 'src/app/store/selectors/auth.selectors';
 import { BackendErrors } from 'src/app/store/types/backend-errors.interface';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { BackendErrorMessagesModule } from 'src/app/shared/modules/backend-error-messages/backend-error-messages.module';
 
 @Component({
   selector: 'app-sign-up',
   templateUrl: './sign-up.component.html',
   styleUrls: ['./sign-up.component.scss'],
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    RouterModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatIconModule,
+    BackendErrorMessagesModule,
+  ],
 })
 export class SignUpComponent implements OnInit {
   form: UntypedFormGroup;
@@ -70,7 +96,7 @@ export class SignUpComponent implements OnInit {
   }
 
   private initializeValues() {
-    this.isSubmitting$ = this.store.select(selectIsSubmiting);
+    this.isSubmitting$ = this.store.select(selectIsSubmitting);
     this.backendErrors$ = this.store.select(selectValidationErrors);
   }
 

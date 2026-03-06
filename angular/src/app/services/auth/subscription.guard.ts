@@ -8,14 +8,10 @@ import {
 } from '@angular/router';
 // Import combineLatest and necessary operators
 import { Observable, map, filter, combineLatest } from 'rxjs';
-import { MemoizedSelector, Store } from '@ngrx/store';
-
-interface SubscriptionSelectorResult {
-  isLoading: boolean;
-  [key: string]: boolean | null | undefined;
-}
+import { MemoizedSelector, DefaultProjectorFn, Store } from '@ngrx/store';
 import { AppState } from 'src/app/store/interfaces/app-state';
-// Import the auth selector
+
+type SubscriptionSelectorResult = { isLoading: boolean } & Record<string, unknown>;
 import { selectIsLoggedIn } from 'src/app/store/selectors/auth.selectors';
 import {
   selectHasActiveTrial,
@@ -42,8 +38,8 @@ export class SubscriptionGuard {
    * @param selector The selector to use for subscription verification
    * @param redirectTo The route to redirect to if the subscription check fails
    */
-  createGuard(
-    selector: MemoizedSelector<AppState, SubscriptionSelectorResult>,
+  createGuard<T extends SubscriptionSelectorResult>(
+    selector: MemoizedSelector<AppState, T, DefaultProjectorFn<T>>,
     redirectTo: string = '/upgrade'
   ) {
     return (
