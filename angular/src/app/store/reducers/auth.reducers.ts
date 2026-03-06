@@ -1,6 +1,6 @@
 import { Action, createReducer, on } from '@ngrx/store';
 
-import { AuthState } from 'src/app/store/interfaces/auth-state';
+import { AuthState } from '@store/interfaces/auth-state';
 import {
   logoutAction,
   logoutFailureAction,
@@ -11,17 +11,17 @@ import {
   registerAction,
   registerFailureAction,
   registerSuccessAction,
-} from 'src/app/store/actions/auth.actions';
+} from '@store/actions/auth.actions';
 import {
   loginAction,
   loginFailureAction,
   loginSuccessAction,
-} from 'src/app/store/actions/auth.actions';
+} from '@store/actions/auth.actions';
 import {
   getCurrentUserAction,
   getCurrentUserFailureAction,
   getCurrentUserSuccessAction,
-} from 'src/app/store/actions/auth.actions';
+} from '@store/actions/auth.actions';
 
 const initialState: AuthState = {
   isSubmitting: false,

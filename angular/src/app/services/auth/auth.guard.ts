@@ -6,8 +6,8 @@ import {
   CanActivateFn,
 } from '@angular/router';
 
-import { select, Store } from '@ngrx/store';
-import { filter, map, Observable, tap } from 'rxjs';
+import { Store } from '@ngrx/store';
+import { map, Observable, tap, filter } from 'rxjs';
 import { AppState } from 'src/app/store/interfaces/app-state';
 import { selectIsLoggedIn } from 'src/app/store/selectors/auth.selectors';
 
@@ -26,10 +26,10 @@ export class AuthGuard {
       filter(s => !s.isLoading),
       tap((s) => {
         if (!s.isLoggedIn) {
-          this.router.navigate(['/login'], { queryParams: { returnUrl: state.url } })
+          this.router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
         }
       }),
-      map((s) => s.isLoggedIn ?? false)
+      map((state) => state.isLoggedIn ?? false)
     );
   }
 }

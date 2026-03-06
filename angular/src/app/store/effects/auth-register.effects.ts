@@ -5,7 +5,7 @@ import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { catchError, map, of, switchMap, tap } from 'rxjs';
 import { AuthService } from 'src/app/services/auth/auth.service';
 import { PersistanceService } from 'src/app/services/persistance.service';
-import { User } from 'src/app/model/user';
+import { User } from 'src/app/models/user';
 import {
   registerAction,
   registerSuccessAction,
@@ -21,13 +21,13 @@ export class RegisterEffect {
     private router: Router
   ) { }
 
-  register$ = createEffect(() =>
-    this.actions$.pipe(
+  register$ = createEffect(() => {
+    return this.actions$.pipe(
       ofType(registerAction),
       switchMap((action) => {
         return this.authService.register(action.request).pipe(
           map((currentUser: User) => {
-            this.persistanceService.set('accessToken', currentUser.accessToken);
+            this.persistanceService.set('token', currentUser.accessToken);
             this.persistanceService.set(
               'refreshToken',
               currentUser.refreshToken
@@ -44,17 +44,18 @@ export class RegisterEffect {
           })
         );
       })
-    )
-  );
+    );
+  });
 
   redirecAfterSubmit$ = createEffect(
-    () =>
-      this.actions$.pipe(
+    () => {
+      return this.actions$.pipe(
         ofType(registerSuccessAction),
         tap(() => {
           this.router.navigateByUrl('/app');
         })
-      ),
+      );
+    },
     // doesn't return an Observable, so we set dispatch to false
     { dispatch: false }
   );

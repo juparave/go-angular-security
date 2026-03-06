@@ -4,7 +4,7 @@ import { AuthState } from 'src/app/store/interfaces/auth-state';
 
 export const authFeatureSelector = (state: AppState): AuthState => state.auth;
 
-export const selectIsSubmiting = createSelector(
+export const selectIsSubmitting = createSelector(
   authFeatureSelector,
   (authState: AuthState) => authState.isSubmitting
 );
@@ -17,12 +17,14 @@ export const selectValidationErrors = createSelector(
 export const selectIsLoggedIn = createSelector(
   authFeatureSelector,
   // (authState: AuthState) => authState.isLoggedIn
+  // to avoid race condition with app.components' getCurrentUserAction, send `isLoading` flag too
   (authState: AuthState) => { return { isLoading: authState.isLoading, isLoggedIn: authState.isLoggedIn } }
 );
 
 export const selectIsAnonymous = createSelector(
   authFeatureSelector,
   // (authState: AuthState) => !(authState.isLoggedIn === true)
+  // to avoid race condition with app.components' getCurrentUserAction, send `isLoading` flag too
   (authState: AuthState) => { return { isLoading: authState.isLoading, isAnon: !(authState.isLoggedIn === true) } }
 );
 

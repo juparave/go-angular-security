@@ -1,0 +1,49 @@
+graph LR
+    %% User Actions section
+    Start((Start)) --> NavLogin["/login"]
+    NavLogin --> SubmitLogin[Submit Login Form]
+    Start --> NavSignUp["/login/sign-up"]
+    NavSignUp --> SubmitSignUp[Submit Sign Up Form]
+    
+    %% Application Flow section
+    NavLogin -- Request --> R_Login["/login"]
+    R_Login -- Guard Check --> G_UnAuth{UnAuthGuard}
+    G_UnAuth -- "Allowed (Not Logged In)" --> LoadLoginMod[Load LoginModule]
+    LoadLoginMod --> C_LoginComp[LoginComponent Container]
+    C_LoginComp -- Default Child Route --> R_LoginForm["/login/form"]
+    R_LoginForm -- Loads --> C_LoginFormComp[LoginFormComponent]
+    
+    NavSignUp -- Request --> R_SignUp["/login/sign-up"]
+    R_SignUp -- "Guard Check (at /login level)" --> G_UnAuth
+    C_LoginComp -- Child Route --> R_SignUpForm["/login/sign-up"]
+    R_SignUpForm -- Loads --> C_SignUpComp[SignUpComponent]
+    
+    SubmitLogin -- Success --> RedirectApp[Redirect to /app]
+    SubmitSignUp -- Success --> RedirectLogin[Redirect to /login/form]
+    
+    RedirectApp -- Request --> R_App["/app"]
+    R_App -- "Guard Check 1" --> G_Auth{AuthGuard}
+    G_Auth -- "Allowed (Logged In)" --> G_Sub{SubscriptionGuard}
+    G_Sub -- "Allowed (Has Subscription)" --> LoadAppMod[Load AppModule]
+    LoadAppMod -- Default Route --> C_Dashboard[DashboardComponent]
+    
+    G_UnAuth -- "Denied (Logged In)" --> RedirectApp
+    G_Auth -- "Denied (Not Logged In)" --> RedirectLoginDenied[Redirect to /login]
+    G_Sub -- "Denied (No Subscription)" --> RedirectSub[Redirect to /subscription]
+    
+    RedirectLogin -- Request --> R_LoginForm
+    RedirectLoginDenied -- Request --> R_Login
+    RedirectSub -- Request --> R_Subscription["/subscription"]
+    
+    %% Styling
+    classDef guard fill:#f9d,stroke:#a66,stroke-width:2px
+    classDef component fill:#dde,stroke:#669,stroke-width:1px
+    classDef route fill:#dfd,stroke:#696,stroke-width:1px
+    classDef action fill:#ffd,stroke:#996,stroke-width:1px
+    classDef module fill:#eee,stroke:#666,stroke-width:1px,stroke-dasharray:5 5
+    
+    class G_UnAuth,G_Auth,G_Sub guard
+    class C_LoginComp,C_LoginFormComp,C_SignUpComp,C_Dashboard component
+    class R_Login,R_LoginForm,R_SignUp,R_SignUpForm,R_App,R_Subscription route
+    class NavLogin,SubmitLogin,NavSignUp,SubmitSignUp,RedirectApp,RedirectLogin,RedirectLoginDenied,RedirectSub action
+    class LoadLoginMod,LoadAppMod module

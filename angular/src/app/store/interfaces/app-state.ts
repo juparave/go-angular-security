@@ -1,7 +1,7 @@
-import { Article } from 'src/app/model/article';
 import { AuthState } from './auth-state';
+import { SubscriptionState } from './subscription-state';
 
 export interface AppState {
-  readonly articles: Array<Article>;
   readonly auth: AuthState;
+  readonly subscription: SubscriptionState;
 }

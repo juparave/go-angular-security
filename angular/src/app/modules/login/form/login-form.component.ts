@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Store } from '@ngrx/store';
@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
 import { loginAction } from 'src/app/store/actions/auth.actions';
 import { AppState } from 'src/app/store/interfaces/app-state';
 import {
-  selectIsSubmiting,
+  selectIsSubmitting,
   selectValidationErrors,
 } from 'src/app/store/selectors/auth.selectors';
 import { BackendErrors } from 'src/app/store/types/backend-errors.interface';
@@ -23,6 +23,8 @@ export class LoginFormComponent implements OnInit {
   backendErrors$!: Observable<BackendErrors | null>;
   route = inject(ActivatedRoute);
 
+  hidePassword = true;
+
   constructor(private store: Store<AppState>, private fb: UntypedFormBuilder) {
     this.loginForm = this.fb.group({
       email: ['', Validators.required],
@@ -35,7 +37,7 @@ export class LoginFormComponent implements OnInit {
   }
 
   private initializeValues() {
-    this.isSubmitting$ = this.store.select(selectIsSubmiting);
+    this.isSubmitting$ = this.store.select(selectIsSubmitting);
     this.backendErrors$ = this.store.select(selectValidationErrors);
   }
 

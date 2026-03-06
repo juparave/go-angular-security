@@ -1,80 +1,61 @@
-<div class="login-wrapper" fxLayout="row" fxLayoutAlign="center center">
+<div class="login-wrapper">
   <mat-card appearance="outlined" class="box">
     <mat-card-header>
       <mat-card-title>Register</mat-card-title>
     </mat-card-header>
-    <form
-      [formGroup]="signUpForm"
-      (ngSubmit)="doRegister()"
-      class="example-form"
-    >
-      <app-backend-error-messages
-        *ngIf="backendErrors$ | async"
-        [backendErrors]="backendErrors$ | async"
-      ></app-backend-error-messages>
+    <form [formGroup]="form" (ngSubmit)="doRegister()" class="example-form">
+      <app-backend-error-messages *ngIf="backendErrors$ | async"
+        [backendErrors]="backendErrors$ | async"></app-backend-error-messages>
       <mat-card-content>
         <mat-form-field class="full-width">
-          <input
-            matInput
-            placeholder="First Name"
-            formControlName="firstName"
-          />
+          <input matInput placeholder="First Name" formControlName="firstName" />
         </mat-form-field>
         <mat-form-field class="full-width">
           <input matInput placeholder="Last Name" formControlName="lastName" />
         </mat-form-field>
         <mat-form-field class="full-width">
           <input matInput placeholder="Email" formControlName="email" />
-          <mat-error *ngIf="f['email'].errors">
-            <div *ngIf="f['email'].errors['required']">Email is required</div>
-            <div *ngIf="f['email'].errors['email']">Email must be valid</div>
-          </mat-error>
+          <mat-error>{{ errorMessages['email'] }} </mat-error>
         </mat-form-field>
         <mat-form-field class="full-width">
-          <input
-            matInput
-            type="password"
-            placeholder="Password"
-            formControlName="password"
-          />
-          <mat-error *ngIf="f['password'].errors">
-            <div *ngIf="f['password'].errors['required']">
-              Password is required
-            </div>
-            <div *ngIf="f['password'].errors['minlength']">
-              Password must be at least
-              {{ f["password"].errors["minlength"].requiredLength }}
-              characters long
-            </div>
-          </mat-error>
+          <input matInput
+                 [type]="hidePassword ? 'password' : 'text'"
+                 placeholder="Password"
+                 formControlName="password" />
+          <button mat-icon-button
+                  matSuffix
+                  type="button"
+                  (click)="hidePassword = !hidePassword"
+                  [attr.aria-label]="'Hide password'"
+                  [attr.aria-pressed]="hidePassword">
+            <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          <mat-error>{{ errorMessages['password'] }} </mat-error>
         </mat-form-field>
         <mat-form-field class="full-width">
-          <input
-            matInput
-            type="password"
-            placeholder="Confim Password"
-            formControlName="confirmPassword"
-          />
-          <mat-error *ngIf="f['confirmPassword'].errors">
-            <div *ngIf="f['confirmPassword'].errors['required']">
-              Confirm password is required
-            </div>
-            <div *ngIf="f['confirmPassword'].errors['mustMatch']">
-              Passwords must match
-            </div>
-          </mat-error>
+          <input matInput
+                 [type]="hideConfirmPassword ? 'password' : 'text'"
+                 placeholder="Confim Password"
+                 formControlName="confirmPassword" />
+          <button mat-icon-button
+                  matSuffix
+                  type="button"
+                  (click)="hideConfirmPassword = !hideConfirmPassword"
+                  [attr.aria-label]="'Hide confirm password'"
+                  [attr.aria-pressed]="hideConfirmPassword">
+            <mat-icon>{{ hideConfirmPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          <mat-error>{{ errorMessages['confirmPassword'] }} </mat-error>
         </mat-form-field>
+        <button mat-raised-button color="primary" class="btn-block">
+          Register
+        </button>
+        <div class="additional-info">
+          <a href="#" [routerLink]="['../', 'form']">Login</a>
+          <span class="divider"></span>
+          <a href="#" [routerLink]="['/login', 'request-reset-password']">Recuperar Contraseña</a>
+        </div>
       </mat-card-content>
-      <button mat-raised-button color="primary" class="btn-block">
-        Register
-      </button>
-      <div class="additional-info" fxLayout="row" fxLayoutAlign="space-between">
-        <a href="#" [routerLink]="['../', 'form']">Login</a>
-        <span class="divider"></span>
-        <a href="#" [routerLink]="['/login', 'request-reset-password']"
-          >Recuperar Contraseña</a
-        >
-      </div>
     </form>
   </mat-card>
 </div>

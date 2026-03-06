@@ -3,6 +3,7 @@ import { BackendErrors } from 'src/app/store/types/backend-errors.interface';
 
 @Component({
   selector: 'app-backend-error-messages',
+  standalone: false,
   styles: [],
   templateUrl: './backend-error-messages.component.html',
 })
@@ -11,16 +12,22 @@ export class BackendErrorMessagesComponent implements OnInit {
 
   errorMessages: string[] = [];
 
-  constructor() {}
+  constructor() { }
 
   ngOnInit(): void {
     if (this.backendErrors) {
-      this.errorMessages = Object.keys(this.backendErrors).map(
-        (name: string) => {
-          const messages = this.backendErrors![name].join(' ');
-          return `${name}: ${messages}`;
-        }
-      );
+      if (typeof this.backendErrors['error'] === 'string') {
+        // Handle single string error message
+        this.errorMessages = [this.backendErrors['error']];
+      } else {
+        // Handle object of arrays error message
+        this.errorMessages = Object.keys(this.backendErrors).flatMap(
+          (name: string) => {
+            const messages = this.backendErrors![name];
+            return messages.map(message => `${name}: ${message}`);
+          }
+        );
+      }
     } else {
       this.errorMessages = [];
     }

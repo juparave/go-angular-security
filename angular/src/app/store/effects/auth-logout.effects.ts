@@ -14,29 +14,30 @@ export class LogoutEffect {
     private actions$: Actions,
     private persistanceService: PersistanceService,
     private router: Router
-  ) {}
+  ) { }
 
-  logout$ = createEffect(() =>
-    this.actions$.pipe(
+  logout$ = createEffect(() => {
+    return this.actions$.pipe(
       ofType(logoutAction),
       map(() => {
         // clear token from persistanceService
-        this.persistanceService.remove('accessToken');
+        this.persistanceService.remove('token');
         this.persistanceService.remove('refreshToken');
 
         return logoutSuccessAction();
-      })
+      }),
     )
-  );
+  });
 
   redirecAfterLogoutSuccess$ = createEffect(
-    () =>
-      this.actions$.pipe(
+    () => {
+      return this.actions$.pipe(
         ofType(logoutSuccessAction),
         tap(() => {
           this.router.navigateByUrl('/login');
         })
-      ),
+      );
+    },
     // doesn't return an Observable, so we set dispatch to false
     { dispatch: false }
   );

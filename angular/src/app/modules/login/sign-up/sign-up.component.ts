@@ -7,7 +7,7 @@ import {
 } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
-import { User } from 'src/app/model/user';
+import { User } from 'src/app/models/user';
 import { MustMatch } from 'src/app/shared/validators/must-match.validator';
 import { registerAction } from 'src/app/store/actions/auth.actions';
 import { AppState } from 'src/app/store/interfaces/app-state';
@@ -23,12 +23,15 @@ import { BackendErrors } from 'src/app/store/types/backend-errors.interface';
   styleUrls: ['./sign-up.component.scss'],
 })
 export class SignUpComponent implements OnInit {
-  signUpForm: UntypedFormGroup;
+  form: UntypedFormGroup;
   isSubmitting$!: Observable<boolean>;
   backendErrors$!: Observable<BackendErrors | null>;
 
+  hidePassword = true;
+  hideConfirmPassword = true;
+
   constructor(private store: Store<AppState>, private fb: UntypedFormBuilder) {
-    this.signUpForm = this.fb.group(
+    this.form = this.fb.group(
       {
         firstName: [''],
         lastName: [''],
@@ -44,7 +47,27 @@ export class SignUpComponent implements OnInit {
 
   // convenience getter to access form fields
   get f(): { [key: string]: AbstractControl } {
-    return this.signUpForm.controls;
+    return this.form.controls;
+  }
+
+  get errorMessages(): { [key: string]: string } {
+    return {
+      email: this.f['email'].hasError('required')
+        ? 'Email is required'
+        : this.f['email'].hasError('email')
+          ? 'Email is invalid'
+          : '',
+      password: this.f['password'].hasError('required')
+        ? 'Password is required'
+        : this.f['password'].hasError('minlength')
+          ? 'Password must be at least 8 characters'
+          : '',
+      confirmPassword: this.f['confirmPassword'].hasError('required')
+        ? 'Confirm Password is required'
+        : this.f['confirmPassword'].hasError('mustMatch')
+          ? 'Passwords must match'
+          : '',
+    };
   }
 
   ngOnInit(): void {
@@ -57,9 +80,9 @@ export class SignUpComponent implements OnInit {
   }
 
   doRegister() {
-    if (this.signUpForm.valid) {
+    if (this.form.valid) {
       const request: User = {
-        ...this.signUpForm.value,
+        ...this.form.value,
       };
       this.store.dispatch(registerAction({ request }));
     }

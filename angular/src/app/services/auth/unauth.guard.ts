@@ -6,8 +6,8 @@ import {
   CanActivateFn,
 } from '@angular/router';
 
-import { select, Store } from '@ngrx/store';
-import { filter, map, Observable, tap } from 'rxjs';
+import { Store } from '@ngrx/store';
+import { Observable, tap, map, filter } from 'rxjs';
 import { AppState } from 'src/app/store/interfaces/app-state';
 import { selectIsAnonymous } from 'src/app/store/selectors/auth.selectors';
 
@@ -23,13 +23,13 @@ export class UnAuthGuard {
     state: RouterStateSnapshot
   ): Observable<boolean> {
     return this.store.select(selectIsAnonymous).pipe(
-      filter(s => !s.isLoading),
-      tap((s) => {
-        if (!s.isAnon) {
+      filter(state => !state.isLoading),
+      tap((state) => {
+        if (!state.isAnon) {
           this.router.navigateByUrl('/app');
         }
       }),
-      map((s) => s.isAnon ?? false)
+      map((state) => state.isAnon),
     );
   }
 }

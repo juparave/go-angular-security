@@ -1,0 +1,12 @@
+{
+    "App": {
+        "Name": "Go Angular Security",
+        "URL": "http://localhost:5000",
+        "Domain": "http://localhost:4200",
+        "Port": 5000,
+        "Mode": "development",
+        "Uploads": "./uploads",
+        "Assets": "./assets",
+        "Api": "http://localhost:5000",
+    }
+}
