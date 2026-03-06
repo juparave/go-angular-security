@@ -19,8 +19,10 @@ const (
 type SubscriptionTier string
 
 const (
-	TierFree SubscriptionTier = "free"
-	TierPro  SubscriptionTier = "pro"
+	TierFree       SubscriptionTier = "free"
+	TierBasic      SubscriptionTier = "basic"
+	TierPro        SubscriptionTier = "pro"
+	TierEnterprise SubscriptionTier = "enterprise"
 )
 
 // SubscriptionStatus represents the status of a subscription
