@@ -21,7 +21,7 @@ type AppConfig struct {
 	Domain      string `env:"APP_DOMAIN" json:"domain"`
 	UploadsPath string `env:"UPLOADS_PATH" json:"uploads_path"`
 	Log         *mylogger.MyLogger
-	MailChan    chan any        `json:"-"`
+	MailChan    chan any       `json:"-"`
 	Database    DatabaseConfig `json:"database"`
 	Email       EmailConfig
 	JWT         JWTConfig

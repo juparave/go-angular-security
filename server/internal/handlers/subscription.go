@@ -30,8 +30,16 @@ func GetCurrentSubscription(c *fiber.Ctx) error {
 	}
 
 	customerID := account.StripeCustomerID
+
+	// If no Stripe customer, return a virtual free-tier subscription
 	if customerID == "" {
-		return c.Status(http.StatusPaymentRequired).JSON(fiber.Map{"error": "No active subscription found"})
+		return c.JSON(fiber.Map{
+			"id":                   "free_" + account.ID,
+			"plan":                 string(account.PlanTier),
+			"status":               string(account.SubscriptionStatus),
+			"cancel_at_period_end": false,
+			"customer":             "",
+		})
 	}
 
 	stripe.Key = app.Stripe.SecretKey
@@ -47,7 +55,14 @@ func GetCurrentSubscription(c *fiber.Ctx) error {
 		return c.JSON(sub)
 	}
 
-	return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "No active subscription found"})
+	// Fallback: account exists with Stripe customer but no active Stripe subscription
+	return c.JSON(fiber.Map{
+		"id":                   "free_" + account.ID,
+		"plan":                 string(account.PlanTier),
+		"status":               string(account.SubscriptionStatus),
+		"cancel_at_period_end": false,
+		"customer":             customerID,
+	})
 }
 
 // CreateCheckoutSession creates a Stripe checkout session for subscription.

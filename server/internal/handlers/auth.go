@@ -103,13 +103,14 @@ func RegisterAccount(c *fiber.Ctx) error {
 		})
 	}
 
-	// Create account
+	// Create account with free tier active subscription
 	account := models.Account{
-		Name:         data[keyAccountName],
-		ContactEmail: data[keyEmail],
-		Status:       models.AccountStatusActive,
-		PlanTier:     models.TierFree,
-		MaxUsers:     1, // Free tier: 1 user
+		Name:               data[keyAccountName],
+		ContactEmail:       data[keyEmail],
+		Status:             models.AccountStatusActive,
+		PlanTier:           models.TierFree,
+		SubscriptionStatus: models.SubscriptionStatusActive,
+		MaxUsers:           1, // Free tier: 1 user
 	}
 
 	if err := masterDB.Create(&account).Error; err != nil {
