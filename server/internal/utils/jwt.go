@@ -11,6 +11,11 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
+const (
+	CookieJWT        = "jwt"
+	CookieRefreshJWT = "refreshjwt"
+)
+
 var jwtConfig struct {
 	secret          string
 	refreshSecret   string
@@ -108,7 +113,7 @@ func GetJWT(c *fiber.Ctx) string {
 	var jwtToken string
 
 	token := c.Get("Token")    // get value from headers
-	cookie := c.Cookies("jwt") // get value from cookie
+	cookie := c.Cookies(CookieJWT) // get value from cookie
 
 	if token != "" {
 		t := strings.Split(token, " ")

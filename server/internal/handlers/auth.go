@@ -305,7 +305,7 @@ func User(c *fiber.Ctx) error {
 // Logout handles user logout.
 func Logout(c *fiber.Ctx) error {
 	cookie := fiber.Cookie{
-		Name:     "jwt",
+		Name:     utils.CookieJWT,
 		Value:    "",
 		Expires:  time.Now().Add(-time.Hour),
 		HTTPOnly: true,
@@ -313,7 +313,7 @@ func Logout(c *fiber.Ctx) error {
 	c.Cookie(&cookie)
 
 	refreshCookie := fiber.Cookie{
-		Name:     "refreshjwt",
+		Name:     utils.CookieRefreshJWT,
 		Value:    "",
 		Expires:  time.Now().Add(-time.Hour),
 		HTTPOnly: true,
@@ -425,7 +425,7 @@ func UpdatePassword(c *fiber.Ctx) error {
 func setCookies(c *fiber.Ctx, user models.User) {
 	secure := app != nil && app.Mode == "production"
 	cookie := fiber.Cookie{
-		Name:     "jwt",
+		Name:     utils.CookieJWT,
 		Value:    user.AccessToken,
 		Expires:  time.Now().Add(utils.AccessTokenDuration()),
 		HTTPOnly: true,
@@ -435,7 +435,7 @@ func setCookies(c *fiber.Ctx, user models.User) {
 	c.Cookie(&cookie)
 
 	refreshCookie := fiber.Cookie{
-		Name:     "refreshjwt",
+		Name:     utils.CookieRefreshJWT,
 		Value:    user.RefreshToken,
 		Expires:  time.Now().Add(utils.RefreshTokenDuration()),
 		HTTPOnly: true,

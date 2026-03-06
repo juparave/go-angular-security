@@ -280,7 +280,7 @@ func TestUpdatePassword(t *testing.T) {
 			req := httptest.NewRequest("PUT", "/users/password", bytes.NewBuffer(bodyBytes))
 			req.Header.Set("Content-Type", "application/json")
 			if currentJwt != "" {
-				req.AddCookie(&http.Cookie{Name: "jwt", Value: currentJwt})
+				req.AddCookie(&http.Cookie{Name: utils.CookieJWT, Value: currentJwt})
 			}
 
 			resp, err := app.Test(req, -1)
@@ -485,7 +485,7 @@ func TestUpdateInfo(t *testing.T) {
 			req := httptest.NewRequest("PUT", "/users/info", bytes.NewBuffer(bodyBytes))
 			req.Header.Set("Content-Type", "application/json")
 			if currentJwt != "" {
-				req.AddCookie(&http.Cookie{Name: "jwt", Value: currentJwt})
+				req.AddCookie(&http.Cookie{Name: utils.CookieJWT, Value: currentJwt})
 			}
 
 			resp, err := app.Test(req, -1)
@@ -541,8 +541,8 @@ func TestLogout(t *testing.T) {
 
 	t.Run("successful logout", func(t *testing.T) {
 		req := httptest.NewRequest("POST", "/logout", nil)
-		req.AddCookie(&http.Cookie{Name: "jwt", Value: "dummytoken"})
-		req.AddCookie(&http.Cookie{Name: "refreshjwt", Value: "dummyrefreshtoken"})
+		req.AddCookie(&http.Cookie{Name: utils.CookieJWT, Value: "dummytoken"})
+		req.AddCookie(&http.Cookie{Name: utils.CookieRefreshJWT, Value: "dummyrefreshtoken"})
 
 		resp, err := app.Test(req, -1)
 		assert.NoError(t, err)
@@ -557,13 +557,13 @@ func TestLogout(t *testing.T) {
 		foundRefreshCookie := false
 
 		for _, cookie := range resp.Cookies() {
-			if cookie.Name == "jwt" {
+			if cookie.Name == utils.CookieJWT {
 				foundJwtCookie = true
 				assert.Equal(t, "", cookie.Value, "jwt cookie value should be empty")
 				assert.True(t, cookie.Expires.Before(time.Now()), "jwt cookie should be expired")
 				assert.True(t, cookie.HttpOnly, "jwt cookie should be HttpOnly")
 			}
-			if cookie.Name == "refreshjwt" {
+			if cookie.Name == utils.CookieRefreshJWT {
 				foundRefreshCookie = true
 				assert.Equal(t, "", cookie.Value, "refreshjwt cookie value should be empty")
 				assert.True(t, cookie.Expires.Before(time.Now()), "refreshjwt cookie should be expired")
@@ -681,7 +681,7 @@ func TestUser(t *testing.T) {
 
 			if tc.sendJWTAsCookie && activeJWT != "" {
 				cookie := new(fiber.Cookie)
-				cookie.Name = "jwt"
+				cookie.Name = utils.CookieJWT
 				cookie.Value = activeJWT
 				httpCookie := &http.Cookie{Name: cookie.Name, Value: cookie.Value}
 				req.AddCookie(httpCookie)
@@ -868,12 +868,12 @@ func TestRefreshToken(t *testing.T) {
 				foundJwtCookie := false
 				foundRefreshCookie := false
 				for _, cookie := range cookies {
-					if cookie.Name == "jwt" {
+					if cookie.Name == utils.CookieJWT {
 						foundJwtCookie = true
 						assert.NotEmpty(t, cookie.Value, "jwt cookie should not be empty for "+tc.name)
 						assert.True(t, cookie.HttpOnly, "jwt cookie should be HttpOnly for "+tc.name)
 					}
-					if cookie.Name == "refreshjwt" {
+					if cookie.Name == utils.CookieRefreshJWT {
 						foundRefreshCookie = true
 						assert.NotEmpty(t, cookie.Value, "refreshjwt cookie should not be empty for "+tc.name)
 						assert.True(t, cookie.HttpOnly, "refreshjwt cookie should be HttpOnly for "+tc.name)
