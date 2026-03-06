@@ -1,6 +1,7 @@
 {
     "App": {
         "Name": "Go Angular Security",
+        "Version": "0.1.0",
         "URL": "http://localhost:5000",
         "Domain": "http://localhost:4200",
         "Port": 5000,

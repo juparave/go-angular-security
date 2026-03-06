@@ -16,6 +16,7 @@ const configFileName = "config.json"
 // environment variables and/or a JSON file.
 type AppConfig struct {
 	Name        string `env:"APP_NAME" json:"name"`
+	Version     string `env:"APP_VERSION" json:"version"`
 	Mode        string `env:"APP_MODE" json:"mode"`
 	Port        int    `env:"APP_PORT" json:"port"`
 	Domain      string `env:"APP_DOMAIN" json:"domain"`
@@ -109,6 +110,11 @@ func GetAppConfig() *AppConfig {
 	}
 	if len(missing) > 0 {
 		log.Fatalf("Missing required configuration: %v", missing)
+	}
+
+	// 5. Set default version
+	if cfg.Version == "" {
+		cfg.Version = "0.1.0"
 	}
 
 	log.Println("Info: Configuration loaded successfully.")
