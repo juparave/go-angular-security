@@ -15,12 +15,11 @@ import { SubscriptionPageComponent } from './subscription-page/subscription-page
 import { SubscriptionStatusComponent } from './subscription-status/subscription-status.component';
 import { SubscriptionSuccessComponent } from './subscription-success/subscription-success.component';
 
-
 @NgModule({
   declarations: [
     SubscriptionPageComponent,
     SubscriptionStatusComponent,
-    SubscriptionSuccessComponent
+    SubscriptionSuccessComponent,
   ],
   imports: [
     CommonModule,
@@ -32,7 +31,7 @@ import { SubscriptionSuccessComponent } from './subscription-success/subscriptio
     MatSlideToggleModule,
     MatListModule,
     MatIconModule,
-    MatProgressSpinnerModule
-  ]
+    MatProgressSpinnerModule,
+  ],
 })
-export class SubscriptionModule { }
+export class SubscriptionModule {}

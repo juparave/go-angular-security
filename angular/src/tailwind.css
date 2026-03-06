@@ -1,0 +1,36 @@
+@import 'tailwindcss';
+@plugin 'daisyui';
+
+/* Configure DaisyUI themes */
+:root {
+  --daisyui-themes: cupcake, dark;
+}
+
+/* Custom theme configuration */
+@theme {
+  --default-font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --breakpoint-3xl: 1920px;
+
+  /* Custom colors that can be used throughout the app */
+  --color-primary: oklch(0.6 0.2 250);
+  --color-secondary: oklch(0.7 0.15 180);
+  --color-accent: oklch(0.65 0.2 40);
+}
+
+/* Base styles */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply antialiased;
+  }
+}
+
+/* Custom utility classes */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

@@ -1,4 +1,4 @@
-@import "variables";
+@import 'variables';
 
 $_module-rem: $module-rem;
 $_border-width: 1px;
@@ -6,27 +6,33 @@ $_shape: $shape;
 $_animation: $animation;
 
 $_types: (
-  default: (bg: main-palette(500),
+  default: (
+    bg: main-palette(500),
     color: main-palette-contrast(500),
     border-color: main-palette(500),
   ),
-  accent: (bg: accent-palette(500),
+  accent: (
+    bg: accent-palette(500),
     color: accent-palette-contrast(500),
     border-color: accent-palette(500),
   ),
-  success: (bg: $success-color,
+  success: (
+    bg: $success-color,
     color: $success-contrast,
     border-color: $success-color,
   ),
-  info: (bg: $info-color,
+  info: (
+    bg: $info-color,
     color: $info-contrast,
     border-color: $info-color,
   ),
-  warning: (bg: $warning-color,
+  warning: (
+    bg: $warning-color,
     color: $warning-contrast,
     border-color: $warning-color,
   ),
-  error: (bg: $error-color,
+  error: (
+    bg: $error-color,
     color: $error-contrast,
     border-color: $error-color,
   ),
@@ -61,7 +67,9 @@ $_types: (
     position: absolute;
     right: 0;
     top: 0;
-    transition: background 0.2s $_animation, color 0.2s $_animation;
+    transition:
+      background 0.2s $_animation,
+      color 0.2s $_animation;
     border: 0;
 
     .rtl & {
@@ -89,50 +97,48 @@ $_types: (
     font-size: 1.43em;
     line-height: 1;
     min-height: 100%;
-    padding: $_module-rem (
-      $_module-rem * 1.5
-    );
-}
+    padding: $_module-rem ($_module-rem * 1.5);
+  }
 
-@each $_type, $_color in $_types {
-  &.alert-#{$_type} {
-    background: map-get($_color, bg);
-    color: map-get($_color, color);
-    border-color: map-get($map: $_color, $key: border-color);
-    margin: 14px 0;
+  @each $_type, $_color in $_types {
+    &.alert-#{$_type} {
+      background: map-get($_color, bg);
+      color: map-get($_color, color);
+      border-color: map-get($map: $_color, $key: border-color);
+      margin: 14px 0;
 
-    &.outline {
-      background: transparent;
-      color: map-get($_color, bg);
+      &.outline {
+        background: transparent;
+        color: map-get($_color, bg);
+      }
     }
   }
-}
 
-&.with-before-icon {
-  padding-left: 0;
-
-  .rtl & {
-    padding-left: $_module-rem;
-    padding-right: 0;
-  }
-}
-
-&.with-after-icon {
-  padding-right: 0;
-
-  .rtl & {
+  &.with-before-icon {
     padding-left: 0;
-    padding-right: $_module-rem;
 
-    &.with-before-icon {
+    .rtl & {
+      padding-left: $_module-rem;
       padding-right: 0;
     }
   }
-}
 
-&:hover {
-  .close {
-    opacity: 1;
+  &.with-after-icon {
+    padding-right: 0;
+
+    .rtl & {
+      padding-left: 0;
+      padding-right: $_module-rem;
+
+      &.with-before-icon {
+        padding-right: 0;
+      }
+    }
   }
-}
+
+  &:hover {
+    .close {
+      opacity: 1;
+    }
+  }
 }

@@ -4,7 +4,8 @@
       <mat-card-title>Register</mat-card-title>
     </mat-card-header>
     <form [formGroup]="form" (ngSubmit)="doRegister()" class="example-form">
-      <app-backend-error-messages *ngIf="backendErrors$ | async"
+      <app-backend-error-messages
+        *ngIf="backendErrors$ | async"
         [backendErrors]="backendErrors$ | async"></app-backend-error-messages>
       <mat-card-content>
         <mat-form-field class="full-width">
@@ -18,38 +19,40 @@
           <mat-error>{{ errorMessages['email'] }} </mat-error>
         </mat-form-field>
         <mat-form-field class="full-width">
-          <input matInput
-                 [type]="hidePassword ? 'password' : 'text'"
-                 placeholder="Password"
-                 formControlName="password" />
-          <button mat-icon-button
-                  matSuffix
-                  type="button"
-                  (click)="hidePassword = !hidePassword"
-                  [attr.aria-label]="'Hide password'"
-                  [attr.aria-pressed]="hidePassword">
+          <input
+            matInput
+            [type]="hidePassword ? 'password' : 'text'"
+            placeholder="Password"
+            formControlName="password" />
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            (click)="hidePassword = !hidePassword"
+            [attr.aria-label]="'Hide password'"
+            [attr.aria-pressed]="hidePassword">
             <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
           </button>
           <mat-error>{{ errorMessages['password'] }} </mat-error>
         </mat-form-field>
         <mat-form-field class="full-width">
-          <input matInput
-                 [type]="hideConfirmPassword ? 'password' : 'text'"
-                 placeholder="Confim Password"
-                 formControlName="confirmPassword" />
-          <button mat-icon-button
-                  matSuffix
-                  type="button"
-                  (click)="hideConfirmPassword = !hideConfirmPassword"
-                  [attr.aria-label]="'Hide confirm password'"
-                  [attr.aria-pressed]="hideConfirmPassword">
+          <input
+            matInput
+            [type]="hideConfirmPassword ? 'password' : 'text'"
+            placeholder="Confim Password"
+            formControlName="confirmPassword" />
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            (click)="hideConfirmPassword = !hideConfirmPassword"
+            [attr.aria-label]="'Hide confirm password'"
+            [attr.aria-pressed]="hideConfirmPassword">
             <mat-icon>{{ hideConfirmPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
           </button>
           <mat-error>{{ errorMessages['confirmPassword'] }} </mat-error>
         </mat-form-field>
-        <button mat-raised-button color="primary" class="btn-block">
-          Register
-        </button>
+        <button mat-raised-button color="primary" class="btn-block">Register</button>
         <div class="additional-info">
           <a href="#" [routerLink]="['../', 'form']">Login</a>
           <span class="divider"></span>

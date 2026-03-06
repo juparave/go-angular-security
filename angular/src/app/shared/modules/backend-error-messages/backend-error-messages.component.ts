@@ -8,11 +8,11 @@ import { BackendErrors } from 'src/app/store/types/backend-errors.interface';
   templateUrl: './backend-error-messages.component.html',
 })
 export class BackendErrorMessagesComponent implements OnInit {
-  @Input('backendErrors') backendErrors!: BackendErrors | null;
+  @Input() backendErrors!: BackendErrors | null;
 
   errorMessages: string[] = [];
 
-  constructor() { }
+  constructor() {}
 
   ngOnInit(): void {
     if (this.backendErrors) {
@@ -21,12 +21,10 @@ export class BackendErrorMessagesComponent implements OnInit {
         this.errorMessages = [this.backendErrors['error']];
       } else {
         // Handle object of arrays error message
-        this.errorMessages = Object.keys(this.backendErrors).flatMap(
-          (name: string) => {
-            const messages = this.backendErrors![name];
-            return messages.map(message => `${name}: ${message}`);
-          }
-        );
+        this.errorMessages = Object.keys(this.backendErrors).flatMap((name: string) => {
+          const messages = this.backendErrors![name];
+          return messages.map((message) => `${name}: ${message}`);
+        });
       }
     } else {
       this.errorMessages = [];

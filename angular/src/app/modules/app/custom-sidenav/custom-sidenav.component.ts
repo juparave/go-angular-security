@@ -10,14 +10,13 @@ export type MenuItem = {
   icon: string;
   label: string;
   route?: string;
-}
-
+};
 
 @Component({
   selector: 'app-custom-sidenav',
   standalone: false,
   templateUrl: './custom-sidenav.component.html',
-  styleUrl: './custom-sidenav.component.scss'
+  styleUrl: './custom-sidenav.component.scss',
 })
 export class CustomSidenavComponent implements OnInit {
   @Output() closeSidenav = new EventEmitter<void>();
@@ -25,7 +24,7 @@ export class CustomSidenavComponent implements OnInit {
     this.sidenavCollapsed.set(value);
   }
   sidenavCollapsed = signal<boolean>(false);
-  profilePicSize = computed(() => this.sidenavCollapsed() ? '40' : '124');
+  profilePicSize = computed(() => (this.sidenavCollapsed() ? '40' : '124'));
   currentUser$!: Observable<User | null>;
 
   menuItems = signal<MenuItem[]>([
@@ -53,10 +52,10 @@ export class CustomSidenavComponent implements OnInit {
       label: 'Subscription',
       icon: 'subscriptions',
       route: '/subscription/status',
-    }
+    },
   ]);
 
-  constructor(private store: Store<AppState>) { }
+  constructor(private store: Store<AppState>) {}
 
   ngOnInit(): void {
     this.initializeValues();

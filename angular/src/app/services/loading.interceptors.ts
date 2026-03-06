@@ -1,4 +1,10 @@
-import { HttpContextToken, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http';
+import {
+  HttpContextToken,
+  HttpEvent,
+  HttpHandler,
+  HttpInterceptor,
+  HttpRequest,
+} from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { LoadingService } from './loading.service';
 import { Observable, finalize } from 'rxjs';
@@ -8,15 +14,10 @@ import { Observable, finalize } from 'rxjs';
 export const SkipLoading = new HttpContextToken<boolean>(() => false);
 
 @Injectable()
-export class LoadingInterceptor
-  implements HttpInterceptor {
-  constructor(private loadingService: LoadingService) {
-  }
+export class LoadingInterceptor implements HttpInterceptor {
+  constructor(private loadingService: LoadingService) {}
 
-  intercept(
-    req: HttpRequest<any>,
-    next: HttpHandler
-  ): Observable<HttpEvent<any>> {
+  intercept(req: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
     // Check for a custom attribute
     // to avoid showing loading spinner
     if (req.context.get(SkipLoading)) {

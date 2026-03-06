@@ -19,7 +19,7 @@ export class LoginEffect {
     private authService: AuthService,
     private persistanceService: PersistanceService,
     private router: Router
-  ) { }
+  ) {}
 
   login$ = createEffect(() => {
     return this.actions$.pipe(
@@ -28,21 +28,16 @@ export class LoginEffect {
         return this.authService.login(action.request).pipe(
           map((currentUser: User) => {
             this.persistanceService.set('token', currentUser.accessToken);
-            this.persistanceService.set(
-              'refreshToken',
-              currentUser.refreshToken
-            );
+            this.persistanceService.set('refreshToken', currentUser.refreshToken);
             return loginSuccessAction({ currentUser, returnUrl: action.returnUrl });
           }),
           catchError((errorResponse: HttpErrorResponse) => {
             // console.log(errorResponse);
-            return of(
-              loginFailureAction({ errors: errorResponse.error.errors })
-            );
+            return of(loginFailureAction({ errors: errorResponse.error.errors }));
           })
         );
       })
-    )
+    );
   });
 
   redirecAfterSubmit$ = createEffect(

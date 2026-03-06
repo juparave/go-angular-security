@@ -43,4 +43,4 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
     MatProgressBarModule,
   ],
 })
-export class SharedModule { }
+export class SharedModule {}

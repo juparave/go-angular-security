@@ -1,5 +1,5 @@
 import { inject } from '@angular/core';
-import { CanActivateFn, Router, UrlTree, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { CanActivateFn, Router, UrlTree } from '@angular/router';
 import { Observable, map, filter, combineLatest } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { AppState } from 'src/app/store/interfaces/app-state';
@@ -10,16 +10,13 @@ import { selectIsLoggedIn } from 'src/app/store/selectors/auth.selectors';
  * Guard to prevent users with an active subscription from accessing certain routes (e.g., /subscription).
  * Ensures both auth and subscription states are loaded before making a decision.
  */
-export const canActivateNoActiveSubscription: CanActivateFn = (
-  route: ActivatedRouteSnapshot,
-  state: RouterStateSnapshot
-): Observable<boolean | UrlTree> => {
+export const canActivateNoActiveSubscription: CanActivateFn = (): Observable<boolean | UrlTree> => {
   const store = inject(Store<AppState>);
   const router = inject(Router);
 
   return combineLatest([
     store.select(selectIsLoggedIn),
-    store.select(selectIsSubscriptionActive)
+    store.select(selectIsSubscriptionActive),
   ]).pipe(
     // Wait until both auth and subscription states are no longer loading
     filter(([authState, subState]) => !authState.isLoading && !subState.isLoading),

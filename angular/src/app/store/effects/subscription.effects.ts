@@ -4,12 +4,24 @@ import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Observable, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 
+interface SubscriptionApiResponse {
+  id: string;
+  plan: string;
+  status: string;
+  trial_start?: string | null;
+  trial_end?: string | null;
+  customer: string;
+  cancel_at_period_end: boolean;
+  canceled_at?: number | null;
+  items?: { data: { current_period_end: number; current_period_start: number }[] };
+}
+
 import { Subscription } from 'src/app/models/subscription';
 import { SubscriptionService } from 'src/app/services/subscription.service';
 import {
   getSubscriptionAction,
   getSubscriptionSuccessAction,
-  getSubscriptionFailureAction
+  getSubscriptionFailureAction,
 } from '../actions/subscription.actions';
 
 /**
@@ -20,7 +32,7 @@ export class GetSubscriptionEffect {
   constructor(
     private actions$: Actions,
     private subscriptionService: SubscriptionService
-  ) { }
+  ) {}
 
   /**
    * Main effect to fetch subscription data
@@ -30,7 +42,9 @@ export class GetSubscriptionEffect {
       ofType(getSubscriptionAction),
       switchMap(() =>
         this.subscriptionService.getSubscription().pipe(
-          map((response) => this.mapToSuccessAction(response)),
+          map((response) =>
+            this.mapToSuccessAction(response as unknown as SubscriptionApiResponse)
+          ),
           catchError((error) => this.handleError(error))
         )
       )
@@ -40,16 +54,18 @@ export class GetSubscriptionEffect {
   /**
    * Maps API response to success action with properly formatted subscription
    */
-  private mapToSuccessAction(response: any): ReturnType<typeof getSubscriptionSuccessAction> {
+  private mapToSuccessAction(
+    response: SubscriptionApiResponse
+  ): ReturnType<typeof getSubscriptionSuccessAction> {
     return getSubscriptionSuccessAction({
-      subscription: this.formatSubscription(response)
+      subscription: this.formatSubscription(response),
     });
   }
 
   /**
    * Transforms raw subscription response to domain model
    */
-  private formatSubscription(response: any): Subscription {
+  private formatSubscription(response: SubscriptionApiResponse): Subscription {
     const subscription: Subscription = {
       id: response.id,
       plan: response.plan,
@@ -79,20 +95,24 @@ export class GetSubscriptionEffect {
   /**
    * Handles HTTP errors and creates appropriate failure action
    */
-  private handleError(error: HttpErrorResponse): Observable<ReturnType<typeof getSubscriptionFailureAction>> {
+  private handleError(
+    error: HttpErrorResponse
+  ): Observable<ReturnType<typeof getSubscriptionFailureAction>> {
     console.error('Error fetching subscription:', error);
 
     const errorMessage = error.error?.message || 'An error occurred while fetching subscription.';
 
-    return of(getSubscriptionFailureAction({
-      errors: { subscription: [errorMessage] }
-    }));
+    return of(
+      getSubscriptionFailureAction({
+        errors: { subscription: [errorMessage] },
+      })
+    );
   }
 
   /**
    * Helper method to check if response has items data
    */
-  private hasItemsData(response: any): boolean {
+  private hasItemsData(response: SubscriptionApiResponse): boolean {
     return response.items?.data?.length > 0;
   }
 

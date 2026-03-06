@@ -1,0 +1,39 @@
+{{template "_header.html" .}}
+
+<div style="text-align: center; margin-bottom: 30px;">
+    <h1 style="margin: 0; color: #333; font-size: 24px;">You're Invited!</h1>
+</div>
+
+<p style="color: #555; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+    Hi{{if .FirstName}} {{.FirstName}}{{end}},
+</p>
+
+<p style="color: #555; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+    <strong>{{.InvitedBy}}</strong> has invited you to join <strong>{{.AccountName}}</strong> on {{.AppName}} as a <strong>{{.Role}}</strong>.
+</p>
+
+<div style="background-color: #f8f9fa; border-radius: 6px; padding: 20px; margin: 20px 0;">
+    <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">Your login details:</p>
+    <p style="margin: 0; color: #333; font-size: 16px;"><strong>Email:</strong> {{.Email}}</p>
+    {{if .TempPassword}}
+    <p style="margin: 10px 0 0 0; color: #333; font-size: 16px;"><strong>Temporary Password:</strong> <code style="background: #fff; padding: 4px 8px; border-radius: 4px;">{{.TempPassword}}</code></p>
+    {{end}}
+</div>
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="{{.LoginURL}}" style="background-color: #0066cc; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-size: 16px; display: inline-block;">
+        Accept Invitation
+    </a>
+</div>
+
+{{if .TempPassword}}
+<p style="color: #e74c3c; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
+    <strong>Important:</strong> Please change your password after logging in for the first time.
+</p>
+{{end}}
+
+<p style="color: #777; font-size: 14px; line-height: 1.6; margin-top: 30px;">
+    If you weren't expecting this invitation, you can safely ignore this email.
+</p>
+
+{{template "_footer.html" .}}

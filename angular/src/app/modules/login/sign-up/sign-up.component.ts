@@ -1,20 +1,12 @@
 import { Component, OnInit } from '@angular/core';
-import {
-  AbstractControl,
-  UntypedFormBuilder,
-  UntypedFormGroup,
-  Validators,
-} from '@angular/forms';
+import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
 import { User } from 'src/app/models/user';
 import { MustMatch } from 'src/app/shared/validators/must-match.validator';
 import { registerAction } from 'src/app/store/actions/auth.actions';
 import { AppState } from 'src/app/store/interfaces/app-state';
-import {
-  selectIsSubmiting,
-  selectValidationErrors,
-} from 'src/app/store/selectors/auth.selectors';
+import { selectIsSubmiting, selectValidationErrors } from 'src/app/store/selectors/auth.selectors';
 import { BackendErrors } from 'src/app/store/types/backend-errors.interface';
 
 @Component({
@@ -30,7 +22,10 @@ export class SignUpComponent implements OnInit {
   hidePassword = true;
   hideConfirmPassword = true;
 
-  constructor(private store: Store<AppState>, private fb: UntypedFormBuilder) {
+  constructor(
+    private store: Store<AppState>,
+    private fb: UntypedFormBuilder
+  ) {
     this.form = this.fb.group(
       {
         firstName: [''],

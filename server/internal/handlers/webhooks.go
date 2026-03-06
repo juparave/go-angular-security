@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 	"server/internal/database"
 	"server/internal/models"
@@ -15,213 +16,253 @@ import (
 	"github.com/stripe/stripe-go/v82/webhook"
 )
 
-func PostStripeWebhook(c *fiber.Ctx) error {
-	// Retrieve the raw body
+// HandleStripeWebhook handles incoming Stripe webhook events
+func HandleStripeWebhook(c *fiber.Ctx) error {
 	payload, err := io.ReadAll(bytes.NewReader(c.Body()))
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Error reading request body"})
 	}
 
-	// log payload
-	app.Log.Debug("Webhook payload:", string(payload))
-
-	// Get the Stripe-Signature header
 	signatureHeader := c.Get("Stripe-Signature")
-
-	// Get your webhook secret from an environment variable
 	endpointSecret := app.Stripe.WebhookSecret
 
-	// Verify the webhook signature
 	event, err := webhook.ConstructEvent(payload, signatureHeader, endpointSecret)
 	if err != nil {
-		app.Log.Error("Webhook signature verification failed:", err)
+		log.Printf("Webhook signature verification failed: %v", err)
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Invalid signature"})
 	}
 
-	// Handle the event
 	switch event.Type {
-	case "customer.subscription.created":
-		var subscription stripe.Subscription
-		err := json.Unmarshal(event.Data.Raw, &subscription)
-		if err != nil {
+	case "checkout.session.completed":
+		var session stripe.CheckoutSession
+		if err := json.Unmarshal(event.Data.Raw, &session); err != nil {
 			return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Error parsing webhook payload"})
 		}
-		// Handle subscription created
+		handleCheckoutSessionCompleted(session)
+
+	case "customer.subscription.created":
+		var subscription stripe.Subscription
+		if err := json.Unmarshal(event.Data.Raw, &subscription); err != nil {
+			return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Error parsing webhook payload"})
+		}
 		handleSubscriptionCreated(subscription)
 
 	case "customer.subscription.updated":
 		var subscription stripe.Subscription
-		err := json.Unmarshal(event.Data.Raw, &subscription)
-		if err != nil {
+		if err := json.Unmarshal(event.Data.Raw, &subscription); err != nil {
 			return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Error parsing webhook payload"})
 		}
-		// Handle subscription updated
 		handleSubscriptionUpdated(subscription)
 
 	case "customer.subscription.deleted":
 		var subscription stripe.Subscription
-		err := json.Unmarshal(event.Data.Raw, &subscription)
-		if err != nil {
+		if err := json.Unmarshal(event.Data.Raw, &subscription); err != nil {
 			return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Error parsing webhook payload"})
 		}
-		// Handle subscription deleted
 		handleSubscriptionDeleted(subscription)
 
-	// ... handle other event types as needed
+	case "invoice.paid":
+		var invoice stripe.Invoice
+		if err := json.Unmarshal(event.Data.Raw, &invoice); err != nil {
+			return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Error parsing webhook payload"})
+		}
+		handleInvoicePaid(invoice)
+
+	case "invoice.payment_failed":
+		var invoice stripe.Invoice
+		if err := json.Unmarshal(event.Data.Raw, &invoice); err != nil {
+			return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Error parsing webhook payload"})
+		}
+		handleInvoicePaymentFailed(invoice)
 
 	default:
-		return c.Status(http.StatusOK).SendString("Unhandled event type")
+		log.Printf("Unhandled event type: %s", event.Type)
 	}
 
 	return c.SendStatus(http.StatusOK)
 }
 
+// PostStripeWebhook is the legacy handler for backward compatibility
+func PostStripeWebhook(c *fiber.Ctx) error {
+	return HandleStripeWebhook(c)
+}
+
+func handleCheckoutSessionCompleted(session stripe.CheckoutSession) {
+	log.Printf("Checkout session completed: %s", session.ID)
+
+	customerID := session.Customer.ID
+	if customerID == "" {
+		log.Printf("Customer ID not found in checkout session")
+		return
+	}
+
+	masterDB := database.Manager.GetMasterDB()
+	var account models.Account
+	if err := masterDB.Where("stripe_customer_id = ?", customerID).First(&account).Error; err != nil {
+		log.Printf("Account not found with customer ID: %s", customerID)
+		return
+	}
+
+	// Update account with subscription info
+	subscriptionID := session.Subscription.ID
+	if subscriptionID != "" {
+		account.StripeSubscriptionID = subscriptionID
+		account.SubscriptionStatus = models.SubscriptionStatusActive
+		account.PlanTier = models.TierPro
+		account.MaxUsers = 10 // Pro tier
+
+		if err := masterDB.Save(&account).Error; err != nil {
+			log.Printf("Error updating account: %v", err)
+			return
+		}
+		log.Printf("Account %s upgraded to Pro", account.ID)
+	}
+}
+
 func handleSubscriptionCreated(subscription stripe.Subscription) {
-	// Implement your logic for handling a created subscription
-	app.Log.Info("Subscription created event received", "subscription_id", subscription.ID)
-	// Get customerID from stripe's subscription object
+	log.Printf("Subscription created: %s", subscription.ID)
+
 	customerID := subscription.Customer.ID
 	if customerID == "" {
-		app.Log.Error("Customer ID not found in subscription")
+		log.Printf("Customer ID not found in subscription")
 		return
 	}
 
-	// Get user linked with this `customerID`
-	var user models.User
-	if err := database.DB.
-		Preload("Subscription").
-		Where("stripe_customer_id = ?", customerID).
-		First(&user).Error; err != nil {
-		app.Log.Error("User not found with customer ID")
+	masterDB := database.Manager.GetMasterDB()
+	var account models.Account
+	if err := masterDB.Where("stripe_customer_id = ?", customerID).First(&account).Error; err != nil {
+		log.Printf("Account not found with customer ID: %s", customerID)
 		return
 	}
 
-	// Get the Stripe client
-	stripeClient := &client.API{}
-	stripeClient.Init(app.Stripe.SecretKey, nil)
+	// Update account subscription details
+	account.StripeSubscriptionID = subscription.ID
+	account.SubscriptionStatus = models.SubscriptionStatus(subscription.Status)
+	account.PlanTier = models.TierPro
+	account.MaxUsers = 10
 
-	// Retrieve the full subscription object from Stripe
-	fullSubscription, err := stripeClient.Subscriptions.Get(subscription.ID, nil)
-	if err != nil {
-		app.Log.Error("Error retrieving full subscription from Stripe:", "err", err)
+	// Get period end from subscription items
+	if len(subscription.Items.Data) > 0 {
+		periodEnd := time.Unix(subscription.Items.Data[0].CurrentPeriodEnd, 0)
+		account.CurrentPeriodEnd = &periodEnd
+	}
+
+	if err := masterDB.Save(&account).Error; err != nil {
+		log.Printf("Error updating account: %v", err)
 		return
 	}
 
-	var currentPeriodStart, currentPeriodEnd int64
-	if len(fullSubscription.Items.Data) > 0 {
-		currentPeriodStart = fullSubscription.Items.Data[0].CurrentPeriodStart
-		currentPeriodEnd = fullSubscription.Items.Data[0].CurrentPeriodEnd
-	}
-
-	// Create user subscription
-	user.Subscription = models.Subscription{
-		ID:                 subscription.ID,
-		CustomerID:         customerID,
-		PlanID:             fullSubscription.Items.Data[0].Plan.ID,
-		Status:             string(subscription.Status),
-		CurrentPeriodStart: time.Unix(currentPeriodStart, 0),
-		CurrentPeriodEnd:   time.Unix(currentPeriodEnd, 0),
-		CancelAtPeriodEnd:  subscription.CancelAtPeriodEnd,
-	}
-
-	// Persist subscription in database
-	if err := database.DB.Save(&user.Subscription).Error; err != nil {
-		app.Log.Error("Error persisting subscription in database:", "err", err)
-		return
-	}
-
-	// Persist user in database
-	// if err := database.DB.Save(&user); err != nil {
-	// 	app.Log.Error("Error persisting user in database:", "err", err)
-	// 	return
-	// }
-
-	app.Log.Info("Subscription created successfully")
-
+	log.Printf("Subscription created for account %s", account.ID)
 }
 
 func handleSubscriptionUpdated(subscription stripe.Subscription) {
+	log.Printf("Subscription updated: %s", subscription.ID)
+
 	customerID := subscription.Customer.ID
 	if customerID == "" {
-		app.Log.Error("Customer ID not found in subscription")
+		log.Printf("Customer ID not found in subscription")
 		return
 	}
 
-	// Find the user by Stripe Customer ID and preload their subscription
-	var user models.User
-	if err := database.DB.
-		Preload("Subscription").
-		Where("stripe_customer_id = ?", customerID).
-		First(&user).Error; err != nil {
-		app.Log.Error("User not found with customer ID")
+	masterDB := database.Manager.GetMasterDB()
+	var account models.Account
+	if err := masterDB.Where("stripe_customer_id = ?", customerID).First(&account).Error; err != nil {
+		log.Printf("Account not found with customer ID: %s", customerID)
 		return
 	}
 
-	// Get the Stripe client
-	stripeClient := &client.API{}
-	stripeClient.Init(app.Stripe.SecretKey, nil)
+	account.SubscriptionStatus = models.SubscriptionStatus(subscription.Status)
+	account.CancelAtPeriodEnd = subscription.CancelAtPeriodEnd
 
-	// Retrieve the full subscription object from Stripe
-	fullSubscription, err := stripeClient.Subscriptions.Get(subscription.ID, nil)
-	if err != nil {
-		app.Log.Error("Error retrieving full subscription from Stripe:", "err", err)
+	// Get period end from subscription items
+	if len(subscription.Items.Data) > 0 {
+		endTime := time.Unix(subscription.Items.Data[0].CurrentPeriodEnd, 0)
+		account.CurrentPeriodEnd = &endTime
+	}
+
+	if err := masterDB.Save(&account).Error; err != nil {
+		log.Printf("Error updating account: %v", err)
 		return
 	}
 
-	var currentPeriodStart, currentPeriodEnd int64
-	if len(fullSubscription.Items.Data) > 0 {
-		currentPeriodStart = fullSubscription.Items.Data[0].CurrentPeriodStart
-		currentPeriodEnd = fullSubscription.Items.Data[0].CurrentPeriodEnd
-	}
-
-	// Update the user's subscription fields
-	sub := &user.Subscription
-	sub.PlanID = fullSubscription.Items.Data[0].Plan.ID
-	sub.Status = string(subscription.Status)
-	sub.CurrentPeriodStart = time.Unix(currentPeriodStart, 0)
-	sub.CurrentPeriodEnd = time.Unix(currentPeriodEnd, 0)
-	sub.CancelAtPeriodEnd = subscription.CancelAtPeriodEnd
-
-	// Persist the updated subscription in the database
-	if err := database.DB.Save(sub).Error; err != nil {
-		app.Log.Error("Error updating subscription in database:", "err", err)
-		return
-	}
-
-	app.Log.Info("Subscription updated successfully")
+	log.Printf("Subscription updated for account %s", account.ID)
 }
 
 func handleSubscriptionDeleted(subscription stripe.Subscription) {
+	log.Printf("Subscription deleted: %s", subscription.ID)
+
 	customerID := subscription.Customer.ID
 	if customerID == "" {
-		app.Log.Error("Customer ID not found in subscription")
+		log.Printf("Customer ID not found in subscription")
 		return
 	}
 
-	// Find the user by Stripe Customer ID and preload their subscription
-	var user models.User
-	if err := database.DB.
-		Preload("Subscription").
-		Where("stripe_customer_id = ?", customerID).
-		First(&user).Error; err != nil {
-		app.Log.Error("User not found with customer ID")
+	masterDB := database.Manager.GetMasterDB()
+	var account models.Account
+	if err := masterDB.Where("stripe_customer_id = ?", customerID).First(&account).Error; err != nil {
+		log.Printf("Account not found with customer ID: %s", customerID)
 		return
 	}
 
-	// Mark the subscription as canceled in the database
-	sub := &user.Subscription
-	sub.Status = string(subscription.Status)
-	sub.CancelAtPeriodEnd = subscription.CancelAtPeriodEnd
-	if subscription.CanceledAt != 0 {
-		canceledAt := time.Unix(subscription.CanceledAt, 0)
-		sub.CanceledAt = &canceledAt
-	}
+	// Downgrade to free tier
+	account.StripeSubscriptionID = ""
+	account.SubscriptionStatus = models.SubscriptionStatusCanceled
+	account.PlanTier = models.TierFree
+	account.MaxUsers = 1
+	account.CancelAtPeriodEnd = false
 
-	// Persist the updated subscription in the database
-	if err := database.DB.Save(sub).Error; err != nil {
-		app.Log.Error("Error updating subscription in database:", "err", err)
+	if err := masterDB.Save(&account).Error; err != nil {
+		log.Printf("Error updating account: %v", err)
 		return
 	}
 
-	app.Log.Info("Subscription deleted/canceled successfully")
+	log.Printf("Subscription canceled for account %s, downgraded to free", account.ID)
+}
+
+func handleInvoicePaid(invoice stripe.Invoice) {
+	log.Printf("Invoice paid: %s", invoice.ID)
+
+	customerID := invoice.Customer.ID
+	if customerID == "" {
+		return
+	}
+
+	masterDB := database.Manager.GetMasterDB()
+	var account models.Account
+	if err := masterDB.Where("stripe_customer_id = ?", customerID).First(&account).Error; err != nil {
+		return
+	}
+
+	// Update period end if available
+	if invoice.PeriodEnd > 0 {
+		endTime := time.Unix(invoice.PeriodEnd, 0)
+		account.CurrentPeriodEnd = &endTime
+		masterDB.Save(&account)
+	}
+}
+
+func handleInvoicePaymentFailed(invoice stripe.Invoice) {
+	log.Printf("Invoice payment failed: %s", invoice.ID)
+
+	customerID := invoice.Customer.ID
+	if customerID == "" {
+		return
+	}
+
+	masterDB := database.Manager.GetMasterDB()
+	var account models.Account
+	if err := masterDB.Where("stripe_customer_id = ?", customerID).First(&account).Error; err != nil {
+		return
+	}
+
+	// Mark subscription as past due
+	account.SubscriptionStatus = models.SubscriptionStatusPastDue
+	masterDB.Save(&account)
+}
+
+// getStripeClient returns a Stripe client initialized with the app's secret key
+func getStripeClient() *client.API {
+	stripeClient := &client.API{}
+	stripeClient.Init(app.Stripe.SecretKey, nil)
+	return stripeClient
 }

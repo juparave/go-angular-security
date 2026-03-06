@@ -16,14 +16,14 @@ import { selectIsLoggedIn } from 'src/app/store/selectors/auth.selectors';
   providedIn: 'root',
 })
 export class AuthGuard {
-  constructor(private store: Store<AppState>, public router: Router) { }
+  constructor(
+    private store: Store<AppState>,
+    public router: Router
+  ) {}
 
-  canActivate(
-    route: ActivatedRouteSnapshot,
-    state: RouterStateSnapshot
-  ): Observable<boolean> {
+  canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> {
     return this.store.select(selectIsLoggedIn).pipe(
-      filter(s => !s.isLoading),
+      filter((s) => !s.isLoading),
       tap((s) => {
         if (!s.isLoggedIn) {
           this.router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
@@ -34,6 +34,9 @@ export class AuthGuard {
   }
 }
 
-export const canActivateAuth: CanActivateFn = (route: ActivatedRouteSnapshot, state: RouterStateSnapshot) => {
+export const canActivateAuth: CanActivateFn = (
+  route: ActivatedRouteSnapshot,
+  state: RouterStateSnapshot
+) => {
   return inject(AuthGuard).canActivate(route, state);
 };

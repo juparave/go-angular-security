@@ -16,24 +16,27 @@ import { selectIsAnonymous } from 'src/app/store/selectors/auth.selectors';
   providedIn: 'root',
 })
 export class UnAuthGuard {
-  constructor(private store: Store<AppState>, public router: Router) { }
+  constructor(
+    private store: Store<AppState>,
+    public router: Router
+  ) {}
 
-  canActivate(
-    route: ActivatedRouteSnapshot,
-    state: RouterStateSnapshot
-  ): Observable<boolean> {
+  canActivate(_route: ActivatedRouteSnapshot, _state: RouterStateSnapshot): Observable<boolean> {
     return this.store.select(selectIsAnonymous).pipe(
-      filter(state => !state.isLoading),
+      filter((state) => !state.isLoading),
       tap((state) => {
         if (!state.isAnon) {
           this.router.navigateByUrl('/app');
         }
       }),
-      map((state) => state.isAnon),
+      map((state) => state.isAnon)
     );
   }
 }
 
-export const canActivateAnon: CanActivateFn = (route: ActivatedRouteSnapshot, state: RouterStateSnapshot) => {
-  return inject(UnAuthGuard).canActivate(route, state);
+export const canActivateAnon: CanActivateFn = (
+  _route: ActivatedRouteSnapshot,
+  _state: RouterStateSnapshot
+) => {
+  return inject(UnAuthGuard).canActivate(_route, _state);
 };

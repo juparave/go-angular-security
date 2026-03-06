@@ -7,10 +7,12 @@ export const selectSubscriptionState = (state: AppState): SubscriptionState => s
 
 export const selectSubscription = createSelector(
   selectSubscriptionState,
-  (state: SubscriptionState): { subscription: Subscription | null; isLoading: boolean; url?: string | null } => ({
+  (
+    state: SubscriptionState
+  ): { subscription: Subscription | null; isLoading: boolean; url?: string | null } => ({
     subscription: state.subscription,
     isLoading: state.isLoading,
-    url: state.redirectUrl
+    url: state.redirectUrl,
   })
 );
 
@@ -31,16 +33,11 @@ export const selectSubscriptionErrors = createSelector(
 
 // Select if the subscription has a specific plan
 export const selectHasSubscriptionPlan = (plans: string[]) =>
-  createSelector(
-    selectSubscription,
-    (state): { hasPlan: boolean; isLoading: boolean } => ({
-      hasPlan: !!state.subscription && (
-        plans.length === 0 ||
-        plans.includes(state.subscription.plan)
-      ),
-      isLoading: state.isLoading
-    })
-  );
+  createSelector(selectSubscription, (state): { hasPlan: boolean; isLoading: boolean } => ({
+    hasPlan:
+      !!state.subscription && (plans.length === 0 || plans.includes(state.subscription.plan)),
+    isLoading: state.isLoading,
+  }));
 
 // Select if the subscription is active
 export const selectIsSubscriptionActive = createSelector(
@@ -48,19 +45,19 @@ export const selectIsSubscriptionActive = createSelector(
   (state): { isActive: boolean; isLoading: boolean } => {
     const subscription = state.subscription;
 
-    const isActive = !!subscription && (
-      subscription.status === 'active' ||
-      subscription.status === 'trialing' ||
-      (subscription.status === 'canceled' && !subscription.cancelAtPeriodEnd) ||
-      (subscription.status === 'canceled' &&
-        subscription.cancelAtPeriodEnd &&
-        subscription.currentPeriodEnd &&
-        new Date() < new Date(subscription.currentPeriodEnd))
-    );
+    const isActive =
+      !!subscription &&
+      (subscription.status === 'active' ||
+        subscription.status === 'trialing' ||
+        (subscription.status === 'canceled' && !subscription.cancelAtPeriodEnd) ||
+        (subscription.status === 'canceled' &&
+          subscription.cancelAtPeriodEnd &&
+          subscription.currentPeriodEnd &&
+          new Date() < new Date(subscription.currentPeriodEnd)));
 
     return {
       isActive: isActive ?? false,
-      isLoading: state.isLoading
+      isLoading: state.isLoading,
     };
   }
 );
@@ -71,18 +68,18 @@ export const selectHasActiveTrial = createSelector(
   (state): { hasActiveTrial: boolean; isLoading: boolean } => {
     const subscription = state.subscription;
 
-    const hasActiveTrial = !!subscription &&
-      subscription.plan === 'trial' && (
-        subscription.status === 'active' ||
+    const hasActiveTrial =
+      !!subscription &&
+      subscription.plan === 'trial' &&
+      (subscription.status === 'active' ||
         subscription.status === 'trialing' ||
         (subscription.status === 'canceled' &&
           subscription.currentPeriodEnd &&
-          new Date() < new Date(subscription.currentPeriodEnd))
-      );
+          new Date() < new Date(subscription.currentPeriodEnd)));
 
     return {
       hasActiveTrial: hasActiveTrial ?? false,
-      isLoading: state.isLoading
+      isLoading: state.isLoading,
     };
   }
 );
@@ -92,17 +89,17 @@ export const selectHasActiveBasic = createSelector(
   (state): { hasActiveBasic: boolean; isLoading: boolean } => {
     const subscription = state.subscription;
 
-    const hasActiveBasic = !!subscription &&
-      subscription.plan === 'basic' && (
-        subscription.status === 'active' ||
+    const hasActiveBasic =
+      !!subscription &&
+      subscription.plan === 'basic' &&
+      (subscription.status === 'active' ||
         (subscription.status === 'canceled' &&
           subscription.currentPeriodEnd &&
-          new Date() < new Date(subscription.currentPeriodEnd))
-      );
+          new Date() < new Date(subscription.currentPeriodEnd)));
 
     return {
       hasActiveBasic: hasActiveBasic ?? false,
-      isLoading: state.isLoading
+      isLoading: state.isLoading,
     };
   }
 );
@@ -112,17 +109,17 @@ export const selectHasActivePro = createSelector(
   (state): { hasActivePro: boolean; isLoading: boolean } => {
     const subscription = state.subscription;
 
-    const hasActivePro = !!subscription &&
-      subscription.plan === 'pro' && (
-        subscription.status === 'active' ||
+    const hasActivePro =
+      !!subscription &&
+      subscription.plan === 'pro' &&
+      (subscription.status === 'active' ||
         (subscription.status === 'canceled' &&
           subscription.currentPeriodEnd &&
-          new Date() < new Date(subscription.currentPeriodEnd))
-      );
+          new Date() < new Date(subscription.currentPeriodEnd)));
 
     return {
       hasActivePro: hasActivePro ?? false,
-      isLoading: state.isLoading
+      isLoading: state.isLoading,
     };
   }
 );
@@ -132,17 +129,17 @@ export const selectHasActivePaid = createSelector(
   (state): { hasActivePaid: boolean; isLoading: boolean } => {
     const subscription = state.subscription;
 
-    const hasActivePaid = !!subscription &&
-      (subscription.plan === 'basic' || subscription.plan === 'pro') && (
-        subscription.status === 'active' ||
+    const hasActivePaid =
+      !!subscription &&
+      (subscription.plan === 'basic' || subscription.plan === 'pro') &&
+      (subscription.status === 'active' ||
         (subscription.status === 'canceled' &&
           subscription.currentPeriodEnd &&
-          new Date() < new Date(subscription.currentPeriodEnd))
-      );
+          new Date() < new Date(subscription.currentPeriodEnd)));
 
     return {
       hasActivePaid: hasActivePaid ?? false,
-      isLoading: state.isLoading
+      isLoading: state.isLoading,
     };
   }
 );

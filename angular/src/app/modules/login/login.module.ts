@@ -58,4 +58,4 @@ export const routes: Routes = [
     RouterModule.forChild(routes),
   ],
 })
-export class LoginModule { }
+export class LoginModule {}

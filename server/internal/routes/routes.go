@@ -10,27 +10,58 @@ import (
 // Setup sets up the API routes.
 // It registers public and authenticated routes using the Fiber framework.
 func Setup(app fiber.Router) {
-	// Public endpoints: accessible without authentication.
-	app.Post("/register", handlers.Register) // Registers a new user.
-	app.Post("/login", handlers.Login)       // Logs in an existing user.
+	// ===================
+	// Public endpoints
+	// ===================
 
-	// Protected endpoints: require authentication.
-	app.Use(middleware.IsAuthenticated) // Applies authentication middleware.
+	// Authentication (public)
+	app.Post("/register", handlers.Register)                      // Legacy registration
+	app.Post("/register-account", handlers.RegisterAccount)       // Self-service account registration
+	app.Post("/login", handlers.Login)
+	app.Post("/refresh-token", handlers.RefreshToken)
 
-	app.Put("/users/info", handlers.UpdateInfo)         // Updates user information.
-	app.Put("/users/password", handlers.UpdatePassword) // Updates user password.
+	// Password reset (public)
+	app.Post("/request-password-reset", handlers.RequestPasswordReset)
+	app.Post("/reset-password", handlers.ResetPassword)
 
-	app.Post("/logout", handlers.Logout) // Logs out the current user.
-	app.Get("/user", handlers.User)      // Retrieves information about the current user.
+	// Webhooks (public, but verified by Stripe signature)
+	app.Post("/webhooks/stripe", handlers.HandleStripeWebhook)
 
-	// Subscription endpoints:
-	app.Get("/subscriptions/current", handlers.GetCurrentSubscription)
-	app.Post("/subscriptions/create-checkout-session", handlers.CreateCheckoutSession) // Creates a Stripe checkout session
-	app.Patch("/subscriptions/:id", handlers.PatchSubscription)
-	app.Post("/subscriptions/:id/cancel", handlers.PostCancelSubscription)
-	app.Post("/subscriptions/:id/reactivate", handlers.PostReactivateSubscription)
-	app.Post("/subscriptions/:id/change-plan", handlers.PostChangeSubscription)
+	// ===================
+	// Protected endpoints
+	// ===================
+	app.Use(middleware.IsAuthenticated)
 
-	// Serve static files from the uploads directory.
+	// User profile
+	app.Get("/user", handlers.User)
+	app.Post("/logout", handlers.Logout)
+	app.Put("/users/info", handlers.UpdateInfo)
+	app.Put("/users/password", handlers.UpdatePassword)
+
+	// Change password (authenticated, requires current password)
+	app.Post("/change-password", handlers.ChangePassword)
+
+	// ===================
+	// Team management (requires account)
+	// ===================
+	app.Get("/team", middleware.RequireAccount, handlers.GetTeamMembers)
+	app.Post("/team", middleware.RequireEditor(), handlers.InviteTeamMember)
+	app.Put("/team/:id", middleware.RequireEditor(), handlers.UpdateTeamMember)
+	app.Delete("/team/:id", middleware.RequireAdmin(), handlers.DeleteTeamMember)
+	app.Post("/team/:id/resend", middleware.RequireEditor(), handlers.ResendInvitation)
+
+	// ===================
+	// Subscriptions (requires account)
+	// ===================
+	app.Get("/subscriptions/current", middleware.RequireAccount, handlers.GetCurrentSubscription)
+	app.Post("/subscriptions/create-checkout-session", middleware.RequireAccount, handlers.CreateCheckoutSession)
+	app.Patch("/subscriptions/:id", middleware.RequireAccount, handlers.PatchSubscription)
+	app.Post("/subscriptions/:id/cancel", middleware.RequireAccount, handlers.PostCancelSubscription)
+	app.Post("/subscriptions/:id/reactivate", middleware.RequireAccount, handlers.PostReactivateSubscription)
+	app.Post("/subscriptions/:id/change-plan", middleware.RequireAccount, handlers.PostChangeSubscription)
+
+	// ===================
+	// Static files
+	// ===================
 	app.Static("/uploads", "./uploads")
 }

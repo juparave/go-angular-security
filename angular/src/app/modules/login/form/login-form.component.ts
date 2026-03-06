@@ -5,10 +5,7 @@ import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
 import { loginAction } from 'src/app/store/actions/auth.actions';
 import { AppState } from 'src/app/store/interfaces/app-state';
-import {
-  selectIsSubmitting,
-  selectValidationErrors,
-} from 'src/app/store/selectors/auth.selectors';
+import { selectIsSubmitting, selectValidationErrors } from 'src/app/store/selectors/auth.selectors';
 import { BackendErrors } from 'src/app/store/types/backend-errors.interface';
 import { LoginRequest } from 'src/app/store/types/login-request.interface';
 
@@ -25,7 +22,10 @@ export class LoginFormComponent implements OnInit {
 
   hidePassword = true;
 
-  constructor(private store: Store<AppState>, private fb: UntypedFormBuilder) {
+  constructor(
+    private store: Store<AppState>,
+    private fb: UntypedFormBuilder
+  ) {
     this.loginForm = this.fb.group({
       email: ['', Validators.required],
       password: ['', Validators.required],

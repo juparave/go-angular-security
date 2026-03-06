@@ -15,7 +15,7 @@ import {
   reactivateSubscriptionFailureAction,
   changePlanAction,
   changePlanSuccessAction,
-  changePlanFailureAction
+  changePlanFailureAction,
 } from '../actions/subscription.actions';
 
 const initialState: SubscriptionState = {
@@ -23,7 +23,7 @@ const initialState: SubscriptionState = {
   isLoading: false,
   isUpdating: false,
   validationErrors: null,
-  redirectUrl: null
+  redirectUrl: null,
 };
 
 export const subscriptionReducer = createReducer(
@@ -35,7 +35,7 @@ export const subscriptionReducer = createReducer(
     (state): SubscriptionState => ({
       ...state,
       isLoading: true,
-      validationErrors: null
+      validationErrors: null,
     })
   ),
   on(
@@ -43,7 +43,7 @@ export const subscriptionReducer = createReducer(
     (state, action): SubscriptionState => ({
       ...state,
       isLoading: false,
-      subscription: action.subscription
+      subscription: action.subscription,
     })
   ),
   on(
@@ -51,7 +51,7 @@ export const subscriptionReducer = createReducer(
     (state, action): SubscriptionState => ({
       ...state,
       isLoading: false,
-      validationErrors: action.errors
+      validationErrors: action.errors,
     })
   ),
 
@@ -61,7 +61,7 @@ export const subscriptionReducer = createReducer(
     (state): SubscriptionState => ({
       ...state,
       isUpdating: true,
-      validationErrors: null
+      validationErrors: null,
     })
   ),
   on(
@@ -69,7 +69,7 @@ export const subscriptionReducer = createReducer(
     (state, action): SubscriptionState => ({
       ...state,
       isUpdating: false,
-      subscription: action.subscription
+      subscription: action.subscription,
     })
   ),
   on(
@@ -77,7 +77,7 @@ export const subscriptionReducer = createReducer(
     (state, action): SubscriptionState => ({
       ...state,
       isUpdating: false,
-      validationErrors: action.errors
+      validationErrors: action.errors,
     })
   ),
 
@@ -87,7 +87,7 @@ export const subscriptionReducer = createReducer(
     (state): SubscriptionState => ({
       ...state,
       isUpdating: true,
-      validationErrors: null
+      validationErrors: null,
     })
   ),
   on(
@@ -95,7 +95,7 @@ export const subscriptionReducer = createReducer(
     (state, action): SubscriptionState => ({
       ...state,
       isUpdating: false,
-      subscription: action.subscription
+      subscription: action.subscription,
     })
   ),
   on(
@@ -103,7 +103,7 @@ export const subscriptionReducer = createReducer(
     (state, action): SubscriptionState => ({
       ...state,
       isUpdating: false,
-      validationErrors: action.errors
+      validationErrors: action.errors,
     })
   ),
 
@@ -113,7 +113,7 @@ export const subscriptionReducer = createReducer(
     (state): SubscriptionState => ({
       ...state,
       isUpdating: true,
-      validationErrors: null
+      validationErrors: null,
     })
   ),
   on(
@@ -121,7 +121,7 @@ export const subscriptionReducer = createReducer(
     (state, action): SubscriptionState => ({
       ...state,
       isUpdating: false,
-      subscription: action.subscription
+      subscription: action.subscription,
     })
   ),
   on(
@@ -129,7 +129,7 @@ export const subscriptionReducer = createReducer(
     (state, action): SubscriptionState => ({
       ...state,
       isUpdating: false,
-      validationErrors: action.errors
+      validationErrors: action.errors,
     })
   ),
 
@@ -139,7 +139,7 @@ export const subscriptionReducer = createReducer(
     (state): SubscriptionState => ({
       ...state,
       isUpdating: true,
-      validationErrors: null
+      validationErrors: null,
     })
   ),
   on(
@@ -147,7 +147,7 @@ export const subscriptionReducer = createReducer(
     (state, action): SubscriptionState => ({
       ...state,
       isUpdating: false,
-      subscription: action.subscription
+      subscription: action.subscription,
     })
   ),
   on(
@@ -155,7 +155,7 @@ export const subscriptionReducer = createReducer(
     (state, action): SubscriptionState => ({
       ...state,
       isUpdating: false,
-      validationErrors: action.errors
+      validationErrors: action.errors,
     })
   )
 );

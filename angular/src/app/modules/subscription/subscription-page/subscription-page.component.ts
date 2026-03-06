@@ -1,18 +1,18 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { SubscriptionService } from 'src/app/services/subscription.service';
 import { loadStripe, Stripe } from '@stripe/stripe-js'; // Import Stripe types
 import { environment } from 'src/environments/environment'; // For Stripe key
 
 // Declare the stripe object if loaded globally (e.g., via index.html script)
 // A better approach is using the @stripe/stripe-js library directly.
-declare var Stripe: any; // Or use the imported Stripe type if using the library properly
+declare const Stripe: (key: string) => unknown; // Or use the imported Stripe type if using the library properly
 
 // Ideally, load these from environment, but hardcoded here for clarity
 const PRICE_IDS: Record<string, string> = {
-  'basic_monthly': 'price_1RIZP44D300v3DFM7QJThARK',
-  'pro_monthly': 'price_1RIZDG4D300v3DFMdmDnDQsS',
-  'basic_yearly': 'price_1RIZDI4D300v3DFMQlQ8czSM',
-  'pro_yearly': 'price_1RIZDJ4D300v3DFMFkyISsbD'
+  basic_monthly: 'price_1RIZP44D300v3DFM7QJThARK',
+  pro_monthly: 'price_1RIZDG4D300v3DFMdmDnDQsS',
+  basic_yearly: 'price_1RIZDI4D300v3DFMQlQ8czSM',
+  pro_yearly: 'price_1RIZDJ4D300v3DFMFkyISsbD',
 };
 
 interface PlanFeature {
@@ -32,10 +32,9 @@ interface Plan {
 @Component({
   selector: 'app-subscription-page',
   templateUrl: './subscription-page.component.html',
-  styleUrls: ['./subscription-page.component.scss']
+  styleUrls: ['./subscription-page.component.scss'],
 })
-export class SubscriptionPageComponent implements OnInit {
-
+export class SubscriptionPageComponent {
   isYearly: boolean = false; // Default to monthly
   plans: Plan[] = [
     {
@@ -49,7 +48,7 @@ export class SubscriptionPageComponent implements OnInit {
         { name: 'Feature B', included: true },
         { name: 'Feature C', included: false },
         { name: 'Feature D', included: false },
-      ]
+      ],
     },
     {
       id: 'pro',
@@ -62,7 +61,7 @@ export class SubscriptionPageComponent implements OnInit {
         { name: 'Feature B', included: true },
         { name: 'Feature C', included: true },
         { name: 'Feature D', included: false },
-      ]
+      ],
     },
     {
       id: 'enterprise',
@@ -75,8 +74,8 @@ export class SubscriptionPageComponent implements OnInit {
         { name: 'Feature B', included: true },
         { name: 'Feature C', included: true },
         { name: 'Feature D', included: true },
-      ]
-    }
+      ],
+    },
   ];
 
   stripePromise: Promise<Stripe | null>; // Hold the Stripe instance promise
@@ -85,10 +84,6 @@ export class SubscriptionPageComponent implements OnInit {
   constructor(private subscriptionService: SubscriptionService) {
     // Initialize Stripe.js asynchronously
     this.stripePromise = loadStripe(environment.stripePublishableKey);
-  }
-
-  ngOnInit(): void {
-    // Potentially fetch dynamic plan details from backend if needed
   }
 
   async redirectToCheckout(sessionId: string) {
@@ -100,7 +95,7 @@ export class SubscriptionPageComponent implements OnInit {
     }
 
     const { error } = await stripe.redirectToCheckout({
-      sessionId: sessionId
+      sessionId: sessionId,
     });
 
     // If `redirectToCheckout` fails due to a browser or network
@@ -138,7 +133,7 @@ export class SubscriptionPageComponent implements OnInit {
       error: (err) => {
         console.error('Error creating checkout session:', err);
         // Handle error display to user (e.g., show a notification)
-      }
+      },
     });
   }
 }

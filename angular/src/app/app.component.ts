@@ -1,15 +1,14 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { getCurrentUserAction } from './store/actions/auth.actions';
-import { getSubscriptionAction } from './store/actions/subscription.actions';
 
 @Component({
   selector: 'app-root',
   standalone: false,
   template: `<router-outlet></router-outlet>`,
 })
-export class AppComponent {
-  constructor(private store: Store) { }
+export class AppComponent implements OnInit {
+  constructor(private store: Store) {}
 
   ngOnInit() {
     // Fetch current user data on app start

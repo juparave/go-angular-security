@@ -10,10 +10,8 @@ import {
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { catchError, filter, switchMap, take, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
-import { isLoggedInSelector } from 'src/app/store/selectors/auth.selectors';
 import { AuthService } from './auth.service';
 import {
-  refreshTokenAction,
   refreshTokenFailureAction,
   refreshTokenSuccessAction,
 } from 'src/app/store/actions/auth.actions';
@@ -26,7 +24,7 @@ const TOKEN_HEADER_KEY = 'Authorization';
 @Injectable()
 export class RefreshTokenInterceptor implements HttpInterceptor {
   private isRefreshing = false;
-  private refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(
+  private refreshTokenSubject: BehaviorSubject<string | null> = new BehaviorSubject<string | null>(
     null
   );
 
@@ -34,98 +32,92 @@ export class RefreshTokenInterceptor implements HttpInterceptor {
     private store: Store<AppState>,
     private persistanceService: PersistanceService,
     private authService: AuthService
-  ) { }
-  ) { }
+  ) {}
 
-intercept(
-  req: HttpRequest<any>,
-  next: HttpHandler
-): Observable < HttpEvent < Object >> {
-  req = req.clone({
-    withCredentials: true,
-  });
-  let authReq = req;
-  const token = this.persistanceService.get('token');
-  if(token != null) {
-  authReq = this.addTokenHeader(req, token);
-}
-
-return next.handle(authReq).pipe(
-  catchError((error) => {
-    if (
-      error instanceof HttpErrorResponse &&
-      !authReq.url.includes('login') &&
-      error.status === 401
-    ) {
-      return this.handle401Error(authReq, next);
+  intercept(req: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
+    req = req.clone({
+      withCredentials: true,
+    });
+    let authReq = req;
+    const token = this.persistanceService.get('token');
+    if (token != null) {
+      authReq = this.addTokenHeader(req, token);
     }
 
-    return throwError(() => error);
-  })
-);
+    return next.handle(authReq).pipe(
+      catchError((error) => {
+        if (
+          error instanceof HttpErrorResponse &&
+          !authReq.url.includes('login') &&
+          error.status === 401
+        ) {
+          return this.handle401Error(authReq, next);
+        }
+
+        return throwError(() => error);
+      })
+    );
   }
 
-  private handle401Error(request: HttpRequest<any>, next: HttpHandler) {
-  if (!this.isRefreshing) {
-    this.isRefreshing = true;
-    this.refreshTokenSubject.next(null);
-    /// this provokes an infinite loop
-    // this.store.dispatch(refreshTokenAction());
+  private handle401Error(request: HttpRequest<unknown>, next: HttpHandler) {
+    if (!this.isRefreshing) {
+      this.isRefreshing = true;
+      this.refreshTokenSubject.next(null);
+      /// this provokes an infinite loop
+      // this.store.dispatch(refreshTokenAction());
 
-    const refreshToken = this.persistanceService.get('refreshToken');
+      const refreshToken = this.persistanceService.get('refreshToken');
 
-    if (refreshToken) {
-      return this.authService.refreshTokens(refreshToken).pipe(
-        switchMap((user: User) => {
-          // console.log('Refresh token success');
-          this.isRefreshing = false;
+      if (refreshToken) {
+        return this.authService.refreshTokens(refreshToken).pipe(
+          switchMap((user: User) => {
+            // console.log('Refresh token success');
+            this.isRefreshing = false;
 
-          this.store.dispatch(
-            refreshTokenSuccessAction({ currentUser: user })
-          );
+            this.store.dispatch(refreshTokenSuccessAction({ currentUser: user }));
 
-          this.refreshTokenSubject.next(user.accessToken);
+            this.refreshTokenSubject.next(user.accessToken);
 
-          return next.handle(this.addTokenHeader(request, user.accessToken));
-        }),
-        catchError((err) => {
-          // console.log('Refresh token failed');
-          this.isRefreshing = false;
+            return next.handle(this.addTokenHeader(request, user.accessToken));
+          }),
+          catchError((err) => {
+            // console.log('Refresh token failed');
+            this.isRefreshing = false;
 
-          this.store.dispatch(
-            refreshTokenFailureAction({
-              errors: { ['error']: ['Refresh token failed'] },
-            })
-          );
-          return throwError(() => err);
-        })
-      );
-    } else {
-      this.store.dispatch(
-        refreshTokenFailureAction({
-          errors: { ['error']: ['Refresh token not found'] },
-        })
-      );
+            this.store.dispatch(
+              refreshTokenFailureAction({
+                errors: { ['error']: ['Refresh token failed'] },
+              })
+            );
+            return throwError(() => err);
+          })
+        );
+      } else {
+        this.store.dispatch(
+          refreshTokenFailureAction({
+            errors: { ['error']: ['Refresh token not found'] },
+          })
+        );
+      }
     }
+
+    return this.refreshTokenSubject.pipe(
+      tap((token) => {
+        console.log('Refresh token: ', token);
+      }),
+      filter((token) => token !== null),
+      take(1),
+      switchMap((token) => next.handle(this.addTokenHeader(request, token)))
+    );
   }
 
-  return this.refreshTokenSubject.pipe(
-    tap((token) => {
-      console.log('Refresh token: ', token);
-    }),
-    filter((token) => token !== null),
-    take(1),
-    switchMap((token) => next.handle(this.addTokenHeader(request, token)))
-  );
-}
+  private addTokenHeader(request: HttpRequest<unknown>, token: string) {
+    /* for Spring Boot back-end */
+    // return request.clone({ headers: request.headers.set(TOKEN_HEADER_KEY, 'Bearer ' + token) });
 
-  private addTokenHeader(request: HttpRequest<any>, token: string) {
-  /* for Spring Boot back-end */
-  // return request.clone({ headers: request.headers.set(TOKEN_HEADER_KEY, 'Bearer ' + token) });
-
-  /* for Node.js Express back-end */
-  return request.clone({
-    headers: request.headers.set(TOKEN_HEADER_KEY, 'Bearer ' + token),
-  });
-}
+    /* for Node.js Express back-end */
+    return request.clone({
+      headers: request.headers.set(TOKEN_HEADER_KEY, 'Bearer ' + token),
+    });
+  }
 }

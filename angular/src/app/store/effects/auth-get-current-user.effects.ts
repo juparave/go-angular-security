@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
-import { catchError, map, of, switchMap, tap } from 'rxjs';
+import { catchError, of, switchMap, tap } from 'rxjs';
 import { AuthService } from 'src/app/services/auth/auth.service';
 
 import { PersistanceService } from 'src/app/services/persistance.service';
@@ -24,7 +24,7 @@ export class GetCurrentUserEffect {
     private authService: AuthService,
     private persistanceService: PersistanceService,
     private router: Router
-  ) { }
+  ) {}
 
   getCurrentUser$ = createEffect(() => {
     return this.actions$.pipe(
@@ -56,7 +56,7 @@ export class GetCurrentUserEffect {
           })
         );
       })
-    )
+    );
   });
 
   getCurrentUserFailure$ = createEffect(
@@ -82,11 +82,9 @@ export class GetCurrentUserEffect {
         ofType(refreshTokenAction),
         tap(() => {
           // this is pending
-
         })
       );
     },
     { dispatch: false }
   );
-
 }

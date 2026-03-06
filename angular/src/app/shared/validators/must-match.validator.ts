@@ -1,10 +1,7 @@
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 
 // custom validator to check that two fields match
-export function MustMatch(
-  controlName: string,
-  matchingControlName: string
-): ValidatorFn {
+export function MustMatch(controlName: string, matchingControlName: string): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
     const originalControl = control.get(controlName);
     const matchingControl = control.get(matchingControlName);

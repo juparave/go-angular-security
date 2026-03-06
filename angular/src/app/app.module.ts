@@ -20,7 +20,12 @@ import { GetCurrentUserEffect } from './store/effects/auth-get-current-user.effe
 import { RefreshTokensEffect } from './store/effects/auth-refresh-tokens.effects'; // Handles refreshing authentication tokens.
 
 // HTTP Client and Interceptors
-import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi, withJsonpSupport } from '@angular/common/http'; // Core HTTP client functionalities and the token for registering interceptors.
+import {
+  HTTP_INTERCEPTORS,
+  provideHttpClient,
+  withInterceptorsFromDi,
+  withJsonpSupport,
+} from '@angular/common/http'; // Core HTTP client functionalities and the token for registering interceptors.
 import { RefreshTokenInterceptor } from './services/auth/refresh-token.interceptor'; // Custom HTTP interceptor to automatically refresh JWT tokens when they expire.
 import { LoadingInterceptor } from './services/loading.interceptors'; // Custom HTTP interceptor to show/hide a global loading indicator during HTTP requests.
 
@@ -50,12 +55,12 @@ const APP_PROVIDERS = [
 @NgModule({
   // Components, directives, and pipes that belong to this module.
   declarations: [
-    AppComponent // The root component is declared here.
+    AppComponent, // The root component is declared here.
   ],
   // The main application view, called the root component, which hosts all other app views.
   // Only the root module should set the bootstrap property.
   bootstrap: [
-    AppComponent // Specifies AppComponent as the component to load when the application starts.
+    AppComponent, // Specifies AppComponent as the component to load when the application starts.
   ],
   // Other modules whose exported classes are needed by component templates declared in this NgModule.
   imports: [
@@ -83,8 +88,9 @@ const APP_PROVIDERS = [
     StoreDevtoolsModule.instrument({
       maxAge: 25, // Retains the last 25 states in the DevTools history.
       logOnly: environment.production, // Restricts the extension to log-only mode in production environments.
-      connectInZone: true // Ensures DevTools operations run inside Angular's zone for better integration.
-    })],
+      connectInZone: true, // Ensures DevTools operations run inside Angular's zone for better integration.
+    }),
+  ],
   // Creators of services that this NgModule contributes to the global collection of services;
   // they become accessible in all parts of the app. (Also used by Dependency Injection).
   providers: [
@@ -92,7 +98,7 @@ const APP_PROVIDERS = [
     // Provides and configures the modern HttpClient.
     // `withInterceptorsFromDi()` enables interceptors provided via DI (like ours).
     // `withJsonpSupport()` adds support for JSONP requests if needed.
-    provideHttpClient(withInterceptorsFromDi(), withJsonpSupport())
+    provideHttpClient(withInterceptorsFromDi(), withJsonpSupport()),
   ],
 })
-export class AppModule { }
+export class AppModule {}

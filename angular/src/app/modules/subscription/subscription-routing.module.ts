@@ -25,7 +25,7 @@ const routes: Routes = [
       {
         path: 'status',
         component: SubscriptionStatusComponent,
-        canActivate: [AuthGuard]
+        canActivate: [AuthGuard],
       },
     ],
   },
@@ -34,15 +34,16 @@ const routes: Routes = [
     component: SubscriptionPageComponent,
     canActivate: [canActivateNoActiveSubscription],
   },
-  { // Added route for success page
+  {
+    // Added route for success page
     path: 'success',
     component: SubscriptionSuccessComponent,
-    canActivate: [AuthGuard]
-  }
+    canActivate: [AuthGuard],
+  },
 ];
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],
-  exports: [RouterModule]
+  exports: [RouterModule],
 })
-export class SubscriptionRoutingModule { }
+export class SubscriptionRoutingModule {}

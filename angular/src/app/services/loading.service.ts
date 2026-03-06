@@ -4,7 +4,7 @@ import { BehaviorSubject } from 'rxjs';
 /// ref: https://blog.angular-university.io/angular-loading-indicator/
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class LoadingService {
   private loadingSubject = new BehaviorSubject<boolean>(false);

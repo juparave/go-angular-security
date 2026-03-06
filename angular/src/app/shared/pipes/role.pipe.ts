@@ -14,10 +14,9 @@ import { Pipe, PipeTransform } from '@angular/core';
  */
 @Pipe({
   name: 'role',
-  standalone: true
+  standalone: true,
 })
 export class RolePipe implements PipeTransform {
-
   transform(roles: string | string[] | undefined, roleName: string): boolean {
     if (!roles) {
       return false;
@@ -27,5 +26,4 @@ export class RolePipe implements PipeTransform {
     }
     return roles.includes(roleName);
   }
-
 }

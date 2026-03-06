@@ -29,11 +29,21 @@ type AppConfig struct {
 	MailChan    chan any       `json:"-"`
 	Database    DatabaseConfig `json:"database"`
 	Email       EmailConfig
+	JWT         JWTConfig
 	Stripe      struct {
 		SecretKey      string `env:"STRIPE_SECRET_KEY"`
 		PublishableKey string `env:"STRIPE_PUBLISHABLE_KEY"`
 		WebhookSecret  string `env:"STRIPE_WEBHOOK_SECRET"`
 	}
+}
+
+// JWTConfig holds JWT-related configuration
+type JWTConfig struct {
+	Secret          string `env:"JWT_SECRET"`
+	RefreshSecret   string `env:"JWT_REFRESH_SECRET"`
+	ResetSecret     string `env:"JWT_RESET_SECRET"`
+	AccessTokenTTL  int    `env:"JWT_ACCESS_TOKEN_TTL"`  // hours
+	RefreshTokenTTL int    `env:"JWT_REFRESH_TOKEN_TTL"` // hours
 }
 
 type DatabaseConfig struct {

@@ -5,83 +5,191 @@ import (
 	"net/http"
 	"server/internal/database"
 	"server/internal/models"
-	"server/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-// IsAuthorized is a middleware function that checks if the authenticated user has the required permission
-// to access a specific resource or perform an action.
-// It retrieves the user ID from the JWT cookie, fetches the user's roles and associated permissions from the database.
+// Role constants for simplified RBAC
+const (
+	RoleAdmin  = "Admin"
+	RoleEditor = "Editor"
+	RoleViewer = "Viewer"
+)
+
+// Role levels for hierarchical permission checking
+var roleLevels = map[string]int{
+	RoleAdmin:  3,
+	RoleEditor: 2,
+	RoleViewer: 1,
+}
+
+// IsAuthorized is a middleware that checks if the user has the required permission.
+// It uses a simplified single-role RBAC system with hierarchical permissions:
+// - Admin: Full access
+// - Editor: Can create, edit, and view
+// - Viewer: Can only view
 //
 // Parameters:
-//   - c: The Fiber context, providing access to the request and response.
-//   - reqPerm: A string representing the base name of the required permission (e.g., "users", "products").
-//     The function checks for permissions like "view_users" or "edit_users" based on the request method.
+//   - c: The Fiber context
+//   - reqPerm: The resource name (e.g., "users", "products")
 //
-// Behavior:
-//  1. Parses the JWT cookie to get the user ID. Returns an error if parsing fails.
-//  2. If `reqPerm` is empty, it allows the request to proceed (no specific permission required).
-//  3. Fetches the user's roles from the database based on the user ID.
-//  4. Fetches all permissions associated with those roles.
-//  5. Checks permissions based on the HTTP method:
-//     - For GET requests: Allows access if the user has either "view_<reqPerm>" or "edit_<reqPerm>".
-//     - For other methods (POST, PUT, DELETE, etc.): Allows access only if the user has "edit_<reqPerm>".
-//  6. If the required permission is found, it returns `nil`, allowing the request to proceed to the next handler.
-//  7. If the required permission is not found, it sets the HTTP status to 401 Unauthorized and returns an "unauthorized" error.
+// For GET requests: Viewer, Editor, and Admin can access
+// For other methods (POST, PUT, DELETE): Editor and Admin can access
 func IsAuthorized(c *fiber.Ctx, reqPerm string) error {
-	// Retrieve JWT from cookie
-	cookie := c.Cookies("jwt")
-
-	// Parse JWT to get user ID
-	userID, err := utils.ParseJwt(cookie)
-	if err != nil {
-		// If JWT parsing fails, consider the user unauthorized
+	userID := GetUserID(c)
+	if userID == "" {
 		c.Status(http.StatusUnauthorized)
-		return errors.New("unauthorized: invalid token")
+		return errors.New("unauthorized: not authenticated")
 	}
 
-	// If no specific permission is required for this route, allow access
+	// If no specific permission required, allow access
 	if reqPerm == "" {
-		return nil // Proceed to the next handler
+		return nil
 	}
 
-	// Prepare user model to query associations
-	user := models.User{
-		ID: userID,
-	}
+	// Get user's role from the appropriate database
+	accountID := GetAccountID(c)
+	var user models.User
+	var role models.Role
 
-	// Find all roles associated with the user
-	var roles []models.Role
-	database.DB.Model(&user).Association("Roles").Find(&roles)
-
-	// Find all permissions associated with the user's roles
-	var permissions []models.Permission
-	// Note: This might fetch duplicate permissions if a user has multiple roles with the same permission.
-	// Consider optimizing this if performance becomes an issue or using a Set-like structure.
-	database.DB.Model(&roles).Association("Permissions").Find(&permissions)
-
-	// Check permissions based on the request method
-	requiredViewPerm := "view_" + reqPerm
-	requiredEditPerm := "edit_" + reqPerm
-
-	if c.Method() == http.MethodGet {
-		// For GET requests, view or edit permissions are sufficient
-		for _, permission := range permissions {
-			if permission.Name == requiredViewPerm || permission.Name == requiredEditPerm {
-				return nil // User has required permission, proceed
-			}
+	if accountID != "" {
+		// Get role from tenant database
+		tenantDB, err := database.Manager.GetConnection(accountID)
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			return errors.New("internal server error")
 		}
+
+		if err := tenantDB.Preload("Role").First(&user, "id = ?", userID).Error; err != nil {
+			c.Status(http.StatusForbidden)
+			return errors.New("forbidden: user not found in tenant")
+		}
+		role = user.Role
 	} else {
-		// For non-GET requests (POST, PUT, DELETE, etc.), edit permission is required
-		for _, permission := range permissions {
-			if permission.Name == requiredEditPerm {
-				return nil // User has required permission, proceed
-			}
+		// Legacy: Get role from master database
+		masterDB := database.Manager.GetMasterDB()
+		if err := masterDB.Preload("Role").First(&user, "id = ?", userID).Error; err != nil {
+			c.Status(http.StatusForbidden)
+			return errors.New("forbidden: user not found")
 		}
+		role = user.Role
 	}
 
-	// If no matching permission was found, deny access
+	// Check permissions based on role level
+	minRequiredLevel := getMinRequiredLevel(c.Method())
+
+	userLevel, exists := roleLevels[role.Name]
+	if !exists {
+		c.Status(http.StatusForbidden)
+		return errors.New("forbidden: unknown role")
+	}
+
+	if userLevel >= minRequiredLevel {
+		return nil
+	}
+
 	c.Status(http.StatusForbidden)
 	return errors.New("forbidden: insufficient permissions")
+}
+
+// RequireRole is a middleware that checks if the user has at least the specified role.
+func RequireRole(minRole string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		userID := GetUserID(c)
+		if userID == "" {
+			return c.Status(http.StatusUnauthorized).JSON(fiber.Map{
+				"message": "not authenticated",
+			})
+		}
+
+		accountID := GetAccountID(c)
+		var user models.User
+
+		if accountID != "" {
+			tenantDB, err := database.Manager.GetConnection(accountID)
+			if err != nil {
+				return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+					"message": "internal server error",
+				})
+			}
+			if err := tenantDB.Preload("Role").First(&user, "id = ?", userID).Error; err != nil {
+				return c.Status(http.StatusForbidden).JSON(fiber.Map{
+					"message": "forbidden",
+				})
+			}
+		} else {
+			masterDB := database.Manager.GetMasterDB()
+			if err := masterDB.Preload("Role").First(&user, "id = ?", userID).Error; err != nil {
+				return c.Status(http.StatusForbidden).JSON(fiber.Map{
+					"message": "forbidden",
+				})
+			}
+		}
+
+		userLevel, exists := roleLevels[user.Role.Name]
+		if !exists {
+			return c.Status(http.StatusForbidden).JSON(fiber.Map{
+				"message": "forbidden",
+			})
+		}
+
+		minLevel, exists := roleLevels[minRole]
+		if !exists {
+			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+				"message": "invalid role configuration",
+			})
+		}
+
+		if userLevel < minLevel {
+			return c.Status(http.StatusForbidden).JSON(fiber.Map{
+				"message": "insufficient permissions",
+			})
+		}
+
+		return c.Next()
+	}
+}
+
+// RequireAdmin is a convenience middleware for admin-only routes
+func RequireAdmin() fiber.Handler {
+	return RequireRole(RoleAdmin)
+}
+
+// RequireEditor is a convenience middleware for editor+ routes
+func RequireEditor() fiber.Handler {
+	return RequireRole(RoleEditor)
+}
+
+// getMinRequiredLevel returns the minimum role level required for the HTTP method
+func getMinRequiredLevel(method string) int {
+	switch method {
+	case http.MethodGet:
+		return roleLevels[RoleViewer] // Viewers can read
+	case http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete:
+		return roleLevels[RoleEditor] // Editors can modify
+	default:
+		return roleLevels[RoleAdmin] // Admin for anything else
+	}
+}
+
+// IsAdmin checks if the current user has admin role
+func IsAdmin(c *fiber.Ctx) bool {
+	user := GetCurrentUser(c)
+	if user == nil {
+		return false
+	}
+	return user.Role.Name == RoleAdmin
+}
+
+// IsEditorOrAdmin checks if the current user has editor or admin role
+func IsEditorOrAdmin(c *fiber.Ctx) bool {
+	user := GetCurrentUser(c)
+	if user == nil {
+		return false
+	}
+	level, exists := roleLevels[user.Role.Name]
+	if !exists {
+		return false
+	}
+	return level >= roleLevels[RoleEditor]
 }

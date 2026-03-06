@@ -19,7 +19,7 @@ export class RegisterEffect {
     private authService: AuthService,
     private persistanceService: PersistanceService,
     private router: Router
-  ) { }
+  ) {}
 
   register$ = createEffect(() => {
     return this.actions$.pipe(
@@ -28,10 +28,7 @@ export class RegisterEffect {
         return this.authService.register(action.request).pipe(
           map((currentUser: User) => {
             this.persistanceService.set('token', currentUser.accessToken);
-            this.persistanceService.set(
-              'refreshToken',
-              currentUser.refreshToken
-            );
+            this.persistanceService.set('refreshToken', currentUser.refreshToken);
             return registerSuccessAction({ currentUser });
           }),
           catchError((errorResponse: HttpErrorResponse) => {

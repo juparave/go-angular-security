@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"log"
 	"server/internal/database"
 	"server/internal/models"
+	"server/internal/services"
 	"server/internal/utils"
 	"time"
 
@@ -11,107 +13,262 @@ import (
 
 const (
 	keyPassword        = "password"
-	keyConfirmPassword = "confirmPassword" // Used in Register and UpdatePassword
-	keyFirstName       = "firstName"       // Used in Register and UpdateInfo
-	keyLastName        = "lastName"        // Used in Register and UpdateInfo
-	keyEmail           = "email"           // Used in Register, Login, UpdateInfo, RequestResetPassword
-	keyRefreshToken    = "refreshToken"    // Used in RefreshToken
+	keyConfirmPassword = "confirmPassword"
+	keyFirstName       = "firstName"
+	keyLastName        = "lastName"
+	keyEmail           = "email"
+	keyRefreshToken    = "refreshToken"
+	keyAccountName     = "accountName"
 )
 
-// Register handles new user registration.
-// It parses user details (firstName, lastName, email, password, confirmPassword) from the request body.
-// It validates that the passwords match, creates a new user record in the database,
-// generates JWT access and refresh tokens, sets them as HTTP-only cookies,
-// and returns the newly created user object (excluding password).
+var userSyncService = services.NewUserSyncService()
+
+// Register handles new user registration (legacy, for backward compatibility).
+// For self-service account registration, use RegisterAccount instead.
 func Register(c *fiber.Ctx) error {
 	var data map[string]string
 
 	if err := c.BodyParser(&data); err != nil {
-		return c.Status(fiber.StatusBadRequest).
-			JSON(fiber.Map{
-				"message": err,
-			})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": err,
+		})
 	}
 
 	if data[keyPassword] != data[keyConfirmPassword] {
-		c.Status(400)
-		return c.Status(fiber.StatusBadRequest).
-			JSON(fiber.Map{
-				"message": "passwords do not match",
-			})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "passwords do not match",
+		})
 	}
 
 	user := models.User{
 		FirstName: data[keyFirstName],
 		LastName:  data[keyLastName],
 		Email:     data[keyEmail],
+		RoleID:    1, // Admin role for standalone users
+		Enabled:   true,
 	}
 
 	user.SetPassword(data[keyPassword])
 
 	res := database.DB.Create(&user)
-	// verify if user was created
 	if res.Error != nil {
-		return c.Status(fiber.StatusBadRequest).
-			JSON(fiber.Map{
-				"message": res.Error.Error(),
-			})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": res.Error.Error(),
+		})
 	}
 
 	err := utils.GenerateUserTokens(&user)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).
-			JSON(fiber.Map{
-				"internal server error": err,
-			})
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "failed to generate tokens",
+		})
 	}
 
-	// set cookie with jwt
 	setCookies(c, user)
 
 	return c.Status(fiber.StatusOK).JSON(user)
 }
 
+// RegisterAccount handles self-service account registration.
+// Creates a new account (tenant) with the first user as admin.
+func RegisterAccount(c *fiber.Ctx) error {
+	var data map[string]string
+
+	if err := c.BodyParser(&data); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "invalid request body",
+		})
+	}
+
+	// Validate required fields
+	if data[keyEmail] == "" || data[keyPassword] == "" || data[keyAccountName] == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "email, password, and account name are required",
+		})
+	}
+
+	if data[keyPassword] != data[keyConfirmPassword] {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "passwords do not match",
+		})
+	}
+
+	masterDB := database.Manager.GetMasterDB()
+
+	// Check if email already exists
+	var existingUser models.User
+	if masterDB.Where("email = ?", data[keyEmail]).First(&existingUser).Error == nil {
+		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+			"message": "an account with this email already exists",
+		})
+	}
+
+	// Create account
+	account := models.Account{
+		Name:         data[keyAccountName],
+		ContactEmail: data[keyEmail],
+		Status:       models.AccountStatusActive,
+		PlanTier:     models.TierFree,
+		MaxUsers:     1, // Free tier: 1 user
+	}
+
+	if err := masterDB.Create(&account).Error; err != nil {
+		log.Printf("Failed to create account: %v", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "failed to create account",
+		})
+	}
+
+	// Create user in master database
+	user := models.User{
+		AccountID:               account.ID,
+		FirstName:               data[keyFirstName],
+		LastName:                data[keyLastName],
+		Email:                   data[keyEmail],
+		RoleID:                  1, // Admin
+		Enabled:                 true,
+		PasswordChangeRequired:  false,
+	}
+	user.SetPassword(data[keyPassword])
+
+	if err := masterDB.Create(&user).Error; err != nil {
+		log.Printf("Failed to create user: %v", err)
+		// Clean up account
+		masterDB.Delete(&account)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "failed to create user",
+		})
+	}
+
+	// Sync user to tenant database
+	if err := userSyncService.SyncUserToTenant(&user); err != nil {
+		log.Printf("Failed to sync user to tenant: %v", err)
+	}
+
+	// Generate tokens
+	if err := utils.GenerateUserTokens(&user); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "failed to generate tokens",
+		})
+	}
+
+	// Load role for response
+	masterDB.Preload("Account").First(&user, "id = ?", user.ID)
+
+	setCookies(c, user)
+
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"message": "account created successfully",
+		"user":    user,
+	})
+}
+
 // Login handles user authentication.
-// It parses the email and password from the request body.
-// It finds the user by email, verifies the password, generates new JWT access and refresh tokens,
-// sets them as HTTP-only cookies, and returns a success message along with the authenticated user object.
-// Returns 404 if the user is not found or 400 if the password is incorrect.
 func Login(c *fiber.Ctx) error {
 	var data map[string]string
 
 	if err := c.BodyParser(&data); err != nil {
-		return err
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "invalid request body",
+		})
 	}
+
+	masterDB := database.Manager.GetMasterDB()
 
 	var user models.User
-
-	database.DB.Preload("Subscription").Where("email = ?", data[keyEmail]).First(&user)
-
-	if user.ID == "" {
-		return c.Status(fiber.StatusNotFound).
-			JSON(fiber.Map{
-				"errors": fiber.Map{
-					"user": []string{"not found"},
-				},
-			})
+	if err := masterDB.Preload("Account").Where("email = ?", data[keyEmail]).First(&user).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"errors": fiber.Map{
+				"email": []string{"not found"},
+			},
+		})
 	}
 
+	// Check if user is enabled
+	if !user.Enabled {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"message": "account is disabled",
+		})
+	}
+
+	// Verify password
 	if err := user.ComparePassword(data[keyPassword]); err != nil {
-		return c.Status(fiber.StatusBadRequest).
-			JSON(fiber.Map{
-				"errors": fiber.Map{
-					"password": []string{"incorrect"},
-				},
-			})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"errors": fiber.Map{
+				"password": []string{"incorrect"},
+			},
+		})
 	}
 
-	err := utils.GenerateUserTokens(&user)
+	// Update last login
+	now := time.Now()
+	user.LastLoginAt = &now
+	masterDB.Model(&user).Update("last_login_at", now)
+
+	// Generate tokens
+	if err := utils.GenerateUserTokens(&user); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "failed to generate tokens",
+		})
+	}
+
+	setCookies(c, user)
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message":               "success",
+		"user":                  user,
+		"passwordChangeRequired": user.PasswordChangeRequired,
+	})
+}
+
+// RefreshToken handles JWT token refresh.
+func RefreshToken(c *fiber.Ctx) error {
+	var data map[string]string
+
+	if err := c.BodyParser(&data); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "invalid request body",
+		})
+	}
+
+	refreshToken := data[keyRefreshToken]
+	if refreshToken == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "refresh token is required",
+		})
+	}
+
+	issuer, err := utils.ParseJwt(refreshToken)
 	if err != nil {
-		return c.SendStatus(fiber.StatusInternalServerError)
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "token invalid or expired",
+		})
 	}
 
-	// set jwt and refreshjwt cookies
+	masterDB := database.Manager.GetMasterDB()
+
+	var user models.User
+	if err := masterDB.Preload("Account").First(&user, "id = ?", issuer).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"errors": fiber.Map{
+				"user": []string{"not found"},
+			},
+		})
+	}
+
+	// Check if user is still enabled
+	if !user.Enabled {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"message": "account is disabled",
+		})
+	}
+
+	if err := utils.GenerateUserTokens(&user); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "failed to generate tokens",
+		})
+	}
+
 	setCookies(c, user)
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
@@ -120,118 +277,71 @@ func Login(c *fiber.Ctx) error {
 	})
 }
 
-// RefreshToken handles the renewal of JWT access tokens using a refresh token.
-// It expects the refresh token in the request body.
-// It parses and validates the refresh token, finds the associated user,
-// generates new JWT access and refresh tokens, sets them as HTTP-only cookies,
-// and returns a success message along with the user object containing the new tokens.
-// Returns 400 if the token is invalid/expired or 404 if the user is not found.
-func RefreshToken(c *fiber.Ctx) error {
-	var data map[string]string
-
-	if err := c.BodyParser(&data); err != nil {
-		// Consider using a proper logger instead of fmt.Println or just returning
-		return err
-	}
-	refreshToken := data[keyRefreshToken]
-
-	issuer, err := utils.ParseJwt(refreshToken)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).
-			JSON(fiber.Map{
-				"message": "token invalid or expired",
-			})
-	}
-
-	user := models.User{
-		ID: issuer,
-	}
-
-	if err := database.DB.First(&user).Error; err != nil {
-		return c.Status(fiber.StatusNotFound).
-			JSON(fiber.Map{
-				"errors": fiber.Map{
-					"user": []string{"not found"},
-				},
-			})
-	}
-
-	err = utils.GenerateUserTokens(&user)
-	if err != nil {
-		return c.SendStatus(fiber.StatusInternalServerError)
-	}
-
-	// set new jwt and refreshjwt cookies
-	setCookies(c, user)
-
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "success",
-		// return user object with token and refreshToken
-		"user": user,
-	})
-}
-
-// User retrieves the details of the currently authenticated user.
-// It extracts the JWT from the request (header or cookie), parses the user ID from it,
-// fetches the user details from the database, and returns the user object.
-// Returns 404 if the user associated with the valid token is not found.
+// User retrieves the current authenticated user.
 func User(c *fiber.Ctx) error {
-	// get jwt from header or cookie
 	jwt := utils.GetJWT(c)
-	id, _ := utils.ParseJwt(jwt)
+	userID, err := utils.ParseJwt(jwt)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"message": "not authenticated",
+		})
+	}
+
+	masterDB := database.Manager.GetMasterDB()
 
 	var user models.User
-
-	database.DB.Preload("Subscription").Where("users.id = ?", id).First(&user)
-
-	if user.ID == "" {
-		c.Status(404)
-		return c.Status(fiber.StatusNotFound).
-			JSON(fiber.Map{
-				"errors": fiber.Map{
-					"user": []string{"token valid but user not found"},
-				},
-			})
+	if err := masterDB.Preload("Account").Preload("Role").First(&user, "id = ?", userID).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"errors": fiber.Map{
+				"user": []string{"not found"},
+			},
+		})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(user)
 }
 
-// Logout handles user logout by invalidating the JWT cookie.
-// It sets the 'jwt' cookie's expiration time to a past date, effectively removing it.
-// Returns a success message.
+// Logout handles user logout.
 func Logout(c *fiber.Ctx) error {
-	// set expiration time to the past to remove cookie
 	cookie := fiber.Cookie{
-		Name:    "jwt",
-		Value:   "",
-		Expires: time.Now().Add(-time.Hour),
-		// only accesible by backend
+		Name:     "jwt",
+		Value:    "",
+		Expires:  time.Now().Add(-time.Hour),
 		HTTPOnly: true,
 	}
-
 	c.Cookie(&cookie)
+
+	refreshCookie := fiber.Cookie{
+		Name:     "refreshjwt",
+		Value:    "",
+		Expires:  time.Now().Add(-time.Hour),
+		HTTPOnly: true,
+	}
+	c.Cookie(&refreshCookie)
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "success",
 	})
-
 }
 
-// UpdateInfo handles updating the authenticated user's profile information (first name, last name, email).
-// It parses the updated data from the request body.
-// It identifies the user based on the JWT, updates the corresponding user record in the database,
-// and returns the updated user object.
+// UpdateInfo handles updating user profile information.
 func UpdateInfo(c *fiber.Ctx) error {
 	var data map[string]string
 
 	if err := c.BodyParser(&data); err != nil {
-		return err
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "invalid request body",
+		})
 	}
 
-	// get jwt from header or cookie
-	jwt := utils.GetJWT(c)
-	userID, _ := utils.ParseJwt(jwt)
+	userID, err := utils.GetUserIDFromContext(c)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"message": "not authenticated",
+		})
+	}
+
+	masterDB := database.Manager.GetMasterDB()
 
 	user := models.User{
 		ID:        userID,
@@ -240,109 +350,95 @@ func UpdateInfo(c *fiber.Ctx) error {
 		Email:     data[keyEmail],
 	}
 
-	database.DB.Model(&user).Where("id = ?", userID).Updates(user)
+	if err := masterDB.Model(&user).Where("id = ?", userID).Updates(map[string]interface{}{
+		"first_name": user.FirstName,
+		"last_name":  user.LastName,
+		"email":      user.Email,
+	}).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "failed to update user",
+		})
+	}
+
+	// Sync to tenant database
+	masterDB.First(&user, "id = ?", userID)
+	if user.AccountID != "" {
+		userSyncService.UpdateUserInTenant(&user)
+	}
+
 	return c.Status(fiber.StatusOK).JSON(user)
 }
 
-// UpdatePassword handles changing the authenticated user's password.
-// It parses the new password and confirmation from the request body.
-// It validates that the passwords match, identifies the user via JWT,
-// sets the new hashed password for the user, updates the database record,
-// and returns the updated user object (excluding password).
-// Returns 400 if the passwords do not match.
+// UpdatePassword handles password change (legacy, use ChangePassword for authenticated changes).
 func UpdatePassword(c *fiber.Ctx) error {
 	var data map[string]string
 
 	if err := c.BodyParser(&data); err != nil {
-		return err
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "invalid request body",
+		})
 	}
 
 	if data[keyPassword] != data[keyConfirmPassword] {
-		c.Status(400)
-		return c.JSON(fiber.Map{
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "passwords do not match",
 		})
 	}
 
-	// get jwt from header or cookie
-	jwt := utils.GetJWT(c)
-	userID, _ := utils.ParseJwt(jwt)
-
-	user := models.User{
-		ID: userID,
-	}
-
-	user.SetPassword(data[keyPassword])
-
-	database.DB.Model(&user).Updates(user)
-
-	return c.Status(fiber.StatusOK).JSON(user)
-}
-
-// RequestResetPassword handles the initiation of a password reset process.
-// It parses the user's email from the request body.
-// It finds the user by email, generates an encrypted password reset token,
-// sends an email to the user containing the reset link/token (implementation pending),
-// and returns a success message.
-// Returns 404 if the user email is not found.
-func RequestResetPassword(c *fiber.Ctx) error {
-	var data map[string]string
-
-	if err := c.BodyParser(&data); err != nil {
-		return err
-	}
-
-	var user models.User
-
-	database.DB.Where("email = ?", data[keyEmail]).First(&user)
-
-	if user.ID == "" {
-		c.Status(404)
-		return c.JSON(fiber.Map{
-			"errors": fiber.Map{
-				"user": []string{"not found"},
-			},
+	userID, err := utils.GetUserIDFromContext(c)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"message": "not authenticated",
 		})
 	}
 
-	encToken, err := utils.GenerateResetPasswordToken(&user)
-	if err != nil {
-		return c.SendStatus(fiber.StatusInternalServerError)
+	masterDB := database.Manager.GetMasterDB()
+
+	var user models.User
+	if err := masterDB.First(&user, "id = ?", userID).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"message": "user not found",
+		})
 	}
 
-	// send email with token
-	err = utils.SendResetPasswordEmail(&user, encToken)
-	if err != nil {
-		return c.SendStatus(fiber.StatusInternalServerError)
+	user.SetPassword(data[keyPassword])
+	user.PasswordChangeRequired = false
+
+	if err := masterDB.Save(&user).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "failed to update password",
+		})
+	}
+
+	// Sync to tenant database
+	if user.AccountID != "" {
+		userSyncService.UpdateUserPasswordInTenant(&user)
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "success",
+		"message": "password updated successfully",
 	})
 }
 
-// setCookies is a helper function to set the JWT access and refresh tokens
-// as HTTP-only cookies in the Fiber context.
-// It takes the Fiber context and the user object (which should contain the generated tokens) as input.
+// setCookies sets JWT cookies for authentication.
 func setCookies(c *fiber.Ctx, user models.User) {
-	// set jwt cookie
 	cookie := fiber.Cookie{
-		Name:    "jwt",
-		Value:   user.AccessToken,
-		Expires: time.Now().Add(utils.AccessTokenDuration),
-		// only accesible by backend
+		Name:     "jwt",
+		Value:    user.AccessToken,
+		Expires:  time.Now().Add(utils.AccessTokenDuration),
 		HTTPOnly: true,
+		Secure:   false, // Set to true in production with HTTPS
+		SameSite: "lax",
 	}
-
 	c.Cookie(&cookie)
 
 	refreshCookie := fiber.Cookie{
-		Name:    "refreshjwt",
-		Value:   user.RefreshToken,
-		Expires: time.Now().Add(utils.RefreshTokenDuration),
-		// only accesible by backend
+		Name:     "refreshjwt",
+		Value:    user.RefreshToken,
+		Expires:  time.Now().Add(utils.RefreshTokenDuration),
 		HTTPOnly: true,
+		Secure:   false, // Set to true in production with HTTPS
+		SameSite: "lax",
 	}
-
 	c.Cookie(&refreshCookie)
 }

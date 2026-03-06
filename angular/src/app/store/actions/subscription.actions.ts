@@ -25,9 +25,7 @@ export enum ActionTypes {
 }
 
 // Get subscription
-export const getSubscriptionAction = createAction(
-  ActionTypes.GET_SUBSCRIPTION
-);
+export const getSubscriptionAction = createAction(ActionTypes.GET_SUBSCRIPTION);
 
 export const getSubscriptionSuccessAction = createAction(
   ActionTypes.GET_SUBSCRIPTION_SUCCESS,

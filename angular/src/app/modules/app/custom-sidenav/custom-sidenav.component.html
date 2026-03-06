@@ -1,29 +1,37 @@
 <div class="sidenav-header">
-  <img [width]="profilePicSize()" src="/assets/images/logo-no-background.png" alt="logo">
+  <img [width]="profilePicSize()" src="/assets/images/logo-no-background.png" alt="logo" />
   <div class="header-text" [class.hide-header-text]="sidenavCollapsed()">
     <h2>{{ (currentUser$ | async)?.email }}</h2>
-    @if ((currentUser$ | async)?.roles | role:'admin') {
-    <h4>Administrador</h4>
-    } @else if ((currentUser$ | async)?.roles | role:'supervisor') {
-    <h4>Supervisor</h4>
+    @if ((currentUser$ | async)?.roles | role: 'admin') {
+      <h4>Administrador</h4>
+    } @else if ((currentUser$ | async)?.roles | role: 'supervisor') {
+      <h4>Supervisor</h4>
     }
   </div>
 </div>
 <mat-nav-list (click)="onClickMenuItem()">
   @for (item of menuItems(); track item) {
-  <a mat-list-item class="menu-item" [routerLink]="item.route" routerLinkActive="selected-menu-item"
-    #rla="routerLinkActive" [activated]="rla.isActive">
-    <mat-icon [fontSet]="rla.isActive ? 'material-icons' : 'material-icons-outlined'" matListItemIcon>{{ item.icon
-      }}</mat-icon>
-    @if (!sidenavCollapsed()) {
-    <span matListItemTitle>{{ item.label }}</span>
-    }
-  </a>
+    <a
+      mat-list-item
+      class="menu-item"
+      [routerLink]="item.route"
+      routerLinkActive="selected-menu-item"
+      #rla="routerLinkActive"
+      [activated]="rla.isActive">
+      <mat-icon
+        [fontSet]="rla.isActive ? 'material-icons' : 'material-icons-outlined'"
+        matListItemIcon
+        >{{ item.icon }}</mat-icon
+      >
+      @if (!sidenavCollapsed()) {
+        <span matListItemTitle>{{ item.label }}</span>
+      }
+    </a>
   }
-  <a mat-list-item class="menu-item" (click)="doLogout()">
+  <a mat-list-item class="menu-item" (click)="doLogout()" (keyup.enter)="doLogout()" tabindex="0">
     <mat-icon matListItemIcon>logout</mat-icon>
     @if (!sidenavCollapsed()) {
-    <span matListItemTitle>Salir</span>
+      <span matListItemTitle>Salir</span>
     }
   </a>
 </mat-nav-list>

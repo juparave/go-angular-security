@@ -34,13 +34,8 @@ export const routes: Routes = [
   },
 ];
 
-
 @NgModule({
-  declarations: [
-    BaseComponent,
-    CustomSidenavComponent,
-    DashboardComponent
-  ],
+  declarations: [BaseComponent, CustomSidenavComponent, DashboardComponent],
   imports: [
     CommonModule,
 
@@ -56,6 +51,6 @@ export const routes: Routes = [
     MatMenuModule,
 
     RolePipe,
-  ]
+  ],
 })
-export class AppModule { }
+export class AppModule {}

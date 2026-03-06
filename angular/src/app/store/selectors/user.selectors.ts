@@ -9,7 +9,7 @@ export const selectUser = createSelector(
   selectUserState,
   (state): { user: User | null; isLoading: boolean } => ({
     user: state.currentUser,
-    isLoading: state.isLoading
+    isLoading: state.isLoading,
   })
 );
 
@@ -19,22 +19,17 @@ export const selectUserSubscription = createSelector(
   (state): { subscription: Subscription | null; isLoading: boolean; url?: string } => ({
     subscription: state.currentUser?.subscription || null,
     isLoading: state.isLoading,
-    url: state.redirectUrl
+    url: state.redirectUrl,
   })
 );
 
 // Select if the user has a specific subscription plan
 export const selectHasSubscriptionPlan = (plans: string[]) =>
-  createSelector(
-    selectUserSubscription,
-    (state): { hasPlan: boolean; isLoading: boolean } => ({
-      hasPlan: !!state.subscription && (
-        plans.length === 0 ||
-        plans.includes(state.subscription.plan)
-      ),
-      isLoading: state.isLoading
-    })
-  );
+  createSelector(selectUserSubscription, (state): { hasPlan: boolean; isLoading: boolean } => ({
+    hasPlan:
+      !!state.subscription && (plans.length === 0 || plans.includes(state.subscription.plan)),
+    isLoading: state.isLoading,
+  }));
 
 // Select if the user has an active subscription
 export const selectHasActiveSubscription = createSelector(
@@ -42,19 +37,19 @@ export const selectHasActiveSubscription = createSelector(
   (state): { isActive: boolean; isLoading: boolean } => {
     const subscription = state.subscription;
 
-    const isActive = !!subscription && (
-      subscription.status === 'active' ||
-      subscription.status === 'trialing' ||
-      (subscription.status === 'canceled' && !subscription.cancelAtPeriodEnd) ||
-      (subscription.status === 'canceled' &&
-        subscription.cancelAtPeriodEnd &&
-        subscription.currentPeriodEnd &&
-        new Date() < subscription.currentPeriodEnd)
-    );
+    const isActive =
+      !!subscription &&
+      (subscription.status === 'active' ||
+        subscription.status === 'trialing' ||
+        (subscription.status === 'canceled' && !subscription.cancelAtPeriodEnd) ||
+        (subscription.status === 'canceled' &&
+          subscription.cancelAtPeriodEnd &&
+          subscription.currentPeriodEnd &&
+          new Date() < subscription.currentPeriodEnd));
 
     return {
       isActive,
-      isLoading: state.isLoading
+      isLoading: state.isLoading,
     };
   }
 );

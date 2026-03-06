@@ -5,10 +5,10 @@ import { Subscription } from '../models/subscription';
 import { environment } from 'src/environments/environment';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class SubscriptionService {
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   /**
    * Get the current user's subscription details
@@ -21,40 +21,32 @@ export class SubscriptionService {
    * Update subscription information
    */
   updateSubscription(subscription: Partial<Subscription>): Observable<Subscription> {
-    return this.http.patch<Subscription>(
-      `${environment.apiUrl}/subscriptions/${subscription.id}`,
-      { subscription }
-    );
+    return this.http.patch<Subscription>(`${environment.apiUrl}/subscriptions/${subscription.id}`, {
+      subscription,
+    });
   }
 
   /**
    * Cancel a subscription (marks it to be canceled at period end)
    */
   cancelSubscription(id: string): Observable<Subscription> {
-    return this.http.post<Subscription>(
-      `${environment.apiUrl}/subscriptions/${id}/cancel`,
-      {}
-    );
+    return this.http.post<Subscription>(`${environment.apiUrl}/subscriptions/${id}/cancel`, {});
   }
 
   /**
    * Reactivate a canceled subscription
    */
   reactivateSubscription(id: string): Observable<Subscription> {
-    return this.http.post<Subscription>(
-      `${environment.apiUrl}/subscriptions/${id}/reactivate`,
-      {}
-    );
+    return this.http.post<Subscription>(`${environment.apiUrl}/subscriptions/${id}/reactivate`, {});
   }
 
   /**
    * Change subscription plan
    */
   changePlan(id: string, plan: string): Observable<Subscription> {
-    return this.http.post<Subscription>(
-      `${environment.apiUrl}/subscriptions/${id}/change-plan`,
-      { plan }
-    );
+    return this.http.post<Subscription>(`${environment.apiUrl}/subscriptions/${id}/change-plan`, {
+      plan,
+    });
   }
 
   /**

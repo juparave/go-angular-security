@@ -7,20 +7,32 @@
       </mat-card-title>
     </mat-card-header>
     <mat-card-content>
-      <p><strong>Estado:</strong> <span [ngClass]="{'mat-accent': data.subscription.status === 'active', 'mat-warn': data.subscription.status !== 'active'}">{{ data.subscription.status }}</span></p>
+      <p>
+        <strong>Estado:</strong>
+        <span
+          [ngClass]="{
+            'mat-accent': data.subscription.status === 'active',
+            'mat-warn': data.subscription.status !== 'active',
+          }"
+          >{{ data.subscription.status }}</span
+        >
+      </p>
       <p><strong>Plan:</strong> {{ data.subscription.plan || 'N/D' }}</p>
       <p *ngIf="data.subscription.currentPeriodEnd">
-        <strong>Fin del periodo actual:</strong> {{ data.subscription.currentPeriodEnd | date:'medium' }}
+        <strong>Fin del periodo actual:</strong>
+        {{ data.subscription.currentPeriodEnd | date: 'medium' }}
       </p>
       <p *ngIf="data.subscription.cancelAtPeriodEnd">
         <mat-icon color="warn" aria-hidden="true">warning</mat-icon>
         La suscripción se cancelará al final del periodo actual.
       </p>
       <p *ngIf="data.subscription.currentPeriodStart">
-        <strong>Fecha de inicio del periodo actual:</strong> {{ data.subscription.currentPeriodStart | date:'medium' }}
+        <strong>Fecha de inicio del periodo actual:</strong>
+        {{ data.subscription.currentPeriodStart | date: 'medium' }}
       </p>
       <p *ngIf="data.subscription.currentPeriodEnd">
-        <strong>Fecha de finalización del periodo actual:</strong> {{ data.subscription.currentPeriodEnd | date:'medium' }}
+        <strong>Fecha de finalización del periodo actual:</strong>
+        {{ data.subscription.currentPeriodEnd | date: 'medium' }}
       </p>
       <!-- Agrega más detalles si es necesario -->
     </mat-card-content>
@@ -36,11 +48,13 @@
       </mat-card-content>
     </mat-card>
   </div>
-  <div *ngIf="!(subscriptionData$ | async)?.isLoading && !(subscriptionData$ | async)?.subscription">
+  <div
+    *ngIf="!(subscriptionData$ | async)?.isLoading && !(subscriptionData$ | async)?.subscription">
     <mat-card class="mat-elevation-z2">
       <mat-card-content>
         <mat-icon color="warn" aria-hidden="true">error_outline</mat-icon>
-        No se pudieron cargar los detalles de la suscripción o no se encontró una suscripción activa.
+        No se pudieron cargar los detalles de la suscripción o no se encontró una suscripción
+        activa.
       </mat-card-content>
     </mat-card>
   </div>

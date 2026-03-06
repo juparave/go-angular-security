@@ -12,29 +12,31 @@ import { logoutAction } from 'src/app/store/actions/auth.actions';
   selector: 'app-base',
   standalone: false,
   templateUrl: './base.component.html',
-  styleUrls: ['./base.component.scss']
+  styleUrls: ['./base.component.scss'],
 })
 export class BaseComponent implements OnInit {
   private breakpointObserver = inject(BreakpointObserver);
   currentUser$!: Observable<User | null>;
 
-  isHandset$: Observable<boolean> = this.breakpointObserver.observe(Breakpoints.Handset)
-    .pipe(
-      map(result => result.matches),
-      shareReplay()
-    );
+  isHandset$: Observable<boolean> = this.breakpointObserver.observe(Breakpoints.Handset).pipe(
+    map((result) => result.matches),
+    shareReplay()
+  );
 
   collapsed = signal<boolean>(false);
   isShowing = signal<boolean>(false);
 
-  sidenavWidth = computed(() => (this.collapsed()) ? '64px' : '250px');
+  sidenavWidth = computed(() => (this.collapsed() ? '64px' : '250px'));
 
   constructor(private store: Store<AppState>) {
-    effect(() => {
-      if (this.isShowing()) {
-        this.collapsed.set(false);
-      }
-    }, { allowSignalWrites: true });
+    effect(
+      () => {
+        if (this.isShowing()) {
+          this.collapsed.set(false);
+        }
+      },
+      { allowSignalWrites: true }
+    );
   }
 
   ngOnInit(): void {
@@ -42,7 +44,7 @@ export class BaseComponent implements OnInit {
   }
 
   initializeValues() {
-    this.currentUser$ = this.store.select(selectCurrentUser)
+    this.currentUser$ = this.store.select(selectCurrentUser);
   }
 
   closeSidenav() {

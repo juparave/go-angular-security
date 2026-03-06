@@ -1,42 +1,44 @@
 // services/auth/auth.service.ts
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import {
-  HttpClient,
-  HttpErrorResponse,
-  HttpHeaders,
-} from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 
-import {
-  map,
-  Observable,
-  shareReplay,
-  throwError,
-} from 'rxjs';
+import { map, Observable, shareReplay, throwError } from 'rxjs';
 
 import { environment } from 'src/environments/environment';
 import { LoginRequest } from 'src/app/store/types/login-request.interface';
 import { User } from 'src/app/models/user';
-import {
-  RequestResetPassword,
-  ResetPassword,
-  ValidateRequestResetPassword,
-} from 'src/app/store/types/request-reset.interface';
+import { RequestResetPassword, ResetPassword } from 'src/app/store/types/request-reset.interface';
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface RegisterAccountRequest {
+  email: string;
+  password: string;
+  confirmPassword: string;
+  firstName?: string;
+  lastName?: string;
+  accountName: string;
+}
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
   private baseUrl = `${environment.apiUrl}`;
-  private headers = new HttpHeaders().set(
-    'Content-Type',
-    'application/json; charset=utf-8'
-  );
+  private headers = new HttpHeaders().set('Content-Type', 'application/json; charset=utf-8');
 
-  constructor(private http: HttpClient, public router: Router) { }
+  constructor(
+    private http: HttpClient,
+    public router: Router
+  ) {}
 
   /**
-   * Calls Register service
+   * Register a new user (legacy method)
    * @param data: User
    */
   register(data: User): Observable<User> {
@@ -44,11 +46,22 @@ export class AuthService {
   }
 
   /**
-   * Calls login service, if succesful, loads and stores sessions values
+   * Register a new account with first user as admin
+   * @param data: RegisterAccountRequest
+   */
+  registerAccount(data: RegisterAccountRequest): Observable<{ message: string; user: User }> {
+    return this.http.post<{ message: string; user: User }>(
+      `${this.baseUrl}/register-account`,
+      data
+    );
+  }
+
+  /**
+   * Login service
    * @param data: LoginRequest
    */
   login(data: LoginRequest): Observable<User> {
-    return this.http.post<any>(`${this.baseUrl}/login`, data.user).pipe(
+    return this.http.post<{ user: User }>(`${this.baseUrl}/login`, data.user).pipe(
       map((res) => res.user),
       shareReplay()
     );
@@ -59,7 +72,7 @@ export class AuthService {
    */
   getCurrentUser(): Observable<User> {
     return this.http.get<User>(`${this.baseUrl}/user`).pipe(
-      map(user => {
+      map((user) => {
         if (user === null) {
           throw new HttpErrorResponse({ status: 401, statusText: 'unauthenticated' });
         }
@@ -69,53 +82,46 @@ export class AuthService {
   }
 
   /**
-   * Refreshes tokens from server, user must be logged in
+   * Refreshes tokens from server
    * @param refreshToken The refresh token
    */
   refreshTokens(refreshToken: string): Observable<User> {
-    return this.http.post<any>(
-      `${this.baseUrl}/refresh_token`,
-      { refreshToken },
-      { headers: this.headers }
-    ).pipe(map((res) => res.user));
+    return this.http
+      .post<{
+        user: User;
+      }>(`${this.baseUrl}/refresh-token`, { refreshToken }, { headers: this.headers })
+      .pipe(map((res) => res.user));
   }
 
   /**
    * Logout method
-   * Note: Implementation delegated to NgRx store
    */
-  logout(): Observable<never> {
-    return throwError(() => new Error('Not implemented, use store for logout'));
+  logout(): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.baseUrl}/logout`, {});
   }
 
   /**
    * Request password reset
    * @param data Request reset data with email
    */
-  requestReset(data: RequestResetPassword): Observable<any> {
-    return this.http.post<any>(
-      `${this.baseUrl}/request_reset_password`,
-      data
-    );
+  requestReset(data: RequestResetPassword): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.baseUrl}/request-password-reset`, data);
   }
 
   /**
-   * Validate reset code for password reset
-   * @param data Validation data with email and code
+   * Reset password with token
+   * @param data Reset data with token and new password
    */
-  validateRequestReset(data: ValidateRequestResetPassword): Observable<any> {
-    return this.http.post<any>(
-      `${this.baseUrl}/validate_request_reset_password`,
-      data
-    );
+  resetPassword(data: ResetPassword & { token: string }): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.baseUrl}/reset-password`, data);
   }
 
   /**
-   * Reset password with new credentials
-   * @param data Reset data with email and new password
+   * Change password for authenticated user
+   * @param data Change password data
    */
-  resetPassword(data: ResetPassword): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/reset_password`, data);
+  changePassword(data: ChangePasswordRequest): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.baseUrl}/change-password`, data);
   }
 
   /**
@@ -124,8 +130,12 @@ export class AuthService {
    * @returns true if token is expired, false otherwise
    */
   isTokenExpired(token: string): boolean {
-    const expiry = (JSON.parse(atob(token.split('.')[1]))).exp;
-    return (Math.floor((new Date).getTime() / 1000)) >= expiry;
+    try {
+      const expiry = JSON.parse(atob(token.split('.')[1])).exp;
+      return Math.floor(new Date().getTime() / 1000) >= expiry;
+    } catch {
+      return true;
+    }
   }
 
   /**

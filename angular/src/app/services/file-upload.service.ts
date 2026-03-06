@@ -4,14 +4,14 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class FileUploadService {
   private baseUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
-  upload(files: File[]): Observable<HttpEvent<any>> {
+  upload(files: File[]): Observable<HttpEvent<unknown>> {
     const formData: FormData = new FormData();
 
     files.forEach((file: File) => {
@@ -20,14 +20,13 @@ export class FileUploadService {
 
     const req = new HttpRequest('POST', `${this.baseUrl}/upload/`, formData, {
       reportProgress: true,
-      responseType: 'json'
+      responseType: 'json',
     });
 
     return this.http.request(req);
   }
 
-  getFiles(): Observable<any> {
+  getFiles(): Observable<unknown> {
     return this.http.get(`${this.baseUrl}/upload/`);
   }
 }
-

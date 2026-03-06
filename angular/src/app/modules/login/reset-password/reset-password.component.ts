@@ -18,7 +18,10 @@ export class ResetPasswordComponent implements OnInit {
   isSubmitting$!: Observable<boolean>;
   backendErrors$!: Observable<BackendErrors | null>;
 
-  constructor(private store: Store<AppState>, private fb: UntypedFormBuilder) {
+  constructor(
+    private store: Store<AppState>,
+    private fb: UntypedFormBuilder
+  ) {
     this.form = this.fb.group({
       email: ['', Validators.required],
     });

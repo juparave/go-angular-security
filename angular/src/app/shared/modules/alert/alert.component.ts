@@ -1,17 +1,11 @@
-import {
-  Component,
-  OnInit,
-  HostBinding,
-  Input,
-  ElementRef,
-} from '@angular/core';
+import { Component, HostBinding, Input, ElementRef } from '@angular/core';
 
 @Component({
   selector: 'app-alert',
   templateUrl: './alert.component.html',
   styleUrls: ['./alert.component.scss'],
 })
-export class AlertComponent implements OnInit {
+export class AlertComponent {
   @Input() title?: string;
   @Input() view: string;
   @Input() removable?: boolean;
@@ -47,8 +41,6 @@ export class AlertComponent implements OnInit {
   constructor(private element: ElementRef) {
     this.view = 'default';
   }
-
-  ngOnInit() {}
 
   removeAlert() {
     this.element.nativeElement.remove();

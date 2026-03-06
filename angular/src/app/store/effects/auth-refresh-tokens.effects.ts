@@ -1,4 +1,3 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
@@ -19,21 +18,15 @@ export class RefreshTokensEffect {
     private authService: AuthService,
     private persistanceService: PersistanceService,
     private router: Router
-  ) { }
+  ) {}
 
   persistNewTokens$ = createEffect(
     () => {
       return this.actions$.pipe(
         ofType(refreshTokenSuccessAction),
         tap((action) => {
-          this.persistanceService.set(
-            'token',
-            action.currentUser.accessToken
-          );
-          this.persistanceService.set(
-            'refreshToken',
-            action.currentUser.refreshToken
-          );
+          this.persistanceService.set('token', action.currentUser.accessToken);
+          this.persistanceService.set('refreshToken', action.currentUser.refreshToken);
         })
       );
     },
@@ -73,7 +66,7 @@ export class RefreshTokensEffect {
           map((currentUser: User) => {
             return refreshTokenSuccessAction({ currentUser });
           }),
-          catchError((errorResponse: HttpErrorResponse) => {
+          catchError(() => {
             return of(refreshTokenFailureAction);
           })
         );

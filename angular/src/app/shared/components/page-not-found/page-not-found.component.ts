@@ -8,8 +8,6 @@ import { MatButtonModule } from '@angular/material/button';
   standalone: true,
   imports: [MatCardModule, MatButtonModule, RouterModule],
   templateUrl: './page-not-found.component.html',
-  styleUrl: './page-not-found.component.scss'
+  styleUrl: './page-not-found.component.scss',
 })
-export class PageNotFoundComponent {
-
-}
+export class PageNotFoundComponent {}

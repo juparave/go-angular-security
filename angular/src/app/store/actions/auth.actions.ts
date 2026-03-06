@@ -33,10 +33,7 @@ export enum ActionTypes {
   RESET_PASSWORD_FAILURE = '[Auth] Reset password failure',
 }
 
-export const registerAction = createAction(
-  ActionTypes.REGISTER,
-  props<{ request: User }>()
-);
+export const registerAction = createAction(ActionTypes.REGISTER, props<{ request: User }>());
 
 export const registerSuccessAction = createAction(
   ActionTypes.REGISTER_SUCCESS,
@@ -50,12 +47,12 @@ export const registerFailureAction = createAction(
 
 export const loginAction = createAction(
   ActionTypes.LOGIN,
-  props<{ request: LoginRequest, returnUrl: ReturnUrl }>()
+  props<{ request: LoginRequest; returnUrl: ReturnUrl }>()
 );
 
 export const loginSuccessAction = createAction(
   ActionTypes.LOGIN_SUCCESS,
-  props<{ currentUser: User, returnUrl: ReturnUrl }>()
+  props<{ currentUser: User; returnUrl: ReturnUrl }>()
 );
 
 export const loginFailureAction = createAction(
@@ -91,9 +88,7 @@ export const getCurrentUserSuccessAction = createAction(
   props<{ currentUser: User }>()
 );
 
-export const getCurrentUserFailureAction = createAction(
-  ActionTypes.GET_CURRENT_USER_FAILURE
-);
+export const getCurrentUserFailureAction = createAction(ActionTypes.GET_CURRENT_USER_FAILURE);
 
 export const requestResetPasswordAction = createAction(
   ActionTypes.REQUEST_RESET_PASSWORD,

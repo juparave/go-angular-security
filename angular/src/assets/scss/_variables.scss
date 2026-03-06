@@ -1,6 +1,6 @@
-@use "sass:math";
+@use 'sass:math';
 
-@import "./mixins";
+@import './mixins';
 
 // Material palettes:
 // $mat-red, $mat-pink, $mat-purple, $mat-deep-purple, $mat-indigo, $mat-blue, $mat-light-blue, $mat-cyan, $mat-teal,
@@ -23,7 +23,8 @@ $main-palette: (
   A200: #2e4cff,
   A400: #0024fa,
   A700: #0020e0,
-  contrast: (50: #000000,
+  contrast: (
+    50: #000000,
     100: #000000,
     200: #000000,
     300: #ffffff,
@@ -64,7 +65,8 @@ $accent-palette: (
   A200: #e1ecff,
   A400: #aeccff,
   A700: #95bcff,
-  contrast: (50: #000000,
+  contrast: (
+    50: #000000,
     100: #000000,
     200: #000000,
     300: #000000,
@@ -102,7 +104,7 @@ $error-contrast: #fff;
 $main-bg: #f8f8f8;
 $main-text-color: #000;
 $main-fs: 16px;
-$main-ff: "Roboto", sans-serif;
+$main-ff: 'Roboto', sans-serif;
 // $main-ff: 'Josefin Sans', sans-serif;
 $main-fw: 400;
 $module: 11px;
@@ -113,27 +115,43 @@ $shadow: 0px 5px 5px -4px rgba(#000, 0.25);
 $shadow-hover: 0px 8px 24px rgba(#000, 0.12);
 
 //Second
-$second-ff: "Roboto Serif", serif;
+$second-ff: 'Roboto Serif', serif;
 
 //Animationng serve
 $animation: ease-in-out;
 
 //Media
-$max543: only screen and (max-width: 543px,
+$max543: only screen and
+  (
+    max-width: 543px,
   );
-$min544: only screen and (min-width: 544px,
+$min544: only screen and
+  (
+    min-width: 544px,
   );
-$max767: only screen and (max-width: 767px,
+$max767: only screen and
+  (
+    max-width: 767px,
   );
-$min768: only screen and (min-width: 768px,
+$min768: only screen and
+  (
+    min-width: 768px,
   );
-$max991: only screen and (max-width: 991px,
+$max991: only screen and
+  (
+    max-width: 991px,
   );
-$min992: only screen and (min-width: 992px,
+$min992: only screen and
+  (
+    min-width: 992px,
   );
-$max1199: only screen and (max-width: 1199px,
+$max1199: only screen and
+  (
+    max-width: 1199px,
   );
-$min1200: only screen and (min-width: 1200px,
+$min1200: only screen and
+  (
+    min-width: 1200px,
   );
 
 //Headers

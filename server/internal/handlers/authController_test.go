@@ -1,4 +1,4 @@
-package controllers
+package handlers
 
 import (
 	"bytes"
@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"go-app/database"
-	"go-app/models"
-	"go-app/util"
+	"server/internal/database"
+	"server/internal/models"
+	"server/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
@@ -26,12 +26,12 @@ func setupApp() (*fiber.App, *gorm.DB) {
 		panic("Failed to connect to database: " + err.Error())
 	}
 
-	err = db.AutoMigrate(&models.User{}, &models.Role{}, &models.Permission{})
+	err = db.AutoMigrate(&models.User{}, &models.Role{}, &models.Permission{}, &models.Account{})
 	if err != nil {
 		panic("Failed to migrate database: " + err.Error())
 	}
 
-	database.DB = db
+	database.DB = db // Legacy compatibility
 
 	app := fiber.New()
 
@@ -173,7 +173,7 @@ func TestUpdatePassword(t *testing.T) {
 		originalPasswordHash = currentUser.Password
 		testUser = currentUser
 
-		err := util.GenerateUserTokens(&testUser)
+		err := utils.GenerateUserTokens(&testUser)
 		assert.NoError(t, err, "Setup: Failed to generate tokens")
 		userJWT = testUser.AccessToken
 		assert.NotEmpty(t, userJWT, "Setup: userJWT is empty")
@@ -348,7 +348,7 @@ func TestUpdateInfo(t *testing.T) {
 		baseUser.SetPassword("password123")
 		db.Create(&baseUser)
 
-		err := util.GenerateUserTokens(&baseUser)
+		err := utils.GenerateUserTokens(&baseUser)
 		assert.NoError(t, err, "Setup: Failed to generate tokens for baseUser")
 		userJWT = baseUser.AccessToken
 		assert.NotEmpty(t, userJWT, "Setup: userJWT is empty")
@@ -588,7 +588,7 @@ func TestUser(t *testing.T) {
 		db.Where("email = ?", currentUser.Email).Delete(&models.User{})
 		db.Create(&currentUser)
 
-		err := util.GenerateUserTokens(&currentUser)
+		err := utils.GenerateUserTokens(&currentUser)
 		assert.NoError(t, err, "Setup: Failed to generate tokens for auth user")
 		validUserJWT = currentUser.AccessToken
 		assert.NotEmpty(t, validUserJWT, "Setup: Generated access token is empty")
@@ -737,7 +737,7 @@ func TestRefreshToken(t *testing.T) {
 		testUser.SetPassword("password123")
 		db.Create(&testUser)
 
-		err := util.GenerateUserTokens(&testUser)
+		err := utils.GenerateUserTokens(&testUser)
 		assert.NoError(t, err, "Setup: Failed to generate tokens for test user")
 		validRefreshToken = testUser.RefreshToken
 		assert.NotEmpty(t, validRefreshToken, "Setup: Generated refresh token is empty")

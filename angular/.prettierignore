@@ -1,0 +1,20 @@
+# Dependencies
+node_modules
+package-lock.json
+
+# Build outputs
+dist
+.angular
+
+# Coverage
+coverage
+
+# Environment files
+.env
+.env.*
+
+# Generated files
+*.generated.ts
+
+# Documentation
+CHANGELOG.md

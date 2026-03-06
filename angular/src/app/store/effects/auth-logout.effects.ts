@@ -3,10 +3,7 @@ import { Router } from '@angular/router';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { map, tap } from 'rxjs';
 import { PersistanceService } from 'src/app/services/persistance.service';
-import {
-  logoutAction,
-  logoutSuccessAction,
-} from 'src/app/store/actions/auth.actions';
+import { logoutAction, logoutSuccessAction } from 'src/app/store/actions/auth.actions';
 
 @Injectable()
 export class LogoutEffect {
@@ -14,7 +11,7 @@ export class LogoutEffect {
     private actions$: Actions,
     private persistanceService: PersistanceService,
     private router: Router
-  ) { }
+  ) {}
 
   logout$ = createEffect(() => {
     return this.actions$.pipe(
@@ -25,8 +22,8 @@ export class LogoutEffect {
         this.persistanceService.remove('refreshToken');
 
         return logoutSuccessAction();
-      }),
-    )
+      })
+    );
   });
 
   redirecAfterLogoutSuccess$ = createEffect(

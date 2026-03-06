@@ -1,4 +1,4 @@
-import { Subscription } from "./subscription";
+import { Subscription } from './subscription';
 
 export interface User {
   id: string;
@@ -6,7 +6,7 @@ export interface User {
   lastName: string;
   email: string;
   roles: string;
-  subscription: Subscription
+  subscription: Subscription;
 
   // transient members
   accessToken: string;

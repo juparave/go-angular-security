@@ -1,5 +1,5 @@
 // Headings
-@use "sass:math";
+@use 'sass:math';
 
 @function h1($key: $h1) {
   @return map-get($h1, $key);
@@ -60,7 +60,7 @@
 %shadow {
   box-shadow: 0 2px 6px 0 rgba(#000, 0.1);
   bottom: 0;
-  content: "";
+  content: '';
   display: block;
   height: 6px;
   left: 10px;
