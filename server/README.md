@@ -1,145 +1,203 @@
-# Go Backend API for Secure Web Application
+# Go Backend API
 
-This directory (`server/`) contains the Go backend API for the secure web application. It's built using the [Fiber](https://docs.gofiber.io/) web framework and provides RESTful endpoints for the Angular frontend.
+This directory (`server/`) contains the Go backend API for the go-angular-security SaaS starter. It's built using the [Fiber](https://docs.gofiber.io/) web framework and provides RESTful endpoints for the Angular frontend.
 
 ## Project Overview
 
 The Go backend is responsible for:
-- User authentication (registration, login) and JWT generation/validation.
-- Authorization and role-based access control (RBAC).
-- Managing user data, roles, and permissions.
-- Serving data to the frontend and handling business logic.
-- Securely interacting with a database (e.g., PostgreSQL, MySQL - specific configuration in `database/connect.go`).
+
+- User authentication (registration, login, Google OAuth) and JWT generation/validation
+- Authorization and role-based access control (Admin / Editor / Viewer)
+- Multi-tenant database management with per-account SQLite databases
+- Team management and member invitations
+- Stripe subscription billing and webhook handling
+- Transactional email system with async queue and retry logic
 
 ## Prerequisites
 
-- Go (version 1.19 or higher)
-- Access to a database supported by GORM (the project is set up for PostgreSQL, but can be adapted).
+- Go 1.24+
+- SMTP server (optional — required for email features)
+- Stripe account (optional — required for billing features)
 
 ## Setup and Running
 
-1.  **Navigate to the server directory:**
-    ```bash
-    cd server
-    ```
+### 1. Navigate to the server directory
 
-2.  **Install Dependencies:**
-    If this is the first time or if `go.mod` or `go.sum` has changed:
-    ```bash
-    go mod tidy
-    go mod download
-    ```
+```bash
+cd server
+```
 
-3.  **Database Configuration:**
-    - The database connection is configured in `database/connect.go`.
-    - Ensure you have a running database instance (e.g., PostgreSQL).
-    - Update the DSN (Data Source Name) string in `database/connect.go` with your database credentials:
-      ```go
-      dsn := "host=localhost user=youruser password=yourpassword dbname=yourdbname port=5432 sslmode=disable TimeZone=Asia/Shanghai"
-      // Adjust according to your database setup
-      ```
-    - The application will attempt to automatically migrate the database schema upon startup (defined in `database/connect.go` using `AutoMigrate`).
+### 2. Install Dependencies
 
-4.  **Environment Variables (Optional but Recommended):**
-    For sensitive information like JWT secrets or database credentials, it's recommended to use environment variables instead of hardcoding. This project might require you to set up:
-    - `JWT_SECRET`: A secret key for signing JWTs.
-    - `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_PORT`: For database connection.
-    *(Note: Current implementation might have these hardcoded; refactoring to use environment variables is a good practice.)*
+```bash
+go mod tidy
+go mod download
+```
 
-5.  **Run the Application:**
-    - **Without auto-reload:**
-      ```bash
-      go run main.go
-      ```
-    - **With auto-reload using Air (recommended for development):**
-      Ensure [Air](https://github.com/cosmtrek/air) is installed (`go install github.com/cosmtrek/air@latest`).
-      ```bash
-      air
-      # Air uses the .air.toml configuration file in this directory
-      ```
-    The API server will start, typically on `http://localhost:3000`.
+### 3. Environment Configuration
+
+Copy the example environment file and configure:
+
+```bash
+cp .env.example .env
+```
+
+Required variables (see `.env.example` for full list):
+
+| Variable | Description |
+|----------|-------------|
+| `JWT_SECRET` | Access token signing secret |
+| `JWT_REFRESH_SECRET` | Refresh token secret |
+| `JWT_RESET_SECRET` | Password reset token secret |
+| `EMAIL_HOST` | SMTP host (optional) |
+| `STRIPE_SECRET_KEY` | Stripe API key (optional) |
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID (optional) |
+
+### 4. Run the Application
+
+**Without auto-reload:**
+
+```bash
+go run cmd/api/main.go
+# → listening on http://localhost:5000
+```
+
+**With auto-reload using Air (recommended for development):**
+
+```bash
+# Install Air if not already installed
+go install github.com/cosmtrek/air@latest
+
+# Run with auto-reload
+air
+# Uses .air.toml configuration
+```
 
 ## API Endpoints
 
-The API routes are defined in `routes/routes.go`. Key endpoint groups include:
+All API endpoints are prefixed `/api/v1/`. Routes are defined in `internal/routes/routes.go`.
 
-*   **Auth Endpoints (`/api/auth`):**
-    *   `POST /api/auth/register`: User registration.
-    *   `POST /api/auth/login`: User login, returns a JWT.
-    *   `GET /api/auth/user`: Get current authenticated user's details (requires JWT).
-    *   `POST /api/auth/logout`: User logout (typically invalidates session/cookie).
-    *   `PUT /api/auth/users/info`: Update authenticated user's info.
-    *   `PUT /api/auth/users/password`: Update authenticated user's password.
+### Public Endpoints
 
-*   **User Management Endpoints (`/api/users` - often admin-restricted):**
-    *   `GET /api/users`: List all users.
-    *   `POST /api/users`: Create a new user.
-    *   `GET /api/users/:id`: Get a specific user by ID.
-    *   `PUT /api/users/:id`: Update a specific user by ID.
-    *   `DELETE /api/users/:id`: Delete a specific user by ID.
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/register` | Legacy user registration |
+| POST | `/register-account` | Self-service account + user creation |
+| POST | `/login` | Email/password login |
+| POST | `/glogin` | Google OAuth sign-in |
+| POST | `/refresh-token` | Refresh JWT access token |
+| POST | `/request-password-reset` | Send reset email |
+| POST | `/reset-password` | Reset password with token |
+| POST | `/contact` | Contact form submission |
 
-*   **Role Management Endpoints (`/api/roles` - often admin-restricted):**
-    *   `GET /api/roles`: List all roles.
-    *   `POST /api/roles`: Create a new role.
-    *   `GET /api/roles/:id`: Get a specific role by ID.
-    *   `PUT /api/roles/:id`: Update a specific role by ID.
-    *   `DELETE /api/roles/:id`: Delete a specific role by ID.
+### Protected Endpoints (requires JWT)
 
-*   **Permission Management Endpoints (`/api/permissions` - often admin-restricted):**
-    *   `GET /api/permissions`: List all permissions.
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/user` | Get current user |
+| POST | `/logout` | Clear auth cookies |
+| PUT | `/users/info` | Update profile |
+| PUT | `/users/password` | Update password |
 
-*(Refer to `routes/routes.go` and controller functions in `controllers/` for detailed request/response formats and specific logic.)*
+### Team Management
 
-## Database Schema
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/team` | List team members |
+| POST | `/team` | Invite new member |
+| PUT | `/team/:id` | Update member role/status |
+| DELETE | `/team/:id` | Remove member |
+| POST | `/team/:id/resend` | Resend invitation email |
 
-The database schema is defined using GORM models in the `models/` directory. Key models include:
+### Subscriptions
 
--   **`User` (`models/users.go`):** Stores user information, credentials, and associated role.
-    - Fields: `ID`, `FirstName`, `LastName`, `Email`, `Password`, `Phone`, `RoleID`, `Role`.
--   **`Role` (`models/role.go`):** Defines user roles (e.g., admin, editor, viewer).
-    - Fields: `ID`, `Name`, `Permissions`.
--   **`Permission` (`models/permission.go`):** Defines granular permissions that can be assigned to roles.
-    - Fields: `ID`, `Name`.
--   **`PasswordReset` (`models/users.go`):** (If password reset functionality is implemented)
-    - Typically stores a token and expiry for password reset requests.
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/subscriptions/current` | Get active subscription |
+| POST | `/subscriptions/create-checkout-session` | Create Stripe checkout |
+| PATCH | `/subscriptions/:id` | Update metadata |
+| POST | `/subscriptions/:id/cancel` | Cancel at period end |
+| POST | `/subscriptions/:id/reactivate` | Remove cancel flag |
+| POST | `/subscriptions/:id/change-plan` | Switch price/plan |
 
-The database connection logic in `database/connect.go` includes an `AutoMigrate` call, which attempts to create or update the tables based on these models when the application starts.
+## Database Architecture
 
-## Authentication and Authorization
+### Multi-tenancy
 
-*   **Authentication:**
-    - Implemented using JSON Web Tokens (JWT).
-    - Upon successful login (`/api/auth/login`), a JWT is generated and sent to the client (typically as an HTTP-only cookie or in the response body).
-    - The JWT secret key is crucial for security and should be managed carefully (ideally via environment variables). Current JWT logic is in `util/jwt.go`.
-    - The `AuthMiddleware` (`middleware/authMiddleware.go`) protects routes that require authentication by validating the JWT from incoming requests.
+- **Master DB** (`gorm.db`): Stores accounts, users, and Stripe metadata
+- **Tenant DBs** (`data/<account_id>.db`): Per-account SQLite databases
 
-*   **Authorization (Role-Based Access Control - RBAC):**
-    - Users are assigned roles, and roles are associated with specific permissions.
-    - The `PermissionMiddleware` (`middleware/permissionMiddleware.go`) can be used to protect endpoints based on the permissions required.
-    - It checks if the authenticated user's role has the necessary permission to access a resource or perform an action.
-    - Permissions are typically strings like "view_users", "edit_users", "view_products", etc. These are checked against the permissions assigned to the user's role.
+The `database.Manager` singleton manages connections to all tenant databases. Use:
+
+- `database.Manager.GetMasterDB()` for users/accounts
+- `database.Manager.GetConnection(accountID)` for tenant data
+
+### Models
+
+Key models in `internal/models/`:
+
+- **Account** — Tenant entity with Stripe customer ID, plan tier, user limits
+- **User** — Belongs to Account; has role, password digest, enabled flag
+- **Role** — 1=Admin, 2=Editor, 3=Viewer
+- **Subscription** — Mirrors Stripe subscription data
+
+## Authentication
+
+### JWT Tokens
+
+- **Access token** — Short-lived, signed with `JWT_SECRET`
+- **Refresh token** — Long-lived, signed with `JWT_REFRESH_SECRET`
+- **Reset token** — For password resets, signed with `JWT_RESET_SECRET`
+
+Tokens are set as `HttpOnly` cookies (`jwt` + `refreshjwt`). Protected routes read from `Token` header or `jwt` cookie.
+
+### Middleware
+
+- `IsAuthenticated` — Validates JWT token
+- `RequireAccount` — Ensures user belongs to an account
+- `RequireAdmin` / `RequireEditor` — Role-based access control
 
 ## Project Structure
 
--   **`main.go`**: Entry point of the application. Initializes Fiber, database, and routes.
--   **`controllers/`**: Contains handler functions for API endpoints (business logic).
--   **`database/`**: Database connection and migration logic.
--   **`middleware/`**: Custom middleware (e.g., authentication, authorization).
--   **`models/`**: GORM models defining the database schema.
--   **`routes/`**: API route definitions.
--   **`util/`**: Utility functions (e.g., JWT handling, password hashing, input validation).
--   **`.air.toml`**: Configuration file for the Air live-reload tool.
--   **`go.mod`, `go.sum`**: Go module files for dependency management.
+```
+server/
+├── cmd/api/main.go        # Entry point
+├── internal/
+│   ├── config/            # AppConfig, JWTConfig, EmailConfig
+│   ├── database/          # Multi-tenant DB manager
+│   ├── handlers/          # HTTP handlers (auth, team, subscription, contact)
+│   ├── middleware/        # Auth and role middleware
+│   ├── models/            # GORM models
+│   ├── routes/            # Route definitions with rate limiters
+│   ├── services/          # UserSyncService
+│   └── utils/             # JWT, crypto, helpers
+├── pkg/mail/              # Async email service with templates
+│   ├── templates/         # HTML email templates
+│   ├── service.go         # Queue-based async sender with retry
+│   └── smtp_sender.go     # SMTP implementation
+├── .air.toml              # Air live-reload configuration
+├── .env.example           # Environment variables template
+└── go.mod                 # Go module definition
+```
+
+## Email System
+
+The `pkg/mail` service provides:
+
+- **Async queue** — Emails sent in background via channel (3 workers)
+- **Retry logic** — 3 attempts with exponential backoff (1s/2s/4s)
+- **Dev mode** — Set `DevMode=true` + `TestRecipient` to redirect all emails
+- **Template rendering** — HTML templates embedded at compile time
+
+Available templates: `password_reset`, `team_invitation`, `welcome`, `contact`
 
 ## Testing
 
-Basic HTTP tests can be found in `controllers/test.http` which can be used with VSCode's REST Client extension.
-Unit tests for utility functions like crypto can be found in `util/crypto_test.go`. To run tests:
 ```bash
 go test ./...
 ```
 
-Further contributions should include relevant tests for new functionalities.
----
+## Further Reading
 
-This README provides a starting point. Refer to the source code for the most up-to-date details.
+- Root `CLAUDE.md` — Full architecture and API reference
+- Root `readme.md` — Project overview and quick start

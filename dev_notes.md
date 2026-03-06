@@ -2,28 +2,17 @@
 
 This document provides notes and instructions for setting up and running the development environment.
 
-## Go Backend (`api` directory)
+## Go Backend (`server` directory)
 
-These instructions assume you are working within the `api` directory of the project.
-
-### Initial Go Module Setup (if starting from scratch)
-
-If you were creating the Go module from scratch (this is already done in the project):
-
-```bash
-# Create a directory for the Go application
-mkdir go-app
-cd go-app
-
-# Initialize the Go module
-go mod init go-app
-```
+These instructions assume you are working within the `server` directory of the project.
 
 ### Installing Dependencies
 
-To install or update the Go application dependencies, navigate to the `api` directory and run:
+To install or update the Go application dependencies, navigate to the `server` directory and run:
 
 ```bash
+cd server
+
 # Download and install dependencies listed in go.mod
 go mod download
 
@@ -46,21 +35,46 @@ The `air` executable should ideally be in your system's `PATH`. You can install 
 ```bash
 go install github.com/cosmtrek/air@latest
 ```
-Alternatively, you can download a pre-compiled binary from the [Air releases page](https://github.com/cosmtrek/air/releases) and place it in a directory included in your `PATH` (e.g., `~/bin/` or `/usr/local/bin/`).
 
 **Running with Air:**
 
-Once `air` is installed, navigate to the `api` directory and run:
+Once `air` is installed, navigate to the `server` directory and run:
 
 ```bash
+cd server
 air
 ```
 
-This will start the Go server, and `air` will monitor for file changes, automatically rebuilding and restarting the server as needed. Configuration for `air` can be done via a `.air.toml` file (if one exists in the directory).
+This will start the Go server, and `air` will monitor for file changes, automatically rebuilding and restarting the server as needed. Configuration is in `.air.toml`.
 
-## Frontend (Angular - `frontend` directory)
+### Environment Configuration
 
-Refer to the main `readme.md` for instructions on setting up and running the Angular frontend.
+Copy the example environment file and fill in values:
+
+```bash
+cd server
+cp .env.example .env
+```
+
+Required environment variables include:
+- `APP_SECRET`, `JWT_SECRET`, `REFRESH_SECRET`, `RESET_SECRET` - for JWT tokens
+- `SMTP` settings for email (`EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USER`, `EMAIL_PASSWORD`)
+- `STRIPE_API_KEY`, `STRIPE_WEBHOOK_SECRET` - for Stripe billing
+
+## Frontend (Angular - `angular` directory)
+
+The Angular frontend is located in the `angular/` directory.
+
+### Setup and Running
+
+```bash
+cd angular
+npm install
+ng serve                 # Dev server on :4200 (proxies API to :5000)
+ng build --configuration production
+```
+
+Refer to `angular/README.md` and `angular/DESIGN_SYSTEM.md` for more details.
 
 ## Codespaces Development
 
