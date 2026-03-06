@@ -42,6 +42,13 @@ var Manager *DBConnManager
 // InitManager initializes the database connection manager.
 // basePath is the directory where tenant databases are stored (e.g., "data")
 func InitManager(masterDSN string, basePath string) error {
+	// Ensure the directory for the master database exists
+	if dir := filepath.Dir(masterDSN); dir != "" && dir != "." {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return fmt.Errorf("failed to create master database directory: %w", err)
+		}
+	}
+
 	// Connect to master database
 	masterDB, err := gorm.Open(sqlite.Open(masterDSN), &gorm.Config{})
 	if err != nil {
