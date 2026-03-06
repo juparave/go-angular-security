@@ -39,7 +39,7 @@ export const selectHasSubscriptionPlan = (plans: string[]) =>
     isLoading: state.isLoading,
   }));
 
-// Select if the subscription is active
+// Select if the subscription is active (includes free tier)
 export const selectIsSubscriptionActive = createSelector(
   selectSubscription,
   (state): { isActive: boolean; isLoading: boolean } => {
@@ -47,7 +47,8 @@ export const selectIsSubscriptionActive = createSelector(
 
     const isActive =
       !!subscription &&
-      (subscription.status === 'active' ||
+      (subscription.plan === 'free' ||
+        subscription.status === 'active' ||
         subscription.status === 'trialing' ||
         (subscription.status === 'canceled' && !subscription.cancelAtPeriodEnd) ||
         (subscription.status === 'canceled' &&

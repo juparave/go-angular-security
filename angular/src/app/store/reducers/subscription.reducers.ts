@@ -17,10 +17,11 @@ import {
   changePlanSuccessAction,
   changePlanFailureAction,
 } from '../actions/subscription.actions';
+import { getCurrentUserFailureAction, logoutSuccessAction } from '../actions/auth.actions';
 
 const initialState: SubscriptionState = {
   subscription: null,
-  isLoading: false,
+  isLoading: true,
   isUpdating: false,
   validationErrors: null,
   redirectUrl: null,
@@ -156,6 +157,17 @@ export const subscriptionReducer = createReducer(
       ...state,
       isUpdating: false,
       validationErrors: action.errors,
+    })
+  ),
+
+  // Reset subscription state when user is not authenticated
+  on(
+    getCurrentUserFailureAction,
+    logoutSuccessAction,
+    (state): SubscriptionState => ({
+      ...state,
+      subscription: null,
+      isLoading: false,
     })
   )
 );

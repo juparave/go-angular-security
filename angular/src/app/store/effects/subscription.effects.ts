@@ -80,13 +80,11 @@ export class GetSubscriptionEffect {
       currentPeriodEnd: null,
     };
 
-    // Process billing period data if available
+    // Process billing period data if available (not present for free tier)
     if (this.hasItemsData(response)) {
       const item = response.items!.data[0];
       subscription.currentPeriodEnd = this.toDateFromTimestamp(item.current_period_end);
       subscription.currentPeriodStart = this.toDateFromTimestamp(item.current_period_start);
-    } else {
-      console.warn('Subscription data is missing or incomplete:', response);
     }
 
     return subscription;

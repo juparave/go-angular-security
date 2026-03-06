@@ -29,8 +29,11 @@
         </mat-list>
       </mat-card-content>
       <mat-card-actions>
-        <button mat-flat-button color="primary" (click)="selectPlan(plan.id)">
-          Choose {{ plan.name }}
+        <button
+          mat-flat-button
+          [color]="plan.id === 'free' ? 'accent' : 'primary'"
+          (click)="selectPlan(plan.id)">
+          {{ plan.id === 'free' ? 'Get Started' : 'Choose ' + plan.name }}
         </button>
       </mat-card-actions>
     </mat-card>

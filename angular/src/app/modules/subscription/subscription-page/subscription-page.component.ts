@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
@@ -51,11 +52,24 @@ export class SubscriptionPageComponent {
   isYearly: boolean = false; // Default to monthly
   plans: Plan[] = [
     {
-      id: 'basic', // Base ID, will append _monthly or _yearly later
+      id: 'free',
+      name: 'Free',
+      description: 'Get started at no cost.',
+      priceMonthly: 0,
+      priceYearly: 0,
+      features: [
+        { name: 'Feature A', included: true },
+        { name: 'Feature B', included: false },
+        { name: 'Feature C', included: false },
+        { name: 'Feature D', included: false },
+      ],
+    },
+    {
+      id: 'basic',
       name: 'Basic',
       description: 'Essential features for individuals.',
       priceMonthly: 10,
-      priceYearly: 100, // e.g., 2 months free
+      priceYearly: 100,
       features: [
         { name: 'Feature A', included: true },
         { name: 'Feature B', included: true },
@@ -93,8 +107,10 @@ export class SubscriptionPageComponent {
 
   stripePromise: Promise<Stripe | null>; // Hold the Stripe instance promise
 
-  // Inject SubscriptionService
-  constructor(private subscriptionService: SubscriptionService) {
+  constructor(
+    private subscriptionService: SubscriptionService,
+    private router: Router
+  ) {
     // Initialize Stripe.js asynchronously
     this.stripePromise = loadStripe(environment.stripePublishableKey);
   }
@@ -127,11 +143,13 @@ export class SubscriptionPageComponent {
   }
 
   selectPlan(planIdBase: string): void {
+    // Free tier: just navigate to the app
+    if (planIdBase === 'free') {
+      this.router.navigateByUrl('/app');
+      return;
+    }
+
     const priceId = this.getPriceId(planIdBase);
-    console.log(`Selected plan with Price ID: ${priceId}`);
-    // Call the service method to initiate checkout
-    // This service method should handle the backend call to create a Stripe Checkout session
-    // Call the service method to initiate checkout
     this.subscriptionService.createCheckoutSession(priceId).subscribe({
       next: (response) => {
         // Backend returns { sessionId: string }
