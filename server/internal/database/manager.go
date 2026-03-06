@@ -31,6 +31,9 @@ var tenantModels = []interface{}{
 // globalModels are models that exist only in the master database
 var globalModels = []interface{}{
 	&models.Account{},
+	&models.Role{},
+	&models.User{},
+	&models.Subscription{},
 }
 
 // Manager is the global database connection manager

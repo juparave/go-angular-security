@@ -7,6 +7,6 @@
         "Mode": "development",
         "Uploads": "./uploads",
         "Assets": "./assets",
-        "Api": "http://localhost:5000",
+        "Api": "http://localhost:5000"
     }
 }

@@ -1,32 +1,27 @@
 package config
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 
-	lconfig "github.com/golobby/config/v3"
-	"github.com/golobby/config/v3/pkg/feeder"
 	"github.com/joho/godotenv"
 	"github.com/juparave/mylogger"
 )
 
-const (
-	// configFileName is the expected name for the JSON configuration file.
-	configFileName = "config.json"
-)
+const configFileName = "config.json"
 
 // AppConfig holds the application's static configuration values loaded from
 // environment variables and/or a JSON file.
 type AppConfig struct {
 	Name        string `env:"APP_NAME" json:"name"`
-	Mode        string `env:"APP_MODE" json:"mode"` // e.g., "development", "production"
+	Mode        string `env:"APP_MODE" json:"mode"`
 	Port        int    `env:"APP_PORT" json:"port"`
 	Domain      string `env:"APP_DOMAIN" json:"domain"`
 	UploadsPath string `env:"UPLOADS_PATH" json:"uploads_path"`
 	Log         *mylogger.MyLogger
-	MailChan    chan any       `json:"-"`
+	MailChan    chan any        `json:"-"`
 	Database    DatabaseConfig `json:"database"`
 	Email       EmailConfig
 	JWT         JWTConfig
@@ -42,8 +37,8 @@ type JWTConfig struct {
 	Secret          string `env:"JWT_SECRET"`
 	RefreshSecret   string `env:"JWT_REFRESH_SECRET"`
 	ResetSecret     string `env:"JWT_RESET_SECRET"`
-	AccessTokenTTL  int    `env:"JWT_ACCESS_TOKEN_TTL"`  // hours
-	RefreshTokenTTL int    `env:"JWT_REFRESH_TOKEN_TTL"` // hours
+	AccessTokenTTL  int    `env:"JWT_ACCESS_TOKEN_TTL"`
+	RefreshTokenTTL int    `env:"JWT_REFRESH_TOKEN_TTL"`
 }
 
 type DatabaseConfig struct {
@@ -62,91 +57,79 @@ type EmailConfig struct {
 	ContactFrom string `env:"EMAIL_CONTACT_FROM"`
 }
 
-// GetAppConfig loads configuration from environment variables and optionally
-// from a 'config.json' file. Environment variables take precedence.
-// It returns a populated AppConfig struct.
+// GetAppConfig loads configuration from environment variables. A .env file and
+// config.json are optional — errors in either are logged as warnings and
+// env vars always take precedence.
 func GetAppConfig() *AppConfig {
-	cfg := AppConfig{}
-
-	// 1. Load .env file if it exists (non-critical)
-	// Useful for local development. In production, rely on actual env vars.
-	err := godotenv.Load()
-	if err != nil {
-		// This is not necessarily an error, could be running in an environment
-		// where env vars are set directly (like Docker, K8s).
-		log.Println("Info: No local .env file found or loaded.")
+	// 1. Load .env file (optional — errors are warnings, not fatal)
+	if err := godotenv.Load(); err != nil {
+		log.Println("Warning: No .env file loaded:", err)
 	} else {
 		log.Println("Info: Loaded configuration from .env file.")
 	}
 
-	// 1.1 Load default values, these values will be replaced, if needed with the file
-	cfg.Name = getEnv("APP_NAME", "GO-ANGULAR-SECURITY").(string)
-	cfg.Mode = getEnv("APP_MODE", "development").(string)
-	cfg.Port = getEnv("APP_PORT", 5000).(int)
-
-	// 2. Prepare configuration feeders
-	var feeders []lconfig.Feeder
-
-	// JSON Feeder (Optional)
+	// 2. Warn if config.json exists but is invalid — don't fail
 	if _, err := os.Stat(configFileName); err == nil {
-		// config.json exists, add it as a feeder
-		log.Printf("Info: Found %s, adding as configuration source.\n", configFileName)
-		feeders = append(feeders, &feeder.Json{Path: configFileName})
-	} else if !os.IsNotExist(err) {
-		// Another error occurred trying to stat the file (e.g., permissions)
-		log.Printf("Warning: Could not stat %s: %v\n", configFileName, err)
-	} else {
-		log.Printf("Info: No %s file found.\n", configFileName)
+		log.Printf("Info: Found %s (note: env vars take precedence).\n", configFileName)
 	}
 
-	// Environment Variable Feeder (Primary)
-	// Env vars will override values from config.json if keys match.
-	feeders = append(feeders, feeder.Env{})
+	// 3. Build config purely from env vars with sensible defaults
+	cfg := &AppConfig{}
+	cfg.Name = envStr("APP_NAME", "GO-ANGULAR-SECURITY")
+	cfg.Mode = envStr("APP_MODE", "development")
+	cfg.Port = envInt("APP_PORT", 5000)
+	cfg.Domain = envStr("APP_DOMAIN", "")
+	cfg.UploadsPath = envStr("UPLOADS_PATH", "./uploads")
 
-	// 3. Create config loader and feed the struct
-	loader := lconfig.New()
-	loader.AddFeeder(feeders...) // Add all prepared feeders
-	loader.AddStruct(&cfg)       // Register the struct to be populated
+	cfg.Database.Driver = envStr("DATABASE_DRIVER", "sqlite")
+	cfg.Database.DSN = envStr("DATABASE_DSN", "")
+	cfg.Database.Path = envStr("DATABASE_PATH", "gorm.db")
 
-	err = loader.Feed()
-	if err != nil {
-		// Log the error, but consider if panicking might be more appropriate
-		// if the application cannot run without valid configuration.
-		log.Printf("Error: Failed to feed configuration: %v\n", err)
-		// Depending on requirements, you might os.Exit(1) here.
+	cfg.JWT.Secret = envStr("JWT_SECRET", "")
+	cfg.JWT.RefreshSecret = envStr("JWT_REFRESH_SECRET", "")
+	cfg.JWT.ResetSecret = envStr("JWT_RESET_SECRET", "")
+	cfg.JWT.AccessTokenTTL = envInt("JWT_ACCESS_TOKEN_TTL", 24)
+	cfg.JWT.RefreshTokenTTL = envInt("JWT_REFRESH_TOKEN_TTL", 720)
+
+	cfg.Email.Host = envStr("EMAIL_HOST", "")
+	cfg.Email.Port = envStr("EMAIL_PORT", "587")
+	cfg.Email.Account = envStr("EMAIL_ACCOUNT", "")
+	cfg.Email.Password = envStr("EMAIL_PASSWORD", "")
+	cfg.Email.ContactTo = envStr("EMAIL_CONTACT_TO", "")
+	cfg.Email.ContactFrom = envStr("EMAIL_CONTACT_FROM", "")
+
+	cfg.Stripe.SecretKey = envStr("STRIPE_SECRET_KEY", "")
+	cfg.Stripe.PublishableKey = envStr("STRIPE_PUBLISHABLE_KEY", "")
+	cfg.Stripe.WebhookSecret = envStr("STRIPE_WEBHOOK_SECRET", "")
+
+	// 4. Validate required fields
+	missing := []string{}
+	if cfg.JWT.Secret == "" {
+		missing = append(missing, "JWT_SECRET")
+	}
+	if len(missing) > 0 {
+		log.Fatalf("Missing required configuration: %v", missing)
 	}
 
-	// 4. Log the loaded configuration (optional, for debugging)
-	// Be cautious about logging sensitive data like passwords in production.
 	log.Println("Info: Configuration loaded successfully.")
-	configJSON, err := json.MarshalIndent(cfg, "", "  ")
-	if err != nil {
-		log.Printf("Error: Failed to marshal configuration to JSON: %v\n", err)
-	}
-	fmt.Println("--- Loaded Configuration ---")
-	fmt.Println(string(configJSON))
-	fmt.Println("--------------------------")
+	fmt.Printf("--- App: %s | Mode: %s | Port: %d ---\n", cfg.Name, cfg.Mode, cfg.Port)
 
-	return &cfg
+	return cfg
 }
 
-// Helper function to get env var or return default, now it can be string, int or float
-func getEnv(key string, fallback interface{}) interface{} {
-	if value, exists := os.LookupEnv(key); exists {
-		switch fallback.(type) {
-		case string:
-			return value
-		case int:
-			var intValue int
-			fmt.Sscan(value, &intValue)
-			return intValue
-		case float64:
-			var floatValue float64
-			fmt.Sscan(value, &floatValue)
-			return floatValue
-		default:
-			return value
+func envStr(key, fallback string) string {
+	if v, ok := os.LookupEnv(key); ok && v != "" {
+		return v
+	}
+	return fallback
+}
+
+func envInt(key string, fallback int) int {
+	if v, ok := os.LookupEnv(key); ok && v != "" {
+		if i, err := strconv.Atoi(v); err == nil {
+			return i
 		}
+		log.Printf("Warning: %s=%q is not a valid integer, using default %d\n", key, v, fallback)
 	}
 	return fallback
 }
