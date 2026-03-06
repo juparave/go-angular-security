@@ -27,22 +27,22 @@ const (
 type SubscriptionStatus string
 
 const (
-	SubscriptionStatusActive    SubscriptionStatus = "active"
-	SubscriptionStatusPastDue   SubscriptionStatus = "past_due"
-	SubscriptionStatusCanceled  SubscriptionStatus = "canceled"
+	SubscriptionStatusActive     SubscriptionStatus = "active"
+	SubscriptionStatusPastDue    SubscriptionStatus = "past_due"
+	SubscriptionStatusCanceled   SubscriptionStatus = "canceled"
 	SubscriptionStatusIncomplete SubscriptionStatus = "incomplete"
 )
 
 // Account represents a tenant in the multitenant system.
 // Each account has its own SQLite database for data isolation.
 type Account struct {
-	ID        string         `json:"id" gorm:"primaryKey;size:11"`
-	Name      string         `json:"name" gorm:"size:128;not null"`
-	ContactEmail string      `json:"contactEmail" gorm:"size:128;not null"`
-	Status    AccountStatus  `json:"status" gorm:"size:32;default:'active'"`
-	CreatedAt time.Time      `json:"createdAt"`
-	UpdatedAt time.Time      `json:"updatedAt"`
-	DeletedAt gorm.DeletedAt `json:"-" gorm:"index"`
+	ID           string         `json:"id" gorm:"primaryKey;size:11"`
+	Name         string         `json:"name" gorm:"size:128;not null"`
+	ContactEmail string         `json:"contactEmail" gorm:"size:128;not null"`
+	Status       AccountStatus  `json:"status" gorm:"size:32;default:'active'"`
+	CreatedAt    time.Time      `json:"createdAt"`
+	UpdatedAt    time.Time      `json:"updatedAt"`
+	DeletedAt    gorm.DeletedAt `json:"-" gorm:"index"`
 
 	// Stripe integration
 	StripeCustomerID     string `json:"stripeCustomerId" gorm:"size:255;index"`

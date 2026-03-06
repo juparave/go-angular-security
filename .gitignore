@@ -21,3 +21,17 @@ go-app/uploads/*
 .aider*
 .DS_Store
 server/.env
+.env
+
+# Database files
+/data
+*.db
+*.db-shm
+*.db-wal
+
+# Uploads and temp files
+/uploads
+/tmp
+
+# Secrets
+serviceAccountKey.json

@@ -11,35 +11,101 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-// SecretKey, to encode jwt claims, change it
-const SecretKey = "s3cr37kEy"
+var jwtConfig struct {
+	secret          string
+	refreshSecret   string
+	resetSecret     string
+	accessTokenTTL  time.Duration
+	refreshTokenTTL time.Duration
+	initialized     bool
+}
 
-const AccessTokenDuration = time.Hour * 24 * 90
-const RefreshTokenDuration = time.Hour * 24 * 180
+// InitJWT initializes JWT configuration from app config values.
+// Must be called before any JWT operations.
+func InitJWT(secret, refreshSecret, resetSecret string, accessTTLHours, refreshTTLHours int) {
+	if secret == "" {
+		log.Fatal("JWT_SECRET is required")
+	}
+	if refreshSecret == "" {
+		refreshSecret = secret + "-refresh"
+	}
+	if resetSecret == "" {
+		resetSecret = secret + "-reset"
+	}
+	if accessTTLHours <= 0 {
+		accessTTLHours = 24 // 1 day default
+	}
+	if refreshTTLHours <= 0 {
+		refreshTTLHours = 720 // 30 days default
+	}
+
+	jwtConfig.secret = secret
+	jwtConfig.refreshSecret = refreshSecret
+	jwtConfig.resetSecret = resetSecret
+	jwtConfig.accessTokenTTL = time.Hour * time.Duration(accessTTLHours)
+	jwtConfig.refreshTokenTTL = time.Hour * time.Duration(refreshTTLHours)
+	jwtConfig.initialized = true
+}
+
+// AccessTokenDuration returns the configured access token TTL
+func AccessTokenDuration() time.Duration {
+	if !jwtConfig.initialized {
+		return time.Hour * 24
+	}
+	return jwtConfig.accessTokenTTL
+}
+
+// RefreshTokenDuration returns the configured refresh token TTL
+func RefreshTokenDuration() time.Duration {
+	if !jwtConfig.initialized {
+		return time.Hour * 720
+	}
+	return jwtConfig.refreshTokenTTL
+}
+
+// GetResetSecret returns the configured reset token secret
+func GetResetSecret() string {
+	if !jwtConfig.initialized {
+		log.Fatal("JWT not initialized: call InitJWT first")
+	}
+	return jwtConfig.resetSecret
+}
+
+func getSecret() string {
+	if !jwtConfig.initialized {
+		log.Fatal("JWT not initialized: call InitJWT first")
+	}
+	return jwtConfig.secret
+}
+
+func getRefreshSecret() string {
+	if !jwtConfig.initialized {
+		log.Fatal("JWT not initialized: call InitJWT first")
+	}
+	return jwtConfig.refreshSecret
+}
 
 func GenerateJwt(issuer string) (string, error) {
-	// ref: https://github.com/golang-jwt/jwt/blob/main/example_test.go
 	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
 		Issuer:    issuer,
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(AccessTokenDuration)),
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(jwtConfig.accessTokenTTL)),
 	})
 
-	return claims.SignedString([]byte(SecretKey))
+	return claims.SignedString([]byte(getSecret()))
 }
 
 func GenerateRefreshJwt(issuer string) (string, error) {
-	// ref: https://github.com/golang-jwt/jwt/blob/main/example_test.go
 	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
 		Issuer:    issuer,
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(RefreshTokenDuration)),
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(jwtConfig.refreshTokenTTL)),
 	})
 
-	return claims.SignedString([]byte(SecretKey))
+	return claims.SignedString([]byte(getRefreshSecret()))
 }
 
 // GetJWT returns jwt from `Authorization` header or from `jwt` cookie
 func GetJWT(c *fiber.Ctx) string {
-	var jwt string
+	var jwtToken string
 
 	token := c.Get("Token")    // get value from headers
 	cookie := c.Cookies("jwt") // get value from cookie
@@ -47,20 +113,20 @@ func GetJWT(c *fiber.Ctx) string {
 	if token != "" {
 		t := strings.Split(token, " ")
 		if len(t) == 2 {
-			jwt = t[1]
+			jwtToken = t[1]
 		} else {
-			jwt = token
+			jwtToken = token
 		}
 	} else {
-		jwt = cookie
+		jwtToken = cookie
 	}
 
-	return jwt
+	return jwtToken
 }
 
 func ParseJwt(cookie string) (string, error) {
 	token, err := jwt.ParseWithClaims(cookie, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(SecretKey), nil
+		return []byte(getSecret()), nil
 	})
 
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
@@ -69,9 +135,22 @@ func ParseJwt(cookie string) (string, error) {
 		return "", err
 	}
 
-	// cast to RegisteredClaims struct
 	claims := token.Claims.(*jwt.RegisteredClaims)
 
+	return claims.Issuer, nil
+}
+
+// ParseJwtWithSecret parses a JWT token with a specific secret (used for refresh tokens)
+func ParseJwtWithSecret(cookie string, secret string) (string, error) {
+	token, err := jwt.ParseWithClaims(cookie, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte(secret), nil
+	})
+
+	if err != nil || !token.Valid {
+		return "", err
+	}
+
+	claims := token.Claims.(*jwt.RegisteredClaims)
 	return claims.Issuer, nil
 }
 
@@ -93,15 +172,12 @@ func GenerateUserTokens(user *models.User) error {
 }
 
 func GenerateResetPasswordToken(user *models.User) (string, error) {
-	// add expiry time to token for 24 hours
 	expiry := time.Now().Add(time.Hour * 24)
-	// use user email with expiry time to generate token string
 	token := fmt.Sprintf("%s|%s", user.Email, expiry.Format(time.RFC3339))
-	// encrypt token string with secret key
-	return Encrypt(token, SecretKey)
+	return Encrypt(token, getSecret())
 }
 
 func GetUserIDFromContext(c *fiber.Ctx) (string, error) {
-	jwt := GetJWT(c)
-	return ParseJwt(jwt)
+	jwtToken := GetJWT(c)
+	return ParseJwt(jwtToken)
 }

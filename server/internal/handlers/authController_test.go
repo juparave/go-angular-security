@@ -63,24 +63,24 @@ func TestRequestResetPassword(t *testing.T) {
 	}
 
 	tests := []struct {
-		name                 string
-		setupUser            bool
-		payload              map[string]string
-		expectedStatusCode   int
-		expectedMessage      string
-		expectedErrorJSON    map[string]interface{}
+		name               string
+		setupUser          bool
+		payload            map[string]string
+		expectedStatusCode int
+		expectedMessage    string
+		expectedErrorJSON  map[string]interface{}
 	}{
 		{
-			name:      "successful password reset request for existing user",
-			setupUser: true,
-			payload:   map[string]string{"email": "resetrequest@example.com"},
+			name:               "successful password reset request for existing user",
+			setupUser:          true,
+			payload:            map[string]string{"email": "resetrequest@example.com"},
 			expectedStatusCode: fiber.StatusOK,
 			expectedMessage:    "success",
 		},
 		{
-			name:      "password reset request for non-existent user",
-			setupUser: false,
-			payload:   map[string]string{"email": "nonexistent@example.com"},
+			name:               "password reset request for non-existent user",
+			setupUser:          false,
+			payload:            map[string]string{"email": "nonexistent@example.com"},
 			expectedStatusCode: fiber.StatusNotFound,
 			expectedErrorJSON:  map[string]interface{}{"errors": map[string]interface{}{"user": []interface{}{"not found"}}},
 		},
@@ -180,13 +180,13 @@ func TestUpdatePassword(t *testing.T) {
 	}
 
 	tests := []struct {
-		name                 string
-		setupUser            bool
-		payload              map[string]string
-		jwtToSend            string
-		expectedStatusCode   int
-		expectedErrorMessage string
-		checkDBPasswordChange bool
+		name                    string
+		setupUser               bool
+		payload                 map[string]string
+		jwtToSend               string
+		expectedStatusCode      int
+		expectedErrorMessage    string
+		checkDBPasswordChange   bool
 		newPasswordForLoginTest string
 	}{
 		{
@@ -196,8 +196,8 @@ func TestUpdatePassword(t *testing.T) {
 				"password":         "newPassword456",
 				"password_confirm": "newPassword456",
 			},
-			expectedStatusCode:   fiber.StatusOK,
-			checkDBPasswordChange: true,
+			expectedStatusCode:      fiber.StatusOK,
+			checkDBPasswordChange:   true,
 			newPasswordForLoginTest: "newPassword456",
 		},
 		{
@@ -273,8 +273,8 @@ func TestUpdatePassword(t *testing.T) {
 				activeTestUser = testUser
 			}
 			if _, customJwtSpecified := tc.payload["_jwt_override_"]; customJwtSpecified || tc.jwtToSend != "" || !tc.setupUser {
-                 currentJwt = tc.jwtToSend
-            }
+				currentJwt = tc.jwtToSend
+			}
 
 			bodyBytes, _ := json.Marshal(tc.payload)
 			req := httptest.NewRequest("PUT", "/users/password", bytes.NewBuffer(bodyBytes))
@@ -324,7 +324,7 @@ func TestUpdatePassword(t *testing.T) {
 			} else if tc.expectedErrorMessage != "" {
 				var errorResponse map[string]string
 				err = json.Unmarshal(respBodyBytes, &errorResponse)
-				assert.NoError(t, err, "Failed to decode error message for "+tc.name+ ": "+string(respBodyBytes))
+				assert.NoError(t, err, "Failed to decode error message for "+tc.name+": "+string(respBodyBytes))
 				assert.Equal(t, tc.expectedErrorMessage, errorResponse["message"], "Error message mismatch for "+tc.name)
 			}
 		})
@@ -394,7 +394,7 @@ func TestUpdateInfo(t *testing.T) {
 				"first_name": "PartialUpdateFirst",
 			},
 			expectedStatusCode: fiber.StatusOK,
-			expectedBodyContains: map[string]string {
+			expectedBodyContains: map[string]string{
 				"first_name": "PartialUpdateFirst",
 			},
 			checkDBAfterTest: true,
@@ -424,15 +424,15 @@ func TestUpdateInfo(t *testing.T) {
 			payload: map[string]string{
 				"email": "existingother@example.com",
 			},
-			expectedStatusCode: fiber.StatusBadRequest,
+			expectedStatusCode:   fiber.StatusBadRequest,
 			expectedErrorMessage: "UNIQUE constraint failed: users.email",
 		},
 		{
-			name:      "update with empty payload",
-			setupUser: true,
-			payload:   map[string]string{},
+			name:               "update with empty payload",
+			setupUser:          true,
+			payload:            map[string]string{},
 			expectedStatusCode: fiber.StatusOK,
-			checkDBAfterTest: true,
+			checkDBAfterTest:   true,
 		},
 	}
 
@@ -466,15 +466,15 @@ func TestUpdateInfo(t *testing.T) {
 						tc.expectedBodyContains["email"] = tempBaseUser.Email
 					}
 				}
-                if tc.name == "update with empty payload" {
-                    tc.expectedDBUser = tempBaseUser
+				if tc.name == "update with empty payload" {
+					tc.expectedDBUser = tempBaseUser
 					tc.expectedBodyContains = map[string]string{
 						"id":         tempBaseUser.ID,
 						"first_name": tempBaseUser.FirstName,
 						"last_name":  tempBaseUser.LastName,
 						"email":      tempBaseUser.Email,
 					}
-                }
+				}
 			}
 
 			if tc.jwtToSend != "" || (tc.name == "update attempt with no JWT" && tc.jwtToSend == "") {
@@ -507,10 +507,10 @@ func TestUpdateInfo(t *testing.T) {
 					assert.Equal(t, tc.expectedBodyContains["last_name"], responseBody.LastName, "LastName in response mismatch for "+tc.name)
 					assert.Equal(t, tc.expectedBodyContains["email"], responseBody.Email, "Email in response mismatch for "+tc.name)
 					if tc.name != "update with empty payload" {
-                         assert.Equal(t, tempBaseUser.ID, responseBody.ID, "User ID in response mismatch for "+tc.name)
-                    } else {
-                         assert.Equal(t, tc.expectedBodyContains["id"], responseBody.ID, "User ID in response mismatch for "+tc.name)
-                    }
+						assert.Equal(t, tempBaseUser.ID, responseBody.ID, "User ID in response mismatch for "+tc.name)
+					} else {
+						assert.Equal(t, tc.expectedBodyContains["id"], responseBody.ID, "User ID in response mismatch for "+tc.name)
+					}
 				}
 
 				if tc.checkDBAfterTest {
@@ -596,14 +596,14 @@ func TestUser(t *testing.T) {
 	}
 
 	tests := []struct {
-		name                string
-		setupAuthUser       bool
-		sendJWTAsCookie     bool
-		sendJWTAsHeader     bool
-		customJWT           string
-		expectedStatusCode  int
-		expectedBodyUser    *models.User
-		expectedErrorJSON   map[string]interface{}
+		name                 string
+		setupAuthUser        bool
+		sendJWTAsCookie      bool
+		sendJWTAsHeader      bool
+		customJWT            string
+		expectedStatusCode   int
+		expectedBodyUser     *models.User
+		expectedErrorJSON    map[string]interface{}
 		expectedErrorMessage string
 	}{
 		{
@@ -619,27 +619,27 @@ func TestUser(t *testing.T) {
 			expectedStatusCode: fiber.StatusOK,
 		},
 		{
-			name:               "user retrieval with invalid JWT - malformed",
-			setupAuthUser:      false,
-			sendJWTAsCookie:    true,
-			customJWT:          "this.is.not.a.valid.jwt",
-			expectedStatusCode: fiber.StatusUnauthorized,
+			name:                 "user retrieval with invalid JWT - malformed",
+			setupAuthUser:        false,
+			sendJWTAsCookie:      true,
+			customJWT:            "this.is.not.a.valid.jwt",
+			expectedStatusCode:   fiber.StatusUnauthorized,
 			expectedErrorMessage: "Unauthenticated: Invalid token",
 		},
 		{
-			name:               "user retrieval with expired JWT",
-			setupAuthUser:      true,
-			sendJWTAsCookie:    true,
-			customJWT:          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjM3YxYjhkZC01YzJjLTQxZmYtYjE4Ny0zMWMyYjY2YmQ3MzAiLCJleHAiOjE2MDkzNzI4MDB9.someinvalidsignature",
-			expectedStatusCode: fiber.StatusUnauthorized,
+			name:                 "user retrieval with expired JWT",
+			setupAuthUser:        true,
+			sendJWTAsCookie:      true,
+			customJWT:            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjM3YxYjhkZC01YzJjLTQxZmYtYjE4Ny0zMWMyYjY2YmQ3MzAiLCJleHAiOjE2MDkzNzI4MDB9.someinvalidsignature",
+			expectedStatusCode:   fiber.StatusUnauthorized,
 			expectedErrorMessage: "Unauthenticated: Invalid token",
 		},
 		{
-			name:               "user retrieval for non-existent user ID in valid JWT structure",
-			setupAuthUser:      false,
-			sendJWTAsCookie:    true,
-			customJWT:          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJmYWtlLXVzZXItaWQtMTIzNDUiLCJleHAiOjE5MjQ5MDU2MDB9.fakelySignedPArt",
-			expectedStatusCode: fiber.StatusUnauthorized,
+			name:                 "user retrieval for non-existent user ID in valid JWT structure",
+			setupAuthUser:        false,
+			sendJWTAsCookie:      true,
+			customJWT:            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJmYWtlLXVzZXItaWQtMTIzNDUiLCJleHAiOjE5MjQ5MDU2MDB9.fakelySignedPArt",
+			expectedStatusCode:   fiber.StatusUnauthorized,
 			expectedErrorMessage: "Unauthenticated: Invalid token",
 		},
 		{
@@ -753,11 +753,11 @@ func TestRefreshToken(t *testing.T) {
 		checkCookie        bool
 	}{
 		{
-			name:          "successful token refresh",
-			setupTestUser: true,
-			payload:       map[string]string{},
+			name:               "successful token refresh",
+			setupTestUser:      true,
+			payload:            map[string]string{},
 			expectedStatusCode: fiber.StatusOK,
-			checkCookie: true,
+			checkCookie:        true,
 		},
 		{
 			name:          "refresh with invalid token - malformed",
@@ -769,16 +769,16 @@ func TestRefreshToken(t *testing.T) {
 			expectedMessage:    "token invalid or expired",
 		},
 		{
-			name:          "refresh with expired token",
-			setupTestUser: true,
-			payload:       map[string]string{},
+			name:               "refresh with expired token",
+			setupTestUser:      true,
+			payload:            map[string]string{},
 			expectedStatusCode: fiber.StatusBadRequest,
 			expectedMessage:    "token invalid or expired",
 		},
 		{
-			name:          "refresh for non-existent user",
-			setupTestUser: false,
-			payload:       map[string]string{},
+			name:               "refresh for non-existent user",
+			setupTestUser:      false,
+			payload:            map[string]string{},
 			expectedStatusCode: fiber.StatusBadRequest,
 			expectedMessage:    "token invalid or expired",
 		},
@@ -959,7 +959,7 @@ func TestRegister(t *testing.T) {
 				"confirmPassword": "password123",
 			},
 			expectedStatusCode: fiber.StatusBadRequest,
-			expectedMessage: "all fields (firstName, lastName, email, password) are required",
+			expectedMessage:    "all fields (firstName, lastName, email, password) are required",
 		},
 		{
 			name: "registration with invalid input data - missing password",

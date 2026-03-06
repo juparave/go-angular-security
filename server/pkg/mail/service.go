@@ -5,6 +5,7 @@ import (
 	"log"
 	"sync"
 	"sync/atomic"
+	"time"
 )
 
 // EmailMessage represents an email to be sent
@@ -28,9 +29,9 @@ type Service struct {
 	cancel    context.CancelFunc
 
 	// Metrics
-	sentCount  atomic.Int64
-	failCount  atomic.Int64
-	queueSize  int
+	sentCount atomic.Int64
+	failCount atomic.Int64
+	queueSize int
 }
 
 // EmailSender defines the interface for sending emails
@@ -44,13 +45,13 @@ func NewService(cfg *Config, queueSize int) *Service {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	s := &Service{
-		config:     cfg,
-		sender:     NewSMTPSender(cfg),
-		templates:  NewTemplateManager(),
-		emailChan:  make(chan EmailMessage, queueSize),
-		ctx:        ctx,
-		cancel:     cancel,
-		queueSize:  queueSize,
+		config:    cfg,
+		sender:    NewSMTPSender(cfg),
+		templates: NewTemplateManager(),
+		emailChan: make(chan EmailMessage, queueSize),
+		ctx:       ctx,
+		cancel:    cancel,
+		queueSize: queueSize,
 	}
 
 	// Start worker goroutines
@@ -107,15 +108,36 @@ func (s *Service) Send(to, subject, templateName string, data map[string]interfa
 	}
 }
 
-// SendSync sends an email synchronously
+// sendSync renders and sends an email synchronously with up to 3 retry attempts.
 func (s *Service) sendSync(email EmailMessage) error {
+	to := email.To
+	// Dev mode: redirect all emails to the test recipient
+	if s.config.DevMode && s.config.TestRecipient != "" {
+		log.Printf("Dev mode: redirecting email for %s to %s", email.To, s.config.TestRecipient)
+		to = s.config.TestRecipient
+	}
+
 	// Render template
 	body, err := s.templates.Render(email.Template, email.Data)
 	if err != nil {
 		return err
 	}
 
-	return s.sender.SendHTML(email.To, email.Subject, body)
+	// Retry up to 3 times with exponential backoff (1s, 2s, 4s)
+	var lastErr error
+	backoff := time.Second
+	for attempt := 1; attempt <= 3; attempt++ {
+		lastErr = s.sender.SendHTML(to, email.Subject, body)
+		if lastErr == nil {
+			return nil
+		}
+		log.Printf("Email send attempt %d/3 failed for %s: %v", attempt, to, lastErr)
+		if attempt < 3 {
+			time.Sleep(backoff)
+			backoff *= 2
+		}
+	}
+	return lastErr
 }
 
 // SendRaw sends a plain text email synchronously

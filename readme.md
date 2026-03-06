@@ -1,182 +1,180 @@
-# Go Angular Security
+# go-angular-security
 
-A production-ready SaaS template built with Go backend and Angular frontend, featuring multitenancy, subscription billing, team management, and modern UI.
+A production-ready SaaS starter template — **Go Fiber** backend + **Angular 19** frontend — with multi-tenancy, JWT authentication, team management, Stripe subscriptions, and a transactional email system.
+
+---
 
 ## Features
 
-- **Multitenancy** - SQLite-based tenant isolation with connection pooling
-- **Modern UI** - Angular 19 + TailwindCSS v4 + DaisyUI
-- **Authentication** - JWT-based auth with password reset and email verification
-- **Team Management** - Role-based access control (Admin/Editor/Viewer)
-- **Subscription Billing** - Stripe integration with 2-tier Free/Pro plans
-- **Email System** - Async email service with templates
+- **Multi-tenancy** — Per-tenant SQLite databases with connection pooling
+- **JWT Auth** — Access + refresh token pair, config-driven secrets, secure cookies
+- **Google OAuth** — Sign in with Google via frontend flow
+- **Password Reset** — Token-based reset with digest-based reuse prevention
+- **Team Management** — Invite members, assign roles (Admin / Editor / Viewer)
+- **Stripe Billing** — Checkout sessions, webhooks, cancel/reactivate/plan-change
+- **Email System** — Async queue, 3-attempt retry, dev-mode redirect, HTML templates
+- **Rate Limiting** — Per-IP limits on auth and password reset endpoints
+- **Graceful Shutdown** — SIGTERM/SIGINT handling with queue drain
+- **Contact Form** — Email notification with configurable recipient
+- **Docker** — Multi-stage build producing a minimal Alpine image
+- **Modern UI** — Angular 19, Tailwind CSS v4, DaisyUI 5
+
+---
+
+## Tech Stack
+
+| Layer | Technology | Version |
+|-------|-----------|---------|
+| Backend | Go + Fiber | 1.24 / v2 |
+| Frontend | Angular | 19 |
+| Database | SQLite (GORM) | — |
+| Auth | golang-jwt | v4 |
+| Billing | Stripe | v82 |
+| UI | Tailwind CSS + DaisyUI | v4 / 5 |
+
+---
 
 ## Prerequisites
 
-- Go 1.21 or higher
-- Node.js 20+ and npm
+- Go 1.24+
+- Node.js 22+ and npm
 - Angular CLI 19+
-- Stripe account (for payments)
+- Stripe account (optional — required for billing features)
+- SMTP server (optional — required for email features)
+
+---
 
 ## Quick Start
 
-### 1. Clone the repository
+### 1. Clone
 
 ```bash
 git clone https://github.com/juparave/go-angular-security.git
 cd go-angular-security
 ```
 
-### 2. Backend Setup
+### 2. Configure
 
 ```bash
 cd server
 cp .env.example .env
-# Edit .env with your configuration
-go mod tidy
-go run cmd/api/main.go
+# Edit .env — set JWT_SECRET, JWT_REFRESH_SECRET, JWT_RESET_SECRET at minimum
 ```
 
-The Go backend will start on `http://localhost:5000`.
-
-### 3. Frontend Setup
+### 3. Start the backend
 
 ```bash
-cd angular
+go mod tidy
+go run cmd/api/main.go
+# → listening on http://localhost:5000
+```
+
+### 4. Start the frontend
+
+```bash
+cd ../angular
 npm install
 ng serve
+# → http://localhost:4200
 ```
 
-The Angular frontend will start on `http://localhost:4200`.
+---
 
-## Architecture
+## Environment Configuration
 
-### Multitenancy
-
-Each tenant (account) has its own SQLite database stored at `data/{accountID}/data.db`. The master database stores account information and user credentials for authentication.
-
-```
-data/
-├── master.db          # Account and user registry
-├── acc_abc123/        # Tenant database
-│   └── data.db
-└── acc_xyz789/
-    └── data.db
-```
-
-### Subscription Tiers
-
-| Feature | Free | Pro |
-|---------|------|-----|
-| Users | 1 | 10 |
-| Storage | 100MB | 10GB |
-| Support | Community | Priority |
-
-### Roles & Permissions
-
-- **Admin** - Full access, team management, billing
-- **Editor** - Create, edit, and view content
-- **Viewer** - Read-only access
-
-## Configuration
-
-### Environment Variables
+See `server/.env.example` for the full list. Key variables:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `APP_NAME` | Application name | GO-ANGULAR-SECURITY |
-| `APP_PORT` | Server port | 5000 |
-| `APP_DOMAIN` | Frontend URL | http://localhost:4200 |
-| `JWT_SECRET` | Access token secret | (required) |
-| `JWT_REFRESH_SECRET` | Refresh token secret | (required) |
-| `DATABASE_PATH` | Master DB path | gorm.db |
-| `EMAIL_HOST` | SMTP host | - |
-| `EMAIL_PORT` | SMTP port | 587 |
-| `STRIPE_SECRET_KEY` | Stripe API key | (required) |
+| `APP_MODE` | `development` or `production` | `development` |
+| `APP_PORT` | Server port | `5000` |
+| `APP_DOMAIN` | Frontend URL (used in emails, CORS) | `http://localhost:4200` |
+| `JWT_SECRET` | Access token signing secret | **required** |
+| `JWT_REFRESH_SECRET` | Refresh token secret | **required** |
+| `JWT_RESET_SECRET` | Password reset token secret | **required** |
+| `JWT_ACCESS_TOKEN_TTL` | Access token lifetime (hours) | `24` |
+| `JWT_REFRESH_TOKEN_TTL` | Refresh token lifetime (hours) | `720` |
+| `DATABASE_PATH` | Master SQLite path | `gorm.db` |
+| `EMAIL_HOST` | SMTP host | — |
+| `EMAIL_PORT` | SMTP port | `587` |
+| `STRIPE_SECRET_KEY` | Stripe secret key | — |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret | — |
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID (frontend) | — |
 
-See `.env.example` for all options.
+---
 
-## API Endpoints
+## Docker Deployment
 
-### Public
+```bash
+# Build and start
+make build
+make run
+
+# Tail logs
+make logs
+
+# Rebuild and restart
+make replace
+
+# Custom port
+PORT=8080 make run
+```
+
+---
+
+## Architecture Overview
+
+```
+Client (Angular)
+       │
+       ▼
+Go Fiber API (/api/v1/*)
+       │
+       ├── Master DB (gorm.db) — accounts, users, Stripe metadata
+       │
+       └── Tenant DBs (data/<account_id>.db) — per-account data
+```
+
+- Protected routes require a valid `jwt` cookie or `Token` header
+- Cookies are `Secure: true` when `APP_MODE=production`
+- CORS allows `APP_DOMAIN` + localhost origins in development
+
+### Roles & Permissions
+
+- **Admin** — Full access, team management, billing
+- **Editor** — Create, edit, and view content
+- **Viewer** — Read-only access
+
+---
+
+## API Reference
+
+Full reference in `CLAUDE.md`. Quick overview:
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/v1/register-account` | Create new account |
-| POST | `/api/v1/login` | Authenticate user |
-| POST | `/api/v1/request-password-reset` | Request reset email |
+| POST | `/api/v1/register-account` | Create account + first user |
+| POST | `/api/v1/login` | Email/password login |
+| POST | `/api/v1/glogin` | Google sign-in |
+| POST | `/api/v1/request-password-reset` | Send reset email |
 | POST | `/api/v1/reset-password` | Reset with token |
-
-### Authenticated
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/v1/user` | Current user |
-| POST | `/api/v1/logout` | Sign out |
-| POST | `/api/v1/change-password` | Change password |
-
-### Team Management
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/v1/team` | List members |
-| POST | `/api/v1/team` | Invite member |
-| PUT | `/api/v1/team/:id` | Update member |
-| DELETE | `/api/v1/team/:id` | Remove member |
-
-### Subscriptions
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/v1/subscriptions/current` | Current subscription |
+| GET | `/api/v1/user` | Current user (auth required) |
+| GET/POST/PUT/DELETE | `/api/v1/team` | Team management |
+| GET | `/api/v1/subscriptions/current` | Active Stripe subscription |
 | POST | `/api/v1/subscriptions/create-checkout-session` | Stripe checkout |
+| POST | `/api/v1/contact` | Contact form |
 
-## Development
+---
 
-### Backend
+## Contributing
 
-```bash
-cd server
-# Run tests
-go test ./...
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/my-feature`
+3. Commit your changes
+4. Open a pull request
 
-# Run with hot reload (requires air)
-air
-```
-
-### Frontend
-
-```bash
-cd angular
-# Development server
-ng serve
-
-# Build for production
-ng build
-
-# Run tests
-ng test
-```
-
-## Deployment
-
-### Docker
-
-```bash
-# Build
-docker-compose build
-
-# Run
-docker-compose up -d
-```
-
-### Manual
-
-1. Build the Go binary: `go build -o server ./cmd/api`
-2. Build Angular: `ng build --configuration production`
-3. Configure environment variables
-4. Run the server with the `dist/angular` folder served statically
+---
 
 ## License
 
-MIT License - see LICENSE file for details.
+MIT — see `LICENSE` for details.

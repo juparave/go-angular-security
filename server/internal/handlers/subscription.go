@@ -12,7 +12,8 @@ import (
 	"github.com/stripe/stripe-go/v82"
 	"github.com/stripe/stripe-go/v82/checkout/session"
 	"github.com/stripe/stripe-go/v82/customer"
-	"github.com/stripe/stripe-go/v82/subscription"
+	stripesub "github.com/stripe/stripe-go/v82/subscription"
+	stripesubitem "github.com/stripe/stripe-go/v82/subscriptionitem"
 )
 
 // GetCurrentSubscription returns the current active subscription for the user's account.
@@ -40,7 +41,7 @@ func GetCurrentSubscription(c *fiber.Ctx) error {
 		Status:   stripe.String(string(stripe.SubscriptionStatusActive)),
 	}
 
-	iter := subscription.List(params)
+	iter := stripesub.List(params)
 	for iter.Next() {
 		sub := iter.Subscription()
 		return c.JSON(sub)
@@ -119,8 +120,8 @@ func CreateCheckoutSession(c *fiber.Ctx) error {
 				Quantity: stripe.Int64(1),
 			},
 		},
-		SuccessURL:         stripe.String(successURL),
-		CancelURL:          stripe.String(cancelURL),
+		SuccessURL:          stripe.String(successURL),
+		CancelURL:           stripe.String(cancelURL),
 		AllowPromotionCodes: stripe.Bool(true),
 	}
 
@@ -133,26 +134,162 @@ func CreateCheckoutSession(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"sessionId": s.ID})
 }
 
-// PatchSubscription updates a subscription with the provided parameters.
+// PatchSubscription updates a subscription (e.g. quantity, metadata).
 func PatchSubscription(c *fiber.Ctx) error {
-	// TODO: Implement subscription patch logic
-	return c.Status(http.StatusNotImplemented).JSON(fiber.Map{"error": "Not implemented"})
+	accountID := middleware.GetAccountID(c)
+	if accountID == "" {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Account required"})
+	}
+
+	subID := c.Params("id")
+	if subID == "" {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Subscription ID required"})
+	}
+
+	var body struct {
+		Metadata map[string]string `json:"metadata"`
+	}
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+	}
+
+	stripe.Key = app.Stripe.SecretKey
+
+	params := &stripe.SubscriptionParams{}
+	if len(body.Metadata) > 0 {
+		params.Metadata = body.Metadata
+	}
+
+	sub, err := stripesub.Update(subID, params)
+	if err != nil {
+		fmt.Printf("Error updating subscription %s: %v\n", subID, err)
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to update subscription"})
+	}
+
+	return c.JSON(sub)
 }
 
-// PostCancelSubscription cancels a subscription.
+// PostCancelSubscription sets a subscription to cancel at period end.
 func PostCancelSubscription(c *fiber.Ctx) error {
-	// TODO: Implement subscription cancellation logic
-	return c.Status(http.StatusNotImplemented).JSON(fiber.Map{"error": "Not implemented"})
+	accountID := middleware.GetAccountID(c)
+	if accountID == "" {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Account required"})
+	}
+
+	subID := c.Params("id")
+	if subID == "" {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Subscription ID required"})
+	}
+
+	stripe.Key = app.Stripe.SecretKey
+
+	params := &stripe.SubscriptionParams{
+		CancelAtPeriodEnd: stripe.Bool(true),
+	}
+
+	sub, err := stripesub.Update(subID, params)
+	if err != nil {
+		fmt.Printf("Error canceling subscription %s: %v\n", subID, err)
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to cancel subscription"})
+	}
+
+	// Update account plan tier if we have one linked
+	masterDB := database.Manager.GetMasterDB()
+	masterDB.Model(&models.Account{}).
+		Where("stripe_customer_id = ?", sub.Customer.ID).
+		Update("cancel_at_period_end", true)
+
+	return c.JSON(fiber.Map{"message": "Subscription will be canceled at period end", "subscription": sub})
 }
 
-// PostReactivateSubscription reactivates a canceled subscription.
+// PostReactivateSubscription removes the cancel-at-period-end flag from a subscription.
 func PostReactivateSubscription(c *fiber.Ctx) error {
-	// TODO: Implement subscription reactivation logic
-	return c.Status(http.StatusNotImplemented).JSON(fiber.Map{"error": "Not implemented"})
+	accountID := middleware.GetAccountID(c)
+	if accountID == "" {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Account required"})
+	}
+
+	subID := c.Params("id")
+	if subID == "" {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Subscription ID required"})
+	}
+
+	stripe.Key = app.Stripe.SecretKey
+
+	// Verify it's currently set to cancel
+	existing, err := stripesub.Get(subID, nil)
+	if err != nil {
+		return c.Status(http.StatusNotFound).JSON(fiber.Map{"error": "Subscription not found"})
+	}
+	if !existing.CancelAtPeriodEnd {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Subscription is not set to cancel"})
+	}
+
+	params := &stripe.SubscriptionParams{
+		CancelAtPeriodEnd: stripe.Bool(false),
+	}
+
+	sub, err := stripesub.Update(subID, params)
+	if err != nil {
+		fmt.Printf("Error reactivating subscription %s: %v\n", subID, err)
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to reactivate subscription"})
+	}
+
+	masterDB := database.Manager.GetMasterDB()
+	masterDB.Model(&models.Account{}).
+		Where("stripe_customer_id = ?", sub.Customer.ID).
+		Update("cancel_at_period_end", false)
+
+	return c.JSON(fiber.Map{"message": "Subscription reactivated", "subscription": sub})
 }
 
-// PostChangeSubscription changes the plan of a subscription.
+// PostChangeSubscription changes the price/plan of an active subscription.
 func PostChangeSubscription(c *fiber.Ctx) error {
-	// TODO: Implement subscription change logic
-	return c.Status(http.StatusNotImplemented).JSON(fiber.Map{"error": "Not implemented"})
+	accountID := middleware.GetAccountID(c)
+	if accountID == "" {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Account required"})
+	}
+
+	subID := c.Params("id")
+	if subID == "" {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Subscription ID required"})
+	}
+
+	var body struct {
+		PriceID string `json:"priceId"`
+	}
+	if err := c.BodyParser(&body); err != nil || body.PriceID == "" {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "priceId is required"})
+	}
+
+	stripe.Key = app.Stripe.SecretKey
+
+	// Get current subscription to find the item ID
+	existing, err := stripesub.Get(subID, nil)
+	if err != nil {
+		return c.Status(http.StatusNotFound).JSON(fiber.Map{"error": "Subscription not found"})
+	}
+
+	if len(existing.Items.Data) == 0 {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Subscription has no items"})
+	}
+
+	// Update the first subscription item's price
+	itemID := existing.Items.Data[0].ID
+	itemParams := &stripe.SubscriptionItemParams{
+		Price: stripe.String(body.PriceID),
+	}
+	_, err = stripesubitem.Update(itemID, itemParams)
+	if err != nil {
+		fmt.Printf("Error changing subscription plan %s: %v\n", subID, err)
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to change plan"})
+	}
+
+	// Return the updated subscription
+	updated, err := stripesub.Get(subID, nil)
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "Plan changed but failed to retrieve updated subscription"})
+	}
+
+	return c.JSON(fiber.Map{"message": "Subscription plan changed", "subscription": updated})
 }

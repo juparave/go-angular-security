@@ -8,20 +8,20 @@ import (
 )
 
 type User struct {
-	ID           string     `json:"id" gorm:"size:11"`
-	AccountID    string     `json:"accountId" gorm:"size:11;index"`
-	RoleID       uint       `json:"roleId" gorm:"default:1"`
-	FirstName    string     `json:"firstName" gorm:"size:128"`
-	LastName     string     `json:"lastName" gorm:"size:128"`
-	Email        string     `json:"email" gorm:"size:128;unique"`
-	Password     []byte     `json:"-" gorm:"size:64"` // don't return password on json
-	AccessToken  string     `json:"accessToken" gorm:"-"`
-	RefreshToken string     `json:"refreshToken" gorm:"-"`
+	ID           string `json:"id" gorm:"size:11"`
+	AccountID    string `json:"accountId" gorm:"size:11;index"`
+	RoleID       uint   `json:"roleId" gorm:"default:1"`
+	FirstName    string `json:"firstName" gorm:"size:128"`
+	LastName     string `json:"lastName" gorm:"size:128"`
+	Email        string `json:"email" gorm:"size:128;unique"`
+	Password     []byte `json:"-" gorm:"size:64"` // don't return password on json
+	AccessToken  string `json:"accessToken" gorm:"-"`
+	RefreshToken string `json:"refreshToken" gorm:"-"`
 
 	// Security flags
-	PasswordChangeRequired bool      `json:"passwordChangeRequired" gorm:"default:false"`
-	PasswordDigest         string    `json:"-" gorm:"size:64"` // For detecting token reuse in password reset
-	Enabled                bool      `json:"enabled" gorm:"default:true"`
+	PasswordChangeRequired bool       `json:"passwordChangeRequired" gorm:"default:false"`
+	PasswordDigest         string     `json:"-" gorm:"size:64"` // For detecting token reuse in password reset
+	Enabled                bool       `json:"enabled" gorm:"default:true"`
 	LastLoginAt            *time.Time `json:"lastLoginAt"`
 
 	// Relationships

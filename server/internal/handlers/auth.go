@@ -121,13 +121,13 @@ func RegisterAccount(c *fiber.Ctx) error {
 
 	// Create user in master database
 	user := models.User{
-		AccountID:               account.ID,
-		FirstName:               data[keyFirstName],
-		LastName:                data[keyLastName],
-		Email:                   data[keyEmail],
-		RoleID:                  1, // Admin
-		Enabled:                 true,
-		PasswordChangeRequired:  false,
+		AccountID:              account.ID,
+		FirstName:              data[keyFirstName],
+		LastName:               data[keyLastName],
+		Email:                  data[keyEmail],
+		RoleID:                 1, // Admin
+		Enabled:                true,
+		PasswordChangeRequired: false,
 	}
 	user.SetPassword(data[keyPassword])
 
@@ -215,8 +215,8 @@ func Login(c *fiber.Ctx) error {
 	setCookies(c, user)
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message":               "success",
-		"user":                  user,
+		"message":                "success",
+		"user":                   user,
 		"passwordChangeRequired": user.PasswordChangeRequired,
 	})
 }
@@ -422,12 +422,13 @@ func UpdatePassword(c *fiber.Ctx) error {
 
 // setCookies sets JWT cookies for authentication.
 func setCookies(c *fiber.Ctx, user models.User) {
+	secure := app != nil && app.Mode == "production"
 	cookie := fiber.Cookie{
 		Name:     "jwt",
 		Value:    user.AccessToken,
-		Expires:  time.Now().Add(utils.AccessTokenDuration),
+		Expires:  time.Now().Add(utils.AccessTokenDuration()),
 		HTTPOnly: true,
-		Secure:   false, // Set to true in production with HTTPS
+		Secure:   secure,
 		SameSite: "lax",
 	}
 	c.Cookie(&cookie)
@@ -435,9 +436,9 @@ func setCookies(c *fiber.Ctx, user models.User) {
 	refreshCookie := fiber.Cookie{
 		Name:     "refreshjwt",
 		Value:    user.RefreshToken,
-		Expires:  time.Now().Add(utils.RefreshTokenDuration),
+		Expires:  time.Now().Add(utils.RefreshTokenDuration()),
 		HTTPOnly: true,
-		Secure:   false, // Set to true in production with HTTPS
+		Secure:   secure,
 		SameSite: "lax",
 	}
 	c.Cookie(&refreshCookie)

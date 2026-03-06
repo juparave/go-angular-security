@@ -101,8 +101,8 @@ func (tm *TemplateManager) Render(templateName string, data map[string]interface
 
 	// Add default data
 	defaultData := map[string]interface{}{
-		"AppName":   "App",
-		"AppURL":    "#",
+		"AppName":      "App",
+		"AppURL":       "#",
 		"SupportEmail": "support@example.com",
 	}
 

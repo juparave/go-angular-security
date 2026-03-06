@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"log"
-	"server/internal/config"
 	"server/internal/database"
 	"server/internal/models"
 	"server/internal/utils"
@@ -22,19 +21,8 @@ const (
 	ResetTokenSecretEnv = "RESET_TOKEN_SECRET"
 )
 
-var (
-	// ResetTokenSecret is the secret key for reset tokens
-	// It should be different from the main JWT secret for security
-	ResetTokenSecret = getResetTokenSecret()
-)
-
-func getResetTokenSecret() string {
-	secret := config.GetAppConfig().Email.Password
-	if secret == "" {
-		secret = "reset-secret-key-change-in-production"
-	}
-	return secret
-}
+// RequestResetPassword is an alias for RequestPasswordReset for backwards compatibility with tests.
+var RequestResetPassword = RequestPasswordReset
 
 // PasswordResetClaims represents the JWT claims for password reset tokens
 type PasswordResetClaims struct {
@@ -98,20 +86,23 @@ func RequestPasswordReset(c *fiber.Ctx) error {
 	user.PasswordDigest = passwordDigest
 	database.Manager.GetMasterDB().Model(&user).Update("password_digest", passwordDigest)
 
-	// Send email with reset link
-	cfg := config.GetAppConfig()
-	resetURL := cfg.Domain + "/reset-password?token=" + token
+	// Build reset URL from handler-level app config
+	resetURL := app.Domain + "/reset-password?token=" + token
 
-	// TODO: Integrate with email service
-	// For now, log the reset URL in development
-	if cfg.Mode == "development" {
+	if app.Mode == "development" {
 		log.Printf("Password reset URL for %s: %s", email, resetURL)
 	}
 
-	// Send email
-	if err := sendPasswordResetEmail(&user, resetURL); err != nil {
-		log.Printf("Failed to send password reset email: %v", err)
-		// Don't reveal the error to the user
+	// Send email via email service, fall back to stub
+	if emailService != nil {
+		if err := emailService.Send(user.Email, "Reset your password", "password_reset", map[string]interface{}{
+			"Name":     user.FirstName,
+			"ResetURL": resetURL,
+		}); err != nil {
+			log.Printf("Failed to queue password reset email: %v", err)
+		}
+	} else {
+		log.Printf("Email service not configured; reset URL for %s: %s", email, resetURL)
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
@@ -320,7 +311,7 @@ func generateResetToken(email, passwordDigest string) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(ResetTokenSecret))
+	return token.SignedString([]byte(utils.GetResetSecret()))
 }
 
 // parseResetToken validates and parses a password reset token
@@ -329,7 +320,7 @@ func parseResetToken(tokenString string) (*PasswordResetClaims, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("unexpected signing method")
 		}
-		return []byte(ResetTokenSecret), nil
+		return []byte(utils.GetResetSecret()), nil
 	})
 
 	if err != nil {
@@ -355,12 +346,4 @@ func validatePasswordStrength(password string) error {
 		return errors.New("password must be at least 8 characters long")
 	}
 	return nil
-}
-
-// sendPasswordResetEmail sends the password reset email
-// This will be updated when the email package is integrated
-func sendPasswordResetEmail(user *models.User, resetURL string) error {
-	// TODO: Integrate with pkg/mail service
-	// For now, use the existing simple mail utility
-	return utils.SendResetPasswordEmail(user, resetURL)
 }

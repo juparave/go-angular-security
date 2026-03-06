@@ -30,15 +30,15 @@ func (s *UserSyncService) SyncUserToTenant(user *models.User) error {
 	// We use a map to update only specific fields to avoid overwriting
 	result := tenantDB.Where("id = ?", user.ID).
 		Assign(models.User{
-			FirstName:               user.FirstName,
-			LastName:                user.LastName,
-			Email:                   user.Email,
-			Password:                user.Password,
-			RoleID:                  user.RoleID,
-			PasswordChangeRequired:  user.PasswordChangeRequired,
-			PasswordDigest:          user.PasswordDigest,
-			Enabled:                 user.Enabled,
-			LastLoginAt:             user.LastLoginAt,
+			FirstName:              user.FirstName,
+			LastName:               user.LastName,
+			Email:                  user.Email,
+			Password:               user.Password,
+			RoleID:                 user.RoleID,
+			PasswordChangeRequired: user.PasswordChangeRequired,
+			PasswordDigest:         user.PasswordDigest,
+			Enabled:                user.Enabled,
+			LastLoginAt:            user.LastLoginAt,
 		}).
 		FirstOrCreate(&models.User{ID: user.ID})
 
@@ -94,11 +94,11 @@ func (s *UserSyncService) UpdateUserInTenant(user *models.User) error {
 	return tenantDB.Model(&models.User{}).
 		Where("id = ?", user.ID).
 		Updates(map[string]interface{}{
-			"first_name":              user.FirstName,
-			"last_name":               user.LastName,
-			"email":                   user.Email,
-			"role_id":                 user.RoleID,
-			"enabled":                 user.Enabled,
+			"first_name":               user.FirstName,
+			"last_name":                user.LastName,
+			"email":                    user.Email,
+			"role_id":                  user.RoleID,
+			"enabled":                  user.Enabled,
 			"password_change_required": user.PasswordChangeRequired,
 		}).Error
 }

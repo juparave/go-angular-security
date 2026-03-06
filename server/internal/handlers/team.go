@@ -1,9 +1,9 @@
 package handlers
 
 import (
+	"crypto/rand"
 	"log"
-	"math/rand"
-	"server/internal/config"
+	"math/big"
 	"server/internal/database"
 	"server/internal/middleware"
 	"server/internal/models"
@@ -20,20 +20,19 @@ const (
 
 var (
 	userSync = services.NewUserSyncService()
-	r        = rand.New(rand.NewSource(time.Now().UnixNano()))
 )
 
 // TeamMember represents a team member response
 type TeamMemberResponse struct {
-	ID                    string     `json:"id"`
-	FirstName             string     `json:"firstName"`
-	LastName              string     `json:"lastName"`
-	Email                 string     `json:"email"`
-	Role                  string     `json:"role"`
-	RoleID                uint       `json:"roleId"`
-	Enabled               bool       `json:"enabled"`
+	ID                     string     `json:"id"`
+	FirstName              string     `json:"firstName"`
+	LastName               string     `json:"lastName"`
+	Email                  string     `json:"email"`
+	Role                   string     `json:"role"`
+	RoleID                 uint       `json:"roleId"`
+	Enabled                bool       `json:"enabled"`
 	PasswordChangeRequired bool       `json:"passwordChangeRequired"`
-	LastLoginAt           *time.Time `json:"lastLoginAt"`
+	LastLoginAt            *time.Time `json:"lastLoginAt"`
 }
 
 // GetTeamMembers returns all team members for the current account
@@ -179,19 +178,27 @@ func InviteTeamMember(c *fiber.Ctx) error {
 	}
 
 	// Send invitation email
-	cfg := config.GetAppConfig()
-	loginURL := cfg.Domain + "/login"
-
-	// TODO: Use email service when integrated
-	log.Printf("Team invitation email for %s - Login: %s, Temp Password: %s", data.Email, loginURL, tempPassword)
+	loginURL := app.Domain + "/login"
+	if emailService != nil {
+		if err := emailService.Send(data.Email, "You've been invited to join "+account.Name, "team_invitation", map[string]interface{}{
+			"InviterName":  inviterName,
+			"AccountName":  account.Name,
+			"LoginURL":     loginURL,
+			"TempPassword": tempPassword,
+		}); err != nil {
+			log.Printf("Failed to queue invitation email for %s: %v", data.Email, err)
+		}
+	} else {
+		log.Printf("Team invitation for %s - Login: %s, Temp Password: %s", data.Email, loginURL, tempPassword)
+	}
 
 	return c.Status(fiber.StatusCreated).JSON(TeamMemberResponse{
-		ID:       newUser.ID,
+		ID:        newUser.ID,
 		FirstName: newUser.FirstName,
-		LastName: newUser.LastName,
-		Email:    newUser.Email,
-		RoleID:   newUser.RoleID,
-		Enabled:  newUser.Enabled,
+		LastName:  newUser.LastName,
+		Email:     newUser.Email,
+		RoleID:    newUser.RoleID,
+		Enabled:   newUser.Enabled,
 	})
 }
 
@@ -336,18 +343,35 @@ func ResendInvitation(c *fiber.Ctx) error {
 	user.PasswordChangeRequired = true
 	masterDB.Save(&user)
 
-	// TODO: Send email
+	loginURL := app.Domain + "/login"
+	if emailService != nil {
+		if err := emailService.Send(user.Email, "Your invitation has been resent", "team_invitation", map[string]interface{}{
+			"InviterName":  "your admin",
+			"AccountName":  accountID,
+			"LoginURL":     loginURL,
+			"TempPassword": tempPassword,
+		}); err != nil {
+			log.Printf("Failed to queue resend invitation email for %s: %v", user.Email, err)
+		}
+	} else {
+		log.Printf("Resend invitation for %s - Login: %s, Temp Password: %s", user.Email, loginURL, tempPassword)
+	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "invitation resent successfully",
 	})
 }
 
-// generateTempPassword generates a random temporary password
+// generateTempPassword generates a cryptographically random temporary password
 func generateTempPassword(length int) string {
 	b := make([]byte, length)
+	charsetLen := big.NewInt(int64(len(charset)))
 	for i := range b {
-		b[i] = charset[r.Intn(len(charset))]
+		n, err := rand.Int(rand.Reader, charsetLen)
+		if err != nil {
+			panic("crypto/rand failed: " + err.Error())
+		}
+		b[i] = charset[n.Int64()]
 	}
 	return string(b)
 }
