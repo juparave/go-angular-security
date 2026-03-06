@@ -14,13 +14,9 @@ import { AppState } from 'src/app/store/interfaces/app-state';
 import { selectIsSubmitting, selectValidationErrors } from 'src/app/store/selectors/auth.selectors';
 import { BackendErrors } from 'src/app/store/types/backend-errors.interface';
 import { LoginRequest } from 'src/app/store/types/login-request.interface';
-import { MatCardModule } from '@angular/material/card';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { BackendErrorMessagesModule } from 'src/app/shared/modules/backend-error-messages/backend-error-messages.module';
+import { AuthLayoutComponent } from 'src/app/shared/components/auth-layout/auth-layout.component';
 
 @Component({
   selector: 'app-login-form',
@@ -31,13 +27,9 @@ import { BackendErrorMessagesModule } from 'src/app/shared/modules/backend-error
     CommonModule,
     ReactiveFormsModule,
     RouterModule,
-    MatCardModule,
-    MatProgressBarModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
     MatIconModule,
     BackendErrorMessagesModule,
+    AuthLayoutComponent,
   ],
 })
 export class LoginFormComponent implements OnInit {

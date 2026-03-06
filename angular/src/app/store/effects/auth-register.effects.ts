@@ -10,6 +10,9 @@ import {
   registerAction,
   registerSuccessAction,
   registerFailureAction,
+  registerAccountAction,
+  registerAccountSuccessAction,
+  registerAccountFailureAction,
 } from 'src/app/store/actions/auth.actions';
 
 @Injectable()
@@ -44,16 +47,35 @@ export class RegisterEffect {
     );
   });
 
+  registerAccount$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(registerAccountAction),
+      switchMap((action) => {
+        return this.authService.registerAccount(action.request).pipe(
+          map((response) => {
+            return registerAccountSuccessAction({ currentUser: response.user });
+          }),
+          catchError((errorResponse: HttpErrorResponse) => {
+            return of(
+              registerAccountFailureAction({
+                errors: { register: [errorResponse.error?.message ?? 'Registration failed'] },
+              })
+            );
+          })
+        );
+      })
+    );
+  });
+
   redirecAfterSubmit$ = createEffect(
     () => {
       return this.actions$.pipe(
-        ofType(registerSuccessAction),
+        ofType(registerSuccessAction, registerAccountSuccessAction),
         tap(() => {
           this.router.navigateByUrl('/app');
         })
       );
     },
-    // doesn't return an Observable, so we set dispatch to false
     { dispatch: false }
   );
 }

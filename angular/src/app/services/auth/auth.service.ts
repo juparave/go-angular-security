@@ -9,20 +9,12 @@ import { environment } from 'src/environments/environment';
 import { LoginRequest } from 'src/app/store/types/login-request.interface';
 import { User } from 'src/app/models/user';
 import { RequestResetPassword, ResetPassword } from 'src/app/store/types/request-reset.interface';
+import { AccountRegistration } from 'src/app/store/types/account-registration.interface';
 
 export interface ChangePasswordRequest {
   currentPassword: string;
   newPassword: string;
   confirmPassword: string;
-}
-
-export interface RegisterAccountRequest {
-  email: string;
-  password: string;
-  confirmPassword: string;
-  firstName?: string;
-  lastName?: string;
-  accountName: string;
 }
 
 @Injectable({
@@ -49,7 +41,7 @@ export class AuthService {
    * Register a new account with first user as admin
    * @param data: RegisterAccountRequest
    */
-  registerAccount(data: RegisterAccountRequest): Observable<{ message: string; user: User }> {
+  registerAccount(data: AccountRegistration): Observable<{ message: string; user: User }> {
     return this.http.post<{ message: string; user: User }>(
       `${this.baseUrl}/register-account`,
       data

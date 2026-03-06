@@ -11,6 +11,9 @@ import {
   registerAction,
   registerFailureAction,
   registerSuccessAction,
+  registerAccountAction,
+  registerAccountSuccessAction,
+  registerAccountFailureAction,
 } from '@store/actions/auth.actions';
 import { loginAction, loginFailureAction, loginSuccessAction } from '@store/actions/auth.actions';
 import {
@@ -39,6 +42,7 @@ export const authReducer = createReducer(
   ),
   on(
     registerSuccessAction,
+    registerAccountSuccessAction,
     (state, action): AuthState => ({
       ...state,
       isSubmitting: false,
@@ -48,12 +52,21 @@ export const authReducer = createReducer(
   ),
   on(
     registerFailureAction,
+    registerAccountFailureAction,
     (state, action): AuthState => ({
       ...state,
       isSubmitting: false,
       isLoggedIn: false,
       currentUser: null,
       validationErrors: action.errors,
+    })
+  ),
+  on(
+    registerAccountAction,
+    (state): AuthState => ({
+      ...state,
+      isSubmitting: true,
+      validationErrors: null,
     })
   ),
   on(

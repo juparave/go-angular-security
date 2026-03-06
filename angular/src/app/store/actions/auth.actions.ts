@@ -3,11 +3,16 @@ import { User } from 'src/app/models/user';
 import { BackendErrors } from 'src/app/store/types/backend-errors.interface';
 import { LoginRequest, ReturnUrl } from 'src/app/store/types/login-request.interface';
 import { RequestResetPassword } from 'src/app/store/types/request-reset.interface';
+import { AccountRegistration } from 'src/app/store/types/account-registration.interface';
 
 export enum ActionTypes {
   REGISTER = '[Auth] Register',
   REGISTER_SUCCESS = '[Auth] Register success',
   REGISTER_FAILURE = '[Auth] Register failure',
+
+  REGISTER_ACCOUNT = '[Auth] Register Account',
+  REGISTER_ACCOUNT_SUCCESS = '[Auth] Register Account Success',
+  REGISTER_ACCOUNT_FAILURE = '[Auth] Register Account Failure',
 
   LOGIN = '[Auth] Login',
   LOGIN_SUCCESS = '[Auth] Login success',
@@ -93,4 +98,19 @@ export const getCurrentUserFailureAction = createAction(ActionTypes.GET_CURRENT_
 export const requestResetPasswordAction = createAction(
   ActionTypes.REQUEST_RESET_PASSWORD,
   props<{ request: RequestResetPassword }>()
+);
+
+export const registerAccountAction = createAction(
+  ActionTypes.REGISTER_ACCOUNT,
+  props<{ request: AccountRegistration }>()
+);
+
+export const registerAccountSuccessAction = createAction(
+  ActionTypes.REGISTER_ACCOUNT_SUCCESS,
+  props<{ currentUser: User }>()
+);
+
+export const registerAccountFailureAction = createAction(
+  ActionTypes.REGISTER_ACCOUNT_FAILURE,
+  props<{ errors: BackendErrors }>()
 );

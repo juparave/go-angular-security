@@ -1,0 +1,17 @@
+<div class="auth-wrapper">
+  <div class="auth-background"></div>
+
+  <div class="auth-container">
+    <div class="auth-card">
+      <ng-content select="[auth-progress]"></ng-content>
+      <ng-content select="[auth-left]"></ng-content>
+      <ng-content select="[auth-right]"></ng-content>
+    </div>
+
+    <div class="auth-footer-links">
+      <a routerLink="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
+      <span class="auth-footer-separator">·</span>
+      <a routerLink="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a>
+    </div>
+  </div>
+</div>
