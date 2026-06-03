@@ -1,0 +1,115 @@
+name: app
+description: "A generic bootstrapped Flutter app."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # State management
+  flutter_riverpod: ^3.3.1
+
+  # HTTP client
+  dio: ^5.7.0
+
+  # Declarative routing with deep-link support
+  go_router: ^14.6.2
+
+  # Secure token storage (Keychain / EncryptedSharedPreferences)
+  flutter_secure_storage: ^9.2.2
+
+  # Non-sensitive prefs (theme mode, UI state)
+  shared_preferences: ^2.3.4
+
+  # Maps (OSM tiles via flutter_map; Google Maps decision deferred — see ROADMAP.md)
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+
+  # Location / GPS for walking mode
+  geolocator: ^13.0.2
+
+  # Formatting (dates, numbers, es-MX locale)
+  intl: ^0.20.2
+
+  # Structured logging
+  logger: ^2.5.0
+
+  # Crash reporting
+  sentry_flutter: ^9.0.0
+
+  # Open legal links in system browser
+  url_launcher: ^6.3.1
+
+  # Package info (version display)
+  package_info_plus: ^9.0.1
+
+  # google_fonts kept for the helper API but runtime fetching is disabled —
+  # fonts are bundled in assets/fonts/ so the app works offline and in the simulator
+  google_fonts: ^6.2.1
+
+  # Google Sign-In — native OAuth flow (iOS/Android), returns an ID token
+  # sent to POST /api/glogin for server-side verification
+  google_sign_in: ^6.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  mocktail: ^1.0.5
+
+  # Dio request/response mocking for unit tests (no real HTTP)
+  http_mock_adapter: ^0.6.1
+
+  # Launcher icons from assets/brand/
+  flutter_launcher_icons: ^0.14.4
+
+  # Native splash screen
+  flutter_native_splash: ^2.4.6
+
+flutter_launcher_icons:
+  image_path: "assets/brand/favicon.png"
+  android: true
+  ios: true
+  macos:
+    generate: true
+    image_path: "assets/brand/favicon.png"
+  remove_alpha_ios: true
+  adaptive_icon_background: "#FAFBFF"
+  adaptive_icon_foreground: "assets/brand/favicon.png"
+
+flutter_native_splash:
+  color: "#FAFBFF"
+  image: assets/brand/logotipo.png
+  color_dark: "#1A1F3A"
+  image_dark: assets/brand/logotipo.png
+  android_12:
+    color: "#FAFBFF"
+    image: assets/brand/favicon.png
+    color_dark: "#1A1F3A"
+    image_dark: assets/brand/favicon.png
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/brand/
+    - assets/fonts/
+
+  fonts:
+    - family: HankenGrotesk
+      fonts:
+        - asset: assets/fonts/HankenGrotesk-Variable.ttf
+    - family: Piazzolla
+      fonts:
+        - asset: assets/fonts/Piazzolla-Variable.ttf
+        - asset: assets/fonts/Piazzolla-Variable.ttf
+          style: italic
