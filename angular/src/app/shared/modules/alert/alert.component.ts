@@ -1,4 +1,4 @@
-import { Component, HostBinding, Input, ElementRef } from '@angular/core';
+import { Component, HostBinding, Input, ElementRef, inject } from '@angular/core';
 
 @Component({
   selector: 'app-alert',
@@ -7,6 +7,8 @@ import { Component, HostBinding, Input, ElementRef } from '@angular/core';
   standalone: false,
 })
 export class AlertComponent {
+  private element = inject(ElementRef);
+
   @Input() title?: string;
   @Input() view: string;
   @Input() removable?: boolean;
@@ -39,7 +41,7 @@ export class AlertComponent {
     return this.view === 'warning';
   }
 
-  constructor(private element: ElementRef) {
+  constructor() {
     this.view = 'default';
   }
 

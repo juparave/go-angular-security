@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { catchError, map, of, switchMap, tap } from 'rxjs';
@@ -14,12 +14,10 @@ import {
 
 @Injectable()
 export class LoginEffect {
-  constructor(
-    private actions$: Actions,
-    private authService: AuthService,
-    private persistanceService: PersistanceService,
-    private router: Router
-  ) {}
+  private actions$ = inject(Actions);
+  private authService = inject(AuthService);
+  private persistanceService = inject(PersistanceService);
+  private router = inject(Router);
 
   login$ = createEffect(() => {
     return this.actions$.pipe(

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
@@ -32,8 +32,9 @@ export interface UpdateMemberRequest {
 })
 export class TeamService {
   private baseUrl = `${environment.apiUrl}/team`;
+  private http = inject(HttpClient);
 
-  constructor(private http: HttpClient) {}
+  constructor() {}
 
   /**
    * Get all team members for the current account

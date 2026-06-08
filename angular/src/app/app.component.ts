@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { getCurrentUserAction } from './store/actions/auth.actions';
 
@@ -8,7 +8,7 @@ import { getCurrentUserAction } from './store/actions/auth.actions';
   template: `<router-outlet></router-outlet>`,
 })
 export class AppComponent implements OnInit {
-  constructor(private store: Store) {}
+  private store = inject(Store);
 
   ngOnInit() {
     // Fetch current user data on app start

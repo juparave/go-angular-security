@@ -5,7 +5,7 @@ import {
   HttpInterceptor,
   HttpRequest,
 } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { LoadingService } from './loading.service';
 import { Observable, finalize } from 'rxjs';
 
@@ -15,7 +15,7 @@ export const SkipLoading = new HttpContextToken<boolean>(() => false);
 
 @Injectable()
 export class LoadingInterceptor implements HttpInterceptor {
-  constructor(private loadingService: LoadingService) {}
+  private loadingService = inject(LoadingService);
 
   intercept(req: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
     // Check for a custom attribute

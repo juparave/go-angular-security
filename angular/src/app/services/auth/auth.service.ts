@@ -1,5 +1,5 @@
 // services/auth/auth.service.ts
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 
@@ -21,13 +21,11 @@ export interface ChangePasswordRequest {
   providedIn: 'root',
 })
 export class AuthService {
+  private http = inject(HttpClient);
+  router = inject(Router);
+
   private baseUrl = `${environment.apiUrl}`;
   private headers = new HttpHeaders().set('Content-Type', 'application/json; charset=utf-8');
-
-  constructor(
-    private http: HttpClient,
-    public router: Router
-  ) {}
 
   /**
    * Register a new user (legacy method)

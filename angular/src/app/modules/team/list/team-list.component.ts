@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TeamService, TeamMember } from '../../../services/team.service';
@@ -156,7 +156,9 @@ export class TeamListComponent implements OnInit {
   selectedMember: TeamMember | null = null;
   memberToDelete: TeamMember | null = null;
 
-  constructor(private teamService: TeamService) {}
+  private teamService = inject(TeamService);
+
+  constructor() {}
 
   ngOnInit(): void {
     this.loadMembers();

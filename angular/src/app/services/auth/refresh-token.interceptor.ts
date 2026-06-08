@@ -1,5 +1,5 @@
 /// ref: https://www.bezkoder.com/angular-16-refresh-token/
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import {
   HttpInterceptor,
   HttpEvent,
@@ -23,16 +23,14 @@ const TOKEN_HEADER_KEY = 'Authorization';
 
 @Injectable()
 export class RefreshTokenInterceptor implements HttpInterceptor {
+  private store = inject<Store<AppState>>(Store);
+  private persistanceService = inject(PersistanceService);
+  private authService = inject(AuthService);
+
   private isRefreshing = false;
   private refreshTokenSubject: BehaviorSubject<string | null> = new BehaviorSubject<string | null>(
     null
   );
-
-  constructor(
-    private store: Store<AppState>,
-    private persistanceService: PersistanceService,
-    private authService: AuthService
-  ) {}
 
   intercept(req: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
     req = req.clone({

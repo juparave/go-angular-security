@@ -15,6 +15,8 @@ import { logoutAction } from 'src/app/store/actions/auth.actions';
   styleUrls: ['./base.component.scss'],
 })
 export class BaseComponent implements OnInit {
+  private store = inject<Store<AppState>>(Store);
+
   private breakpointObserver = inject(BreakpointObserver);
   currentUser$!: Observable<User | null>;
 
@@ -28,7 +30,7 @@ export class BaseComponent implements OnInit {
 
   sidenavWidth = computed(() => (this.collapsed() ? '64px' : '250px'));
 
-  constructor(private store: Store<AppState>) {
+  constructor() {
     effect(
       () => {
         if (this.isShowing()) {

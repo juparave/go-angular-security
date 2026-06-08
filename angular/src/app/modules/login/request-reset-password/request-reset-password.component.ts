@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   ReactiveFormsModule,
@@ -35,14 +35,14 @@ import { BackendErrorMessagesModule } from 'src/app/shared/modules/backend-error
   ],
 })
 export class RequestResetPasswordComponent implements OnInit {
+  private store = inject<Store<AppState>>(Store);
+  private fb = inject(UntypedFormBuilder);
+
   form: UntypedFormGroup;
   isSubmitting$!: Observable<boolean>;
   backendErrors$!: Observable<BackendErrors | null>;
 
-  constructor(
-    private store: Store<AppState>,
-    private fb: UntypedFormBuilder
-  ) {
+  constructor() {
     this.form = this.fb.group({
       email: ['', Validators.required],
     });

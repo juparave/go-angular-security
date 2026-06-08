@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Store } from '@ngrx/store';
@@ -111,16 +111,16 @@ import { AppState } from '../../../../store/interfaces/app-state';
   ],
 })
 export class ChangePasswordComponent {
+  private fb = inject(FormBuilder);
+  private authService = inject(AuthService);
+  private store = inject(Store<AppState>);
+
   changePasswordForm: FormGroup;
   isSubmitting = false;
   errorMessage = '';
   successMessage = '';
 
-  constructor(
-    private fb: FormBuilder,
-    private authService: AuthService,
-    private store: Store<AppState>
-  ) {
+  constructor() {
     this.changePasswordForm = this.fb.group(
       {
         currentPassword: ['', [Validators.required]],

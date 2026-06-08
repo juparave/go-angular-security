@@ -1,4 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideMockStore } from '@ngrx/store/testing';
+import { provideRouter } from '@angular/router';
 
 import { RequestResetPasswordComponent } from './request-reset-password.component';
 
@@ -8,7 +11,8 @@ describe('RequestResetPasswordComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [RequestResetPasswordComponent],
+      imports: [RequestResetPasswordComponent, NoopAnimationsModule],
+      providers: [provideMockStore(), provideRouter([])],
     }).compileComponents();
   });
 

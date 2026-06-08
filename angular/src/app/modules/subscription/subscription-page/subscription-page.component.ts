@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -49,6 +49,9 @@ interface Plan {
   ],
 })
 export class SubscriptionPageComponent {
+  private subscriptionService = inject(SubscriptionService);
+  private router = inject(Router);
+
   isYearly: boolean = false; // Default to monthly
   plans: Plan[] = [
     {
@@ -107,10 +110,7 @@ export class SubscriptionPageComponent {
 
   stripePromise: Promise<Stripe | null>; // Hold the Stripe instance promise
 
-  constructor(
-    private subscriptionService: SubscriptionService,
-    private router: Router
-  ) {
+  constructor() {
     // Initialize Stripe.js asynchronously
     this.stripePromise = loadStripe(environment.stripePublishableKey);
   }

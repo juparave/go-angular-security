@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TeamService, TeamMember } from '../../../services/team.service';
@@ -79,15 +79,15 @@ export class TeamMemberEditComponent implements OnChanges {
   @Output() closeModal = new EventEmitter<void>();
   @Output() updated = new EventEmitter<void>();
 
+  private fb = inject(FormBuilder);
+  private teamService = inject(TeamService);
+
   editForm: FormGroup;
   isSubmitting = false;
   errorMessage = '';
   roles = this.teamService.getRoles();
 
-  constructor(
-    private fb: FormBuilder,
-    private teamService: TeamService
-  ) {
+  constructor() {
     this.editForm = this.fb.group({
       roleId: [null, Validators.required],
       enabled: [true],

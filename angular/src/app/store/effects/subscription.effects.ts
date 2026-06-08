@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Observable, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
@@ -29,10 +29,8 @@ import {
  */
 @Injectable()
 export class GetSubscriptionEffect {
-  constructor(
-    private actions$: Actions,
-    private subscriptionService: SubscriptionService
-  ) {}
+  private actions$ = inject(Actions);
+  private subscriptionService = inject(SubscriptionService);
 
   /**
    * Main effect to fetch subscription data

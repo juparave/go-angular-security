@@ -1,4 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideMockStore } from '@ngrx/store/testing';
+import { provideRouter } from '@angular/router';
+
 import { LoginFormComponent } from './login-form.component';
 
 describe('LoginFormComponent', () => {
@@ -7,7 +11,8 @@ describe('LoginFormComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [LoginFormComponent],
+      imports: [LoginFormComponent, NoopAnimationsModule],
+      providers: [provideMockStore(), provideRouter([])],
     }).compileComponents();
   });
 

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { map, tap } from 'rxjs';
@@ -7,11 +7,9 @@ import { logoutAction, logoutSuccessAction } from 'src/app/store/actions/auth.ac
 
 @Injectable()
 export class LogoutEffect {
-  constructor(
-    private actions$: Actions,
-    private persistanceService: PersistanceService,
-    private router: Router
-  ) {}
+  private actions$ = inject(Actions);
+  private persistanceService = inject(PersistanceService);
+  private router = inject(Router);
 
   logout$ = createEffect(() => {
     return this.actions$.pipe(

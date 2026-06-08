@@ -28,10 +28,8 @@ import {
   providedIn: 'root',
 })
 export class SubscriptionGuard {
-  constructor(
-    private store: Store<AppState>,
-    public router: Router
-  ) {}
+  private store = inject<Store<AppState>>(Store);
+  router = inject(Router);
 
   /**
    * Creates a guard function that verifies subscription requirements

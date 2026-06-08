@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { map, filter } from 'rxjs/operators';
 import {
@@ -14,7 +14,7 @@ import { Subscription } from 'src/app/models/subscription';
 
 @Injectable()
 export class SyncSubscriptionEffect {
-  constructor(private actions$: Actions) {}
+  private actions$ = inject(Actions);
 
   // When user data includes inline subscription, use it directly
   syncSubscription$ = createEffect(() => {

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -17,12 +17,12 @@ import { selectSubscription } from 'src/app/store/selectors/subscription.selecto
   imports: [CommonModule, MatCardModule, MatIconModule, MatProgressSpinnerModule],
 })
 export class SubscriptionStatusComponent implements OnInit {
+  private store = inject<Store<AppState>>(Store);
+
   // Observable for the subscription data from the store
   subscriptionData$:
     | Observable<{ subscription: Subscription | null; isLoading: boolean }>
     | undefined;
-
-  constructor(private store: Store<AppState>) {}
 
   ngOnInit(): void {
     // Select the subscription data from the store

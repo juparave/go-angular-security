@@ -16,10 +16,8 @@ import { selectIsAnonymous } from 'src/app/store/selectors/auth.selectors';
   providedIn: 'root',
 })
 export class UnAuthGuard {
-  constructor(
-    private store: Store<AppState>,
-    public router: Router
-  ) {}
+  private store = inject<Store<AppState>>(Store);
+  router = inject(Router);
 
   canActivate(_route: ActivatedRouteSnapshot, _state: RouterStateSnapshot): Observable<boolean> {
     return this.store.select(selectIsAnonymous).pipe(

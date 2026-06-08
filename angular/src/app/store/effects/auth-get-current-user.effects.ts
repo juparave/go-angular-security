@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { catchError, of, switchMap, tap } from 'rxjs';
@@ -18,13 +18,11 @@ import { Store } from '@ngrx/store';
 
 @Injectable()
 export class GetCurrentUserEffect {
-  constructor(
-    private store: Store,
-    private actions$: Actions,
-    private authService: AuthService,
-    private persistanceService: PersistanceService,
-    private router: Router
-  ) {}
+  private store = inject(Store);
+  private actions$ = inject(Actions);
+  private authService = inject(AuthService);
+  private persistanceService = inject(PersistanceService);
+  private router = inject(Router);
 
   getCurrentUser$ = createEffect(() => {
     return this.actions$.pipe(

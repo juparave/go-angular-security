@@ -33,6 +33,9 @@ import { AuthLayoutComponent } from 'src/app/shared/components/auth-layout/auth-
   ],
 })
 export class LoginFormComponent implements OnInit {
+  private store = inject<Store<AppState>>(Store);
+  private fb = inject(UntypedFormBuilder);
+
   loginForm: UntypedFormGroup;
   isSubmitting$!: Observable<boolean>;
   backendErrors$!: Observable<BackendErrors | null>;
@@ -40,10 +43,7 @@ export class LoginFormComponent implements OnInit {
 
   hidePassword = true;
 
-  constructor(
-    private store: Store<AppState>,
-    private fb: UntypedFormBuilder
-  ) {
+  constructor() {
     this.loginForm = this.fb.group({
       email: ['', Validators.required],
       password: ['', Validators.required],

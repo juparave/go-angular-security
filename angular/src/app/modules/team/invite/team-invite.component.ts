@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TeamService } from '../../../services/team.service';
@@ -118,15 +118,15 @@ export class TeamInviteComponent {
   @Output() closeModal = new EventEmitter<void>();
   @Output() invited = new EventEmitter<void>();
 
+  private fb = inject(FormBuilder);
+  private teamService = inject(TeamService);
+
   inviteForm: FormGroup;
   isSubmitting = false;
   errorMessage = '';
   roles = this.teamService.getRoles();
 
-  constructor(
-    private fb: FormBuilder,
-    private teamService: TeamService
-  ) {
+  constructor() {
     this.inviteForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       firstName: [''],

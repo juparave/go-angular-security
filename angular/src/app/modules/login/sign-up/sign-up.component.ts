@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   AbstractControl,
@@ -33,14 +33,14 @@ import { AuthLayoutComponent } from 'src/app/shared/components/auth-layout/auth-
   ],
 })
 export class SignUpComponent implements OnInit {
+  private store = inject<Store<AppState>>(Store);
+  private fb = inject(UntypedFormBuilder);
+
   form: UntypedFormGroup;
   isSubmitting$!: Observable<boolean>;
   backendErrors$!: Observable<BackendErrors | null>;
 
-  constructor(
-    private store: Store<AppState>,
-    private fb: UntypedFormBuilder
-  ) {
+  constructor() {
     this.form = this.fb.group(
       {
         accountName: ['', Validators.required],

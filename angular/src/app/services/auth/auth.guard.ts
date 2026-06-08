@@ -16,10 +16,8 @@ import { selectIsLoggedIn } from 'src/app/store/selectors/auth.selectors';
   providedIn: 'root',
 })
 export class AuthGuard {
-  constructor(
-    private store: Store<AppState>,
-    public router: Router
-  ) {}
+  private store = inject<Store<AppState>>(Store);
+  router = inject(Router);
 
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> {
     return this.store.select(selectIsLoggedIn).pipe(

@@ -1,4 +1,13 @@
-import { Component, EventEmitter, Input, OnInit, Output, computed, signal } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnInit,
+  Output,
+  computed,
+  signal,
+  inject,
+} from '@angular/core';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
 import { User } from 'src/app/models/user';
@@ -19,6 +28,8 @@ export type MenuItem = {
   styleUrl: './custom-sidenav.component.scss',
 })
 export class CustomSidenavComponent implements OnInit {
+  private store = inject<Store<AppState>>(Store);
+
   @Output() closeSidenav = new EventEmitter<void>();
   @Input() set collapsed(value: boolean) {
     this.sidenavCollapsed.set(value);
@@ -54,8 +65,6 @@ export class CustomSidenavComponent implements OnInit {
       route: '/subscription/status',
     },
   ]);
-
-  constructor(private store: Store<AppState>) {}
 
   ngOnInit(): void {
     this.initializeValues();
