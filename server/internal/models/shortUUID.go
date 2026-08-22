@@ -2,8 +2,16 @@ package models
 
 import (
 	"math/rand"
+	"sync/atomic"
 	"time"
 )
+
+// lastNano holds the most recently issued nanosecond value used by
+// SortableShortUUID. It guarantees strict monotonicity so that rapid,
+// back-to-back calls (e.g. a batch insert of order lines) never collide on the
+// same UnixNano() tick — which previously produced duplicate primary keys that
+// SQLite silently dropped.
+var lastNano int64
 
 const numerals = "0123456789ABCDEFGHIJKLMNPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 const alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz"
@@ -29,11 +37,21 @@ func ShortUUID(length int) string {
 	return shortuuid[0:length]
 }
 
+// SortableShortUUID generates a sortable, unique, time-ordered string. It is
+// safe under rapid concurrent/looped calls: a monotonic counter ensures each
+// call yields a strictly larger value than the previous one even when the
+// system clock has not advanced between calls.
 func SortableShortUUID() string {
-	// use time.Now() to get a unix timestamp
-	// the length of the timestamp is 11 using all numerals
-	// this UUID is sortable and can be used as a key in a map
-	return encode(time.Now().UnixNano(), len(alphabet), alphabet)
+	for {
+		prev := atomic.LoadInt64(&lastNano)
+		next := time.Now().UnixNano()
+		if next <= prev {
+			next = prev + 1
+		}
+		if atomic.CompareAndSwapInt64(&lastNano, prev, next) {
+			return encode(next, len(alphabet), alphabet)
+		}
+	}
 }
 
 func encode(num int64, base int, numerals string) string {
