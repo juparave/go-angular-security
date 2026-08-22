@@ -8,17 +8,16 @@ class DashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(currentUserProvider).value;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dashboard'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => ref.read(authNotifierProvider.notifier).logout(),
-          ),
-        ],
+      appBar: AppBar(title: const Text('Panel')),
+      body: Center(
+        child: Text(
+          user == null ? 'Panel' : 'Hola, ${user.displayName}',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
       ),
-      body: const Center(child: Text('Dashboard — Phase 4')),
     );
   }
 }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../application/auth_notifier.dart';
@@ -26,21 +25,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _googleSignIn() async {
-    await ref.read(authNotifierProvider.notifier).googleSignIn();
+    await ref.read(authControllerProvider.notifier).googleSignIn();
     _handleResult();
   }
 
   Future<void> _emailLogin() async {
     if (!_formKey.currentState!.validate()) return;
     await ref
-        .read(authNotifierProvider.notifier)
+        .read(authControllerProvider.notifier)
         .login(email: _emailCtrl.text.trim(), password: _passwordCtrl.text);
     _handleResult();
   }
 
   void _handleResult() {
     if (!mounted) return;
-    final auth = ref.read(authNotifierProvider);
+    final auth = ref.read(authControllerProvider);
     if (auth.hasError) {
       ScaffoldMessenger.of(
         context,
@@ -52,7 +51,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isLoading = ref.watch(authNotifierProvider).isLoading;
+    final isLoading = ref.watch(authControllerProvider).isLoading;
 
     return Scaffold(
       body: SafeArea(
@@ -87,6 +86,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                   // Google Sign-In button
                   _GoogleSignInButton(
+                    key: const Key('googleSignInButton'),
                     onPressed: isLoading ? null : _googleSignIn,
                     isLoading: isLoading,
                   ),
@@ -98,6 +98,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   // Email/password toggle
                   if (!_showEmailForm)
                     OutlinedButton(
+                      key: const Key('showEmailFormButton'),
                       onPressed: isLoading
                           ? null
                           : () => setState(() => _showEmailForm = true),
@@ -110,6 +111,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           TextFormField(
+                            key: const Key('signInEmailField'),
                             controller: _emailCtrl,
                             keyboardType: TextInputType.emailAddress,
                             decoration: const InputDecoration(
@@ -121,6 +123,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           const SizedBox(height: 14),
                           TextFormField(
+                            key: const Key('signInPasswordField'),
                             controller: _passwordCtrl,
                             obscureText: true,
                             decoration: const InputDecoration(
@@ -132,6 +135,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           const SizedBox(height: 24),
                           FilledButton(
+                            key: const Key('signInSubmitButton'),
                             onPressed: isLoading ? null : _emailLogin,
                             child: isLoading
                                 ? const SizedBox(
@@ -147,12 +151,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ],
                       ),
                     ),
-
-                  const SizedBox(height: 24),
-                  TextButton(
-                    onPressed: () => context.go('/'),
-                    child: const Text('Continuar sin cuenta'),
-                  ),
                 ],
               ),
             ),
@@ -164,7 +162,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 }
 
 class _GoogleSignInButton extends StatelessWidget {
-  const _GoogleSignInButton({this.onPressed, required this.isLoading});
+  const _GoogleSignInButton({
+    super.key,
+    this.onPressed,
+    required this.isLoading,
+  });
   final VoidCallback? onPressed;
   final bool isLoading;
 

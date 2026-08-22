@@ -1,32 +1,44 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../config/env.dart';
+import '../config/environment_config.dart';
 import '../storage/secure_storage.dart';
 import 'api_exception.dart';
 
+part 'api_client.g.dart';
+
 class ApiClient {
-  ApiClient(this._dio, this._storage) {
+  /// [refreshDio] is the client used for the token-refresh call itself. It is
+  /// deliberately separate from [_dio] so refreshing doesn't re-enter
+  /// [_RefreshInterceptor]; tests inject their own to mock that leg.
+  ApiClient(this._dio, this._storage, this._config, {Dio? refreshDio}) {
+    final refresher = refreshDio ?? Dio();
+    refresher
+      ..options.baseUrl = _config.apiBaseUrl
+      ..options.connectTimeout = const Duration(seconds: 15)
+      ..options.receiveTimeout = const Duration(seconds: 30)
+      ..options.headers['Accept'] = 'application/json';
+
     _dio
-      ..options.baseUrl = Env.apiBaseUrl
+      ..options.baseUrl = _config.apiBaseUrl
       ..options.connectTimeout = const Duration(seconds: 15)
       ..options.receiveTimeout = const Duration(seconds: 30)
       ..options.headers['Accept'] = 'application/json'
       ..interceptors.addAll([
         _CookieAuthInterceptor(_storage),
-        _RefreshInterceptor(_storage, _dio),
+        _RefreshInterceptor(_storage, _dio, refresher),
         _ErrorInterceptor(),
       ]);
   }
 
   final Dio _dio;
   final SecureStorage _storage;
+  final EnvironmentConfig _config;
 
   Future<Response<T>> get<T>(
     String path, {
     Map<String, dynamic>? queryParameters,
-  }) =>
-      _dio.get<T>(path, queryParameters: queryParameters);
+  }) => _dio.get<T>(path, queryParameters: queryParameters);
 
   Future<Response<T>> post<T>(String path, {Object? data}) =>
       _dio.post<T>(path, data: data);
@@ -60,16 +72,17 @@ class _CookieAuthInterceptor extends Interceptor {
   }
 }
 
-/// On a 401, silently calls POST /api/refresh-token, saves the new tokens,
+/// On a 401, silently calls POST /refresh-token, saves the new tokens,
 /// then retries the original request once. If the refresh itself fails the
 /// original 401 is forwarded to _ErrorInterceptor so AuthNotifier can sign out.
 ///
 /// Uses a separate Dio instance to avoid re-entering this interceptor.
 class _RefreshInterceptor extends Interceptor {
-  _RefreshInterceptor(this._storage, this._dio);
+  _RefreshInterceptor(this._storage, this._dio, this._refreshDio);
 
   final SecureStorage _storage;
   final Dio _dio;
+  final Dio _refreshDio;
 
   // Prevents concurrent refreshes when multiple requests 401 simultaneously.
   bool _refreshing = false;
@@ -103,14 +116,8 @@ class _RefreshInterceptor extends Interceptor {
 
     _refreshing = true;
     try {
-      final refreshDio = Dio()
-        ..options.baseUrl = Env.apiBaseUrl
-        ..options.connectTimeout = const Duration(seconds: 15)
-        ..options.receiveTimeout = const Duration(seconds: 30)
-        ..options.headers['Accept'] = 'application/json';
-
-      final refreshResponse = await refreshDio.post<Map<String, dynamic>>(
-        '/api/refresh-token',
+      final refreshResponse = await _refreshDio.post<Map<String, dynamic>>(
+        '/refresh-token',
         data: {'refreshToken': refreshToken},
       );
 
@@ -205,6 +212,9 @@ class _ErrorInterceptor extends Interceptor {
   }
 }
 
-final apiClientProvider = Provider<ApiClient>((ref) {
-  return ApiClient(Dio(), ref.watch(secureStorageProvider));
-});
+@Riverpod(keepAlive: true)
+ApiClient apiClient(Ref ref) => ApiClient(
+  Dio(),
+  ref.watch(secureStorageProvider),
+  ref.watch(environmentConfigProvider),
+);

@@ -1,11 +1,16 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../config/env.dart';
+import '../config/environment_config.dart';
 
-final loggerProvider = Provider<Logger>((ref) {
+part 'logger.g.dart';
+
+@Riverpod(keepAlive: true)
+Logger logger(Ref ref) {
   return Logger(
-    level: Env.isProduction ? Level.warning : Level.debug,
+    level: ref.watch(environmentConfigProvider).isProduction
+        ? Level.warning
+        : Level.debug,
     printer: PrettyPrinter(
       methodCount: 1,
       errorMethodCount: 8,
@@ -14,4 +19,4 @@ final loggerProvider = Provider<Logger>((ref) {
       printEmojis: true,
     ),
   );
-});
+}

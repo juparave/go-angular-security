@@ -1,10 +1,12 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:http_mock_adapter/http_mock_adapter.dart';
-import 'package:mocktail/mocktail.dart';
 
 import 'package:app/core/api/api_client.dart';
 import 'package:app/core/api/api_exception.dart';
+import 'package:app/core/config/environment_config.dart';
 import 'package:app/core/storage/secure_storage.dart';
 
 // ---------------------------------------------------------------------------
@@ -37,135 +39,85 @@ class _FakeSecureStorage extends Fake implements SecureStorage {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
+/// Minimal [HttpClientAdapter] that answers from a caller-supplied function and
+/// records every request it saw. Unlike http_mock_adapter's route handlers, the
+/// function runs per request, so a call can answer 401 then 200 on the retry.
+class _StubAdapter implements HttpClientAdapter {
+  _StubAdapter(this._respond);
 
-/// Builds a Dio + DioAdapter pair wired up with the same interceptors as
-/// [ApiClient] but with the adapter injected so we can fake HTTP.
-///
-/// Returns the (Dio, DioAdapter, _FakeSecureStorage) triple.
-(Dio, DioAdapter, _FakeSecureStorage) _buildTestClient() {
-  final storage = _FakeSecureStorage();
-  final dio = Dio(
-    BaseOptions(
-      baseUrl: 'http://localhost',
-      validateStatus: (_) => true, // let interceptors handle status codes
-    ),
-  );
-  final adapter = DioAdapter(dio: dio, matcher: const FullHttpRequestMatcher());
+  final ResponseBody Function(RequestOptions options, int callIndex) _respond;
+  final requests = <RequestOptions>[];
 
-  dio.interceptors.addAll([
-    _TestCookieInterceptor(storage),
-    _TestRefreshInterceptor(storage, dio),
-    _TestErrorInterceptor(),
-  ]);
-
-  return (dio, adapter, storage);
-}
-
-/// Minimal cookie interceptor mirroring production behaviour.
-class _TestCookieInterceptor extends Interceptor {
-  _TestCookieInterceptor(this._storage);
-  final _FakeSecureStorage _storage;
+  /// Header snapshots taken at call time. The retry mutates the original
+  /// RequestOptions in place, so [requests] holds the same instance twice —
+  /// copy the headers here to see what each individual call actually sent.
+  final sentHeaders = <Map<String, dynamic>>[];
 
   @override
-  Future<void> onRequest(
+  Future<ResponseBody> fetch(
     RequestOptions options,
-    RequestInterceptorHandler handler,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
   ) async {
-    final token = await _storage.readAccessToken();
-    if (token != null && token.isNotEmpty) {
-      options.headers['Cookie'] = 'jwt=$token';
-    }
-    handler.next(options);
+    final index = requests.length;
+    requests.add(options);
+    sentHeaders.add(Map<String, dynamic>.from(options.headers));
+    return _respond(options, index);
   }
-}
-
-/// Re-implements _RefreshInterceptor using the same logic but with an
-/// injectable refresh Dio so we can mock both the original and refresh calls.
-class _TestRefreshInterceptor extends Interceptor {
-  _TestRefreshInterceptor(this._storage, this._dio);
-  final _FakeSecureStorage _storage;
-  final Dio _dio;
-  bool _refreshing = false;
 
   @override
-  Future<void> onError(
-    DioException err,
-    ErrorInterceptorHandler handler,
-  ) async {
-    final response = err.response;
-
-    if (response?.statusCode != 401 ||
-        err.requestOptions.path.contains('/refresh-token') ||
-        err.requestOptions.path.contains('/login') ||
-        err.requestOptions.path.contains('/glogin')) {
-      handler.next(err);
-      return;
-    }
-
-    if (_refreshing) {
-      handler.next(err);
-      return;
-    }
-
-    final refreshToken = await _storage.readRefreshToken();
-    if (refreshToken == null || refreshToken.isEmpty) {
-      handler.next(err);
-      return;
-    }
-
-    _refreshing = true;
-    try {
-      // Use the same Dio (adapter already mocked) for the refresh call.
-      final refreshResponse = await _dio.post<Map<String, dynamic>>(
-        '/api/refresh-token',
-        data: {'refreshToken': refreshToken},
-      );
-
-      final body = refreshResponse.data!;
-      final user = body['user'] as Map<String, dynamic>?;
-      final newAccess = user?['accessToken'] as String?;
-      final newRefresh = user?['refreshToken'] as String?;
-
-      if (newAccess == null || newAccess.isEmpty) {
-        handler.next(err);
-        return;
-      }
-
-      await _storage.saveTokens(
-        accessToken: newAccess,
-        refreshToken: newRefresh ?? refreshToken,
-      );
-
-      final retryOptions = err.requestOptions;
-      retryOptions.headers['Cookie'] = 'jwt=$newAccess';
-      final retryResponse = await _dio.fetch<dynamic>(retryOptions);
-      handler.resolve(retryResponse);
-    } catch (_) {
-      handler.next(err);
-    } finally {
-      _refreshing = false;
-    }
-  }
+  void close({bool force = false}) {}
 }
 
-class _TestErrorInterceptor extends Interceptor {
-  @override
-  void onError(DioException err, ErrorInterceptorHandler handler) {
-    final response = err.response;
-    if (response?.statusCode == 401) {
-      handler.reject(
-        DioException(
-          requestOptions: err.requestOptions,
-          error: const UnauthorizedException(),
+ResponseBody _json(int status, Map<String, dynamic> body) =>
+    ResponseBody.fromString(
+      jsonEncode(body),
+      status,
+      headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      },
+    );
+
+class _Harness {
+  _Harness(this.client, this.api, this.refresh, this.storage);
+
+  final ApiClient client;
+
+  /// Requests that went through the main Dio (business endpoints + retries).
+  final _StubAdapter api;
+
+  /// Requests that went through the refresh Dio (POST /refresh-token only).
+  final _StubAdapter refresh;
+
+  final _FakeSecureStorage storage;
+}
+
+/// Builds a real [ApiClient] with both of its Dio instances stubbed, so the
+/// production interceptors are the code actually under test.
+_Harness _buildHarness({
+  required ResponseBody Function(RequestOptions options, int callIndex) api,
+  ResponseBody Function(RequestOptions options, int callIndex)? refresh,
+}) {
+  final storage = _FakeSecureStorage();
+  final apiAdapter = _StubAdapter(api);
+  final refreshAdapter = _StubAdapter(
+    refresh ??
+        (options, _) => throw StateError(
+          'refresh endpoint should not have been called: ${options.path}',
         ),
-      );
-      return;
-    }
-    handler.next(err);
-  }
+  );
+
+  final dio = Dio()..httpClientAdapter = apiAdapter;
+  final refreshDio = Dio()..httpClientAdapter = refreshAdapter;
+
+  final client = ApiClient(
+    dio,
+    storage,
+    const EnvironmentConfig(),
+    refreshDio: refreshDio,
+  );
+
+  return _Harness(client, apiAdapter, refreshAdapter, storage);
 }
 
 // ---------------------------------------------------------------------------
@@ -173,24 +125,20 @@ class _TestErrorInterceptor extends Interceptor {
 // ---------------------------------------------------------------------------
 
 void main() {
+  test('ApiClient targets the Fiber /api/v1 group', () {
+    expect(
+      const EnvironmentConfig().apiBaseUrl,
+      endsWith(EnvironmentConfig.apiPrefix),
+    );
+  });
+
   group('_RefreshInterceptor', () {
-    test('retries original request after successful token refresh', () async {
-      final (dio, adapter, storage) = _buildTestClient();
-
-      storage.accessToken = 'expired-token';
-      storage.refreshToken = 'valid-refresh';
-
-      // First call to /api/data returns 401.
-      adapter.onGet(
-        '/api/data',
-        (server) => server.reply(401, {'message': 'Unauthorized'}),
-        headers: {'Cookie': 'jwt=expired-token'},
-      );
-
-      // Refresh endpoint returns new tokens.
-      adapter.onPost(
-        '/api/refresh-token',
-        (server) => server.reply(200, {
+    test('retries the original request after a successful refresh', () async {
+      final h = _buildHarness(
+        api: (options, i) => i == 0
+            ? _json(401, {'message': 'Unauthorized'})
+            : _json(200, {'ok': true}),
+        refresh: (options, _) => _json(200, {
           'message': 'success',
           'user': {
             'id': '1',
@@ -198,38 +146,68 @@ void main() {
             'refreshToken': 'new-refresh-token',
           },
         }),
-        data: {'refreshToken': 'valid-refresh'},
       );
+      h.storage.accessToken = 'expired-token';
+      h.storage.refreshToken = 'valid-refresh';
 
-      // Retry with new token succeeds.
-      adapter.onGet(
-        '/api/data',
-        (server) => server.reply(200, {'result': 'ok'}),
-        headers: {'Cookie': 'jwt=new-access-token'},
-      );
-
-      final response = await dio.get<Map<String, dynamic>>('/api/data');
+      final response = await h.client.get<Map<String, dynamic>>('/data');
 
       expect(response.statusCode, 200);
-      expect(response.data, {'result': 'ok'});
-      expect(storage.accessToken, 'new-access-token');
-      expect(storage.refreshToken, 'new-refresh-token');
+      expect(h.api.requests, hasLength(2), reason: 'retried exactly once');
+      expect(h.refresh.requests.single.path, '/refresh-token');
+      expect(h.refresh.requests.single.data, {
+        'refreshToken': 'valid-refresh',
+      });
+      expect(h.storage.accessToken, 'new-access-token');
+      expect(h.storage.refreshToken, 'new-refresh-token');
+    });
+
+    test('sends the refreshed token as the jwt cookie on the retry', () async {
+      final h = _buildHarness(
+        api: (options, i) => i == 0
+            ? _json(401, {'message': 'Unauthorized'})
+            : _json(200, {'ok': true}),
+        refresh: (options, _) => _json(200, {
+          'user': {'id': '1', 'accessToken': 'fresh-token'},
+        }),
+      );
+      h.storage.accessToken = 'expired-token';
+      h.storage.refreshToken = 'valid-refresh';
+
+      await h.client.get<Map<String, dynamic>>('/data');
+
+      expect(h.api.sentHeaders.first['Cookie'], 'jwt=expired-token');
+      expect(h.api.sentHeaders.last['Cookie'], 'jwt=fresh-token');
+    });
+
+    test('keeps the old refresh token when the response omits a new one',
+        () async {
+      final h = _buildHarness(
+        api: (options, i) => i == 0
+            ? _json(401, {'message': 'Unauthorized'})
+            : _json(200, {'ok': true}),
+        refresh: (options, _) => _json(200, {
+          'user': {'id': '1', 'accessToken': 'fresh-token'},
+        }),
+      );
+      h.storage.accessToken = 'expired-token';
+      h.storage.refreshToken = 'valid-refresh';
+
+      await h.client.get<Map<String, dynamic>>('/data');
+
+      expect(h.storage.refreshToken, 'valid-refresh');
     });
 
     test('raises UnauthorizedException when no refresh token is stored',
         () async {
-      final (dio, adapter, storage) = _buildTestClient();
-
-      storage.accessToken = 'expired-token';
-      storage.refreshToken = null; // nothing to refresh with
-
-      adapter.onGet(
-        '/api/data',
-        (server) => server.reply(401, {'message': 'Unauthorized'}),
+      final h = _buildHarness(
+        api: (options, i) => _json(401, {'message': 'Unauthorized'}),
       );
+      h.storage.accessToken = 'expired-token';
+      h.storage.refreshToken = null;
 
-      expect(
-        () => dio.get<dynamic>('/api/data'),
+      await expectLater(
+        () => h.client.get<Map<String, dynamic>>('/data'),
         throwsA(
           isA<DioException>().having(
             (e) => e.error,
@@ -238,28 +216,22 @@ void main() {
           ),
         ),
       );
+      expect(h.refresh.requests, isEmpty);
+      expect(h.api.requests, hasLength(1), reason: 'no retry without a token');
     });
 
-    test('raises UnauthorizedException when refresh endpoint itself returns 401',
+    test('raises UnauthorizedException when the refresh call itself fails',
         () async {
-      final (dio, adapter, storage) = _buildTestClient();
-
-      storage.accessToken = 'expired-token';
-      storage.refreshToken = 'also-expired-refresh';
-
-      adapter.onGet(
-        '/api/data',
-        (server) => server.reply(401, {'message': 'Unauthorized'}),
+      final h = _buildHarness(
+        api: (options, i) => _json(401, {'message': 'Unauthorized'}),
+        refresh: (options, _) =>
+            _json(401, {'message': 'Refresh token expired'}),
       );
+      h.storage.accessToken = 'expired-token';
+      h.storage.refreshToken = 'stale-refresh';
 
-      adapter.onPost(
-        '/api/refresh-token',
-        (server) => server.reply(401, {'message': 'refresh token expired'}),
-        data: {'refreshToken': 'also-expired-refresh'},
-      );
-
-      expect(
-        () => dio.get<dynamic>('/api/data'),
+      await expectLater(
+        () => h.client.get<Map<String, dynamic>>('/data'),
         throwsA(
           isA<DioException>().having(
             (e) => e.error,
@@ -270,99 +242,64 @@ void main() {
       );
     });
 
-    test('does not intercept 401 on /login', () async {
-      final (dio, adapter, storage) = _buildTestClient();
+    for (final path in ['/login', '/glogin', '/refresh-token']) {
+      test('does not attempt a refresh for a 401 on $path', () async {
+        // The refresh adapter throws if touched.
+        final h = _buildHarness(
+          api: (options, i) => _json(401, {'message': 'Invalid credentials'}),
+        );
+        h.storage.accessToken = 'expired-token';
+        h.storage.refreshToken = 'valid-refresh';
 
-      storage.refreshToken = 'some-refresh';
+        await expectLater(
+          () => h.client.post<Map<String, dynamic>>(path, data: const {}),
+          throwsA(
+            isA<DioException>().having(
+              (e) => e.error,
+              'error',
+              isA<UnauthorizedException>(),
+            ),
+          ),
+        );
+        expect(h.refresh.requests, isEmpty);
+        expect(h.api.requests, hasLength(1));
+      });
+    }
+  });
 
-      adapter.onPost(
-        '/api/login',
-        (server) => server.reply(401, {'message': 'bad credentials'}),
-      );
+  group('_ErrorInterceptor', () {
+    test('maps 5xx to ServerException', () async {
+      final h = _buildHarness(api: (options, i) => _json(500, {'m': 'boom'}));
 
-      expect(
-        () => dio.post<dynamic>('/api/login', data: {}),
+      await expectLater(
+        () => h.client.get<Map<String, dynamic>>('/data'),
         throwsA(
           isA<DioException>().having(
             (e) => e.error,
             'error',
-            isA<UnauthorizedException>(),
+            isA<ServerException>(),
           ),
         ),
       );
     });
 
-    test('does not intercept 401 on /glogin', () async {
-      final (dio, adapter, storage) = _buildTestClient();
-
-      storage.refreshToken = 'some-refresh';
-
-      adapter.onPost(
-        '/api/glogin',
-        (server) => server.reply(401, {'message': 'invalid credential'}),
+    test('maps other 4xx to ClientException with the server message', () async {
+      final h = _buildHarness(
+        api: (options, i) => _json(422, {'message': 'Email ya registrado'}),
       );
 
-      expect(
-        () => dio.post<dynamic>('/api/glogin', data: {}),
+      await expectLater(
+        () => h.client.get<Map<String, dynamic>>('/data'),
         throwsA(
           isA<DioException>().having(
             (e) => e.error,
             'error',
-            isA<UnauthorizedException>(),
+            isA<ClientException>()
+                .having((e) => e.statusCode, 'statusCode', 422)
+                .having((e) => e.message, 'message', 'Email ya registrado'),
           ),
         ),
       );
-    });
-
-    test('injects new access token as Cookie header on retry', () async {
-      final (dio, adapter, storage) = _buildTestClient();
-
-      storage.accessToken = 'old-token';
-      storage.refreshToken = 'good-refresh';
-
-      String? cookieOnRetry;
-
-      adapter.onGet(
-        '/api/data',
-        (server) => server.reply(401, {'message': 'Unauthorized'}),
-        headers: {'Cookie': 'jwt=old-token'},
-      );
-
-      adapter.onPost(
-        '/api/refresh-token',
-        (server) => server.reply(200, {
-          'message': 'success',
-          'user': {
-            'id': '1',
-            'accessToken': 'fresh-token',
-            'refreshToken': 'fresh-refresh',
-          },
-        }),
-        data: {'refreshToken': 'good-refresh'},
-      );
-
-      // Capture the cookie on the retry.
-      dio.interceptors.add(
-        InterceptorsWrapper(
-          onRequest: (options, handler) {
-            if (options.path == '/api/data' &&
-                options.headers['Cookie'] != 'jwt=old-token') {
-              cookieOnRetry = options.headers['Cookie'] as String?;
-            }
-            handler.next(options);
-          },
-        ),
-      );
-
-      adapter.onGet(
-        '/api/data',
-        (server) => server.reply(200, {'ok': true}),
-        headers: {'Cookie': 'jwt=fresh-token'},
-      );
-
-      await dio.get<dynamic>('/api/data');
-
-      expect(cookieOnRetry, 'jwt=fresh-token');
     });
   });
 }

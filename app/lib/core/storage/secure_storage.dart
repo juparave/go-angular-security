@@ -1,5 +1,7 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'secure_storage.g.dart';
 
 const _kAccessToken = 'access_token';
 const _kRefreshToken = 'refresh_token';
@@ -30,10 +32,9 @@ class SecureStorage {
   }
 }
 
-final secureStorageProvider = Provider<SecureStorage>((ref) {
-  return SecureStorage(
-    const FlutterSecureStorage(
-      aOptions: AndroidOptions(encryptedSharedPreferences: true),
-    ),
-  );
-});
+@Riverpod(keepAlive: true)
+SecureStorage secureStorage(Ref ref) => SecureStorage(
+  const FlutterSecureStorage(
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+  ),
+);
